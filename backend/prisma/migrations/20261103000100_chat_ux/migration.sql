@@ -1,0 +1,2 @@
+ALTER TYPE "ChatMessageStatus" ADD VALUE IF NOT EXISTS 'CANCELED';
+ALTER TABLE "ChatMessage" ADD COLUMN "suggestions" JSONB;

@@ -1,0 +1,123 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: feline_ai
+      POSTGRES_USER: feline_ai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_dev_only}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U feline_ai -d feline_ai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    build: ./backend
+    restart: "no"
+    command: ["pnpm", "prisma:migrate"]
+    environment: &app_environment
+      NODE_ENV: production
+      DATABASE_URL: postgresql://feline_ai:${POSTGRES_PASSWORD:-local_dev_only}@postgres:5432/feline_ai?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REPORT_TIME_ZONE: Asia/Ho_Chi_Minh
+      REPORT_QUEUE_NAME: workshop-daily-report
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-feline_session}
+      AUTH_SESSION_TTL_HOURS: ${AUTH_SESSION_TTL_HOURS:-168}
+      AUTH_MAX_FAILED_ATTEMPTS: ${AUTH_MAX_FAILED_ATTEMPTS:-5}
+      AUTH_LOCK_MINUTES: ${AUTH_LOCK_MINUTES:-15}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      SOURCE_MYSQL_URL: ${SOURCE_MYSQL_URL:-}
+      SOURCE_MYSQL_SSL: ${SOURCE_MYSQL_SSL:-true}
+      SOURCE_MYSQL_CA_PATH: /app/certs/shop-test-mysql-ca.pem
+      TIKTOK_MYSQL_URL: ${TIKTOK_MYSQL_URL:-}
+      TIKTOK_MYSQL_SSL: ${TIKTOK_MYSQL_SSL:-false}
+      TIKTOK_MYSQL_SSL_REJECT_UNAUTHORIZED: ${TIKTOK_MYSQL_SSL_REJECT_UNAUTHORIZED:-true}
+      LEMIEX_AI_ENABLED: ${LEMIEX_AI_ENABLED:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_WORKSPACE_ID: ${ANTHROPIC_WORKSPACE_ID:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-1800}
+      AI_CHAT_MAX_OUTPUT_TOKENS: ${AI_CHAT_MAX_OUTPUT_TOKENS:-1000}
+      AI_REQUEST_TIMEOUT_MS: ${AI_REQUEST_TIMEOUT_MS:-30000}
+      AI_CHAT_TIMEOUT_MS: ${AI_CHAT_TIMEOUT_MS:-45000}
+      AI_PROVIDER_MAX_RETRIES: ${AI_PROVIDER_MAX_RETRIES:-2}
+      AI_RATE_LIMIT_REQUESTS: ${AI_RATE_LIMIT_REQUESTS:-10}
+      AI_RATE_LIMIT_WINDOW_SECONDS: ${AI_RATE_LIMIT_WINDOW_SECONDS:-60}
+      AI_CHAT_TOKEN_RESERVATION: ${AI_CHAT_TOKEN_RESERVATION:-4000}
+      AI_DAILY_TOKEN_LIMIT_ENABLED: ${AI_DAILY_TOKEN_LIMIT_ENABLED:-false}
+      AI_DAILY_TOKEN_LIMIT_PER_USER: ${AI_DAILY_TOKEN_LIMIT_PER_USER:-50000}
+      AI_DAILY_TOKEN_LIMIT_PER_AGENT: ${AI_DAILY_TOKEN_LIMIT_PER_AGENT:-500000}
+      KNOWLEDGE_MOCK_SEED_ENABLED: ${KNOWLEDGE_MOCK_SEED_ENABLED:-true}
+      ANTHROPIC_INPUT_COST_PER_MILLION: ${ANTHROPIC_INPUT_COST_PER_MILLION:-}
+      ANTHROPIC_OUTPUT_COST_PER_MILLION: ${ANTHROPIC_OUTPUT_COST_PER_MILLION:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    command: ["node", "dist/main.js"]
+    env_file:
+      - .env.b2
+    environment:
+      <<: *app_environment
+      PORT: 3000
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    command: ["node", "dist/worker.js"]
+    environment:
+      <<: *app_environment
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

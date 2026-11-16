@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Chốt phạm vi CEO AI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,600&display=swap');
+
+    :root {
+      --ink: #17211b;
+      --muted: #5e6a62;
+      --paper: #f7f5ee;
+      --surface: #fffef9;
+      --line: #dcded5;
+      --brand: #146346;
+      --brand-dark: #0b4933;
+      --brand-soft: #e3f0e7;
+      --accent: #d96f42;
+      --accent-soft: #f9e8de;
+      --danger: #a64035;
+      --shadow: 0 20px 55px rgba(38, 48, 41, .10);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 85% 10%, rgba(217, 111, 66, .12), transparent 27rem),
+        radial-gradient(circle at 5% 80%, rgba(20, 99, 70, .10), transparent 32rem),
+        var(--paper);
+      font-family: Manrope, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { color: white; background: var(--brand); }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(217, 111, 66, .34);
+      outline-offset: 3px;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 34px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      color: white;
+      background: var(--brand);
+      box-shadow: 0 8px 20px rgba(20, 99, 70, .22);
+    }
+    .brand-mark svg { width: 20px; height: 20px; }
+    .save-state { color: var(--muted); font-size: 13px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 38px;
+      align-items: start;
+    }
+
+    .rail { position: sticky; top: 28px; }
+    .rail h1 {
+      margin: 0 0 12px;
+      max-width: 9ch;
+      font: 600 clamp(34px, 4.4vw, 57px)/.96 Newsreader, serif;
+      letter-spacing: -.035em;
+    }
+    .rail-copy {
+      max-width: 29ch;
+      margin: 0 0 30px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .steps { display: grid; gap: 6px; }
+    .step-link {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      padding: 10px 8px;
+      border: 0;
+      border-radius: 12px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .step-link:hover { background: rgba(255, 255, 255, .54); }
+    .step-link[aria-current="step"] { color: var(--ink); background: var(--surface); }
+    .step-dot {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .step-link[aria-current="step"] .step-dot { color: white; border-color: var(--brand); background: var(--brand); }
+    .step-link.is-done .step-dot { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+    .step-name { font-size: 13px; font-weight: 700; }
+
+    .progress-track {
+      height: 5px;
+      margin-top: 28px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #e4e3da;
+    }
+    .progress-bar { height: 100%; width: 20%; background: var(--accent); transition: width .35s ease; }
+
+    .panel {
+      min-height: 650px;
+      overflow: hidden;
+      border-radius: 24px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 34px 40px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .panel-head h2 { margin: 0 0 7px; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.03em; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .step-count {
+      flex: none;
+      padding: 7px 11px;
+      border-radius: 99px;
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .step-panel { display: none; padding: 28px 40px 40px; animation: enter .32s cubic-bezier(.22, 1, .36, 1); }
+    .step-panel.is-active { display: block; }
+    @keyframes enter { from { opacity: .25; transform: translateY(10px); } }
+
+    .question { padding: 3px 0 28px; }
+    .question + .question { padding-top: 28px; border-top: 1px solid var(--line); }
+    .question h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -.012em; }
+    .question-help { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .choices.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .choice { position: relative; }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice label {
+      display: block;
+      min-height: 100%;
+      padding: 16px 17px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: white;
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .choice label:hover { border-color: #abb9ae; transform: translateY(-1px); }
+    .choice input:focus-visible + label { outline: 3px solid rgba(217, 111, 66, .34); outline-offset: 2px; }
+    .choice input:checked + label { border-color: var(--brand); background: var(--brand-soft); }
+    .choice-title { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 800; }
+    .choice-copy { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .choice input:checked + label .choice-copy { color: #3f5c4d; }
+
+    .field {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: white;
+      resize: vertical;
+    }
+    .field::placeholder { color: #69756d; }
+
+    .notice {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: #59352a;
+      background: var(--accent-soft);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .notice strong { display: block; margin-bottom: 2px; }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 40px;
+      border-top: 1px solid var(--line);
+      background: #fbfaf5;
+    }
+    .action-group { display: flex; gap: 10px; }
+    .button {
+      min-height: 44px;
+      padding: 0 17px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button:disabled { opacity: .42; cursor: not-allowed; transform: none; }
+    .button-primary { color: white; background: var(--brand); box-shadow: 0 8px 18px rgba(20, 99, 70, .18); }
+    .button-primary:hover { background: var(--brand-dark); }
+    .button-secondary { border-color: var(--line); background: white; }
+    .button-quiet { padding-inline: 8px; color: var(--muted); background: transparent; }
+
+    .summary { display: grid; gap: 20px; }
+    .summary-section { padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+    .summary-section:last-child { border-bottom: 0; }
+    .summary-section h3 { margin: 0 0 11px; font-size: 14px; }
+    .summary-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .summary-list li { display: flex; align-items: flex-start; gap: 10px; color: #415047; font-size: 13px; line-height: 1.55; }
+    .check {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 19px;
+      height: 19px;
+      margin-top: 1px;
+      border-radius: 50%;
+      color: var(--brand-dark);
+      background: var(--brand-soft);
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .empty-summary { color: var(--muted); font-size: 13px; }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      padding: 13px 16px;
+      border-radius: 12px;
+      color: white;
+      background: var(--ink);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: .22s ease;
+    }
+    .toast.is-visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 820px) {
+      .shell { width: min(100% - 24px, 680px); padding-top: 18px; }
+      .topbar { margin-bottom: 20px; }
+      .layout { grid-template-columns: 1fr; gap: 18px; }
+      .rail { position: static; }
+      .rail h1 { max-width: none; font-size: 38px; }
+      .rail-copy { max-width: 55ch; margin-bottom: 18px; }
+      .steps { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+      .step-link { display: grid; place-items: center; padding: 4px; }
+      .step-name { display: none; }
+      .progress-track { margin-top: 14px; }
+      .panel { min-height: 0; border-radius: 20px; }
+      .panel-head, .step-panel, .actions { padding-left: 22px; padding-right: 22px; }
+      .choices.three { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .save-state { display: none; }
+      .panel-head { padding-top: 24px; }
+      .panel-head h2 { font-size: 26px; }
+      .step-count { display: none; }
+      .choices { grid-template-columns: 1fr; }
+      .actions { align-items: stretch; flex-direction: column-reverse; }
+      .action-group { display: grid; grid-template-columns: 1fr 1fr; }
+      .button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6.8 16.4c1.3-3.7 3.7-6.5 7.8-8.8M9.1 19c3.2-.9 6.5-3.4 8.6-7.6M5 11.4c1.2.3 2.2.9 2.9 1.8M14.3 5c.6 1.1.8 2.2.6 3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        Feline AI
+      </div>
+      <span class="save-state" id="saveState">Tự động lưu trên thiết bị này</span>
+    </header>
+
+    <div class="layout">
+      <aside class="rail">
+        <h1>Chốt CEO AI, từng bước một.</h1>
+        <p class="rail-copy">Chỉ chọn điều đúng với doanh nghiệp hiện tại. Những phần chưa chắc có thể để lại và bổ sung sau.</p>
+
+        <nav class="steps" aria-label="Các bước cấu hình">
+          <button class="step-link" type="button" data-step-link="0" aria-current="step"><span class="step-dot">1</span><span class="step-name">Phạm vi</span></button>
+          <button class="step-link" type="button" data-step-link="1"><span class="step-dot">2</span><span class="step-name">Dữ liệu</span></button>
+          <button class="step-link" type="button" data-step-link="2"><span class="step-dot">3</span><span class="step-name">Quyền xem</span></button>
+          <button class="step-link" type="button" data-step-link="3"><span class="step-dot">4</span><span class="step-name">Phê duyệt</span></button>
+          <button class="step-link" type="button" data-step-link="4"><span class="step-dot">5</span><span class="step-name">Xác nhận</span></button>
+        </nav>
+        <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+      </aside>
+
+      <section class="panel" aria-live="polite">
+        <header class="panel-head">
+          <div>
+            <h2 id="panelTitle">CEO AI làm gì trước?</h2>
+            <p id="panelDescription">Chọn các công việc cần triển khai trong phiên bản đầu tiên.</p>
+          </div>
+          <span class="step-count" id="stepCount">Bước 1 / 5</span>
+        </header>
+
+        <form id="questionForm">
+          <div class="step-panel is-active" data-step="0">
+            <div class="question">
+              <h3>Chức năng cần có ngay</h3>
+              <p class="question-help">Có thể chọn nhiều mục.</p>
+              <div class="choices">
+                <div class="choice"><input type="checkbox" id="scope-policy" name="scope" value="Hỏi đáp chính sách và quy trình nhân sự"><label for="scope-policy"><span class="choice-title">Hỏi đáp nhân sự</span><span class="choice-copy">Nội quy, chính sách, quyền lợi và quy trình.</span></label></div>
+                <div class="choice"><input type="checkbox" id="scope-personal" name="scope" value="Tra cứu thông tin cá nhân"><label for="scope-personal"><span class="choice-title">Thông tin cá nhân</span><span class="choice-copy">Phép, chấm công, hợp đồng hoặc thông tin của chính người hỏi.</span></label></div>
+                <div class="choice"><input type="checkbox" id="scope-request" name="scope" value="Tiếp nhận và theo dõi yêu cầu"><label for="scope-request"><span class="choice-title">Tiếp nhận yêu cầu</span><span class="choice-copy">Tạo yêu cầu và theo dõi trạng thái xử lý.</span></label></div>
+                <div class="choice"><input type="checkbox" id="scope-approval" name="scope" value="Phân tích và điều phối phê duyệt"><label for="scope-approval"><span class="choice-title">Điều phối phê duyệt</span><span class="choice-copy">Kiểm tra điều kiện rồi chuyển đúng người duyệt.</span></label></div>
+              </div>
+            </div>
+            <div class="question">
+              <h3>Kênh sử dụng đầu tiên</h3>
+              <div class="choices three">
+                <div class="choice"><input type="radio" id="channel-dashboard" name="channel" value="Dashboard" checked><label for="channel-dashboard"><span class="choice-title">Dashboard</span><span class="choice-copy">Dễ kiểm soát quyền và lịch sử.</span></label></div>
+                <div class="choice"><input type="radio" id="channel-chat" name="channel" value="Ứng dụng chat"><label for="channel-chat"><span class="choice-title">Ứng dụng chat</span><span class="choice-copy">Tiện hỏi nhanh trong công việc.</span></label></div>
+                <div class="choice"><input type="radio" id="channel-both" name="channel" value="Dashboard và ứng dụng chat"><label for="channel-both"><span class="choice-title">Cả hai</span><span class="choice-copy">Dashboard quản lý, chat để sử dụng.</span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-panel" data-step="1">
+            <div class="question">
+              <h3>CEO AI được đọc dữ liệu nào?</h3>
+              <p class="question-help">Chọn dữ liệu cho phiên bản đầu, chưa chọn không có nghĩa là bỏ vĩnh viễn.</p>
+              <div class="choices">
+                <div class="choice"><input type="checkbox" id="data-policy" name="data" value="Nội quy, chính sách và quy trình"><label for="data-policy"><span class="choice-title">Chính sách chung</span><span class="choice-copy">Nội quy, biểu mẫu, quy trình và lịch nghỉ.</span></label></div>
+                <div class="choice"><input type="checkbox" id="data-org" name="data" value="Cơ cấu tổ chức và người phụ trách"><label for="data-org"><span class="choice-title">Cơ cấu tổ chức</span><span class="choice-copy">Phòng ban, chức danh và người phụ trách.</span></label></div>
+                <div class="choice"><input type="checkbox" id="data-attendance" name="data" value="Chấm công và nghỉ phép"><label for="data-attendance"><span class="choice-title">Chấm công & phép</span><span class="choice-copy">Ngày công, số phép và lịch sử nghỉ.</span></label></div>
+                <div class="choice"><input type="checkbox" id="data-contract" name="data" value="Hợp đồng lao động"><label for="data-contract"><span class="choice-title">Hợp đồng</span><span class="choice-copy">Loại hợp đồng, hiệu lực và thông tin liên quan.</span></label></div>
+                <div class="choice"><input type="checkbox" id="data-payroll" name="data" value="Lương, thưởng và phụ cấp"><label for="data-payroll"><span class="choice-title">Lương & thưởng</span><span class="choice-copy">Dữ liệu nhạy cảm, cần cấp quyền riêng.</span></label></div>
+                <div class="choice"><input type="checkbox" id="data-review" name="data" value="Đánh giá hiệu suất"><label for="data-review"><span class="choice-title">Đánh giá nhân sự</span><span class="choice-copy">Kết quả đánh giá và mục tiêu công việc.</span></label></div>
+              </div>
+            </div>
+            <div class="question">
+              <h3>Nguồn dữ liệu hiện tại</h3>
+              <textarea class="field" name="dataSource" rows="3" placeholder="Ví dụ: file Google Drive, phần mềm chấm công, Excel, database nội bộ..."></textarea>
+            </div>
+          </div>
+
+          <div class="step-panel" data-step="2">
+            <div class="question">
+              <h3>Nhân viên được xem thông tin nào?</h3>
+              <div class="choices three">
+                <div class="choice"><input type="radio" id="employee-public" name="employeeAccess" value="Chỉ chính sách chung"><label for="employee-public"><span class="choice-title">Chính sách chung</span><span class="choice-copy">Không truy cập hồ sơ cá nhân.</span></label></div>
+                <div class="choice"><input type="radio" id="employee-self" name="employeeAccess" value="Chính sách chung và dữ liệu của chính mình" checked><label for="employee-self"><span class="choice-title">Thêm dữ liệu của mình</span><span class="choice-copy">Không xem dữ liệu người khác.</span></label></div>
+                <div class="choice"><input type="radio" id="employee-custom" name="employeeAccess" value="Cấp riêng theo từng loại dữ liệu"><label for="employee-custom"><span class="choice-title">Cấp quyền riêng</span><span class="choice-copy">Linh hoạt nhưng cần cấu hình kỹ hơn.</span></label></div>
+              </div>
+            </div>
+            <div class="question">
+              <h3>Manager được xem thông tin nào của nhân viên trong team?</h3>
+              <div class="choices">
+                <div class="choice"><input type="checkbox" id="manager-profile" name="managerAccess" value="Thông tin công việc và liên hệ nội bộ"><label for="manager-profile"><span class="choice-title">Thông tin công việc</span><span class="choice-copy">Chức danh, team và liên hệ nội bộ.</span></label></div>
+                <div class="choice"><input type="checkbox" id="manager-attendance" name="managerAccess" value="Chấm công và nghỉ phép"><label for="manager-attendance"><span class="choice-title">Chấm công & phép</span><span class="choice-copy">Phục vụ quản lý lịch làm việc.</span></label></div>
+                <div class="choice"><input type="checkbox" id="manager-review" name="managerAccess" value="Đánh giá hiệu suất"><label for="manager-review"><span class="choice-title">Đánh giá hiệu suất</span><span class="choice-copy">Mục tiêu và kết quả nhân viên trong team.</span></label></div>
+                <div class="choice"><input type="checkbox" id="manager-payroll" name="managerAccess" value="Lương, thưởng và phụ cấp"><label for="manager-payroll"><span class="choice-title">Lương & thưởng</span><span class="choice-copy">Chỉ chọn nếu Manager thực sự cần quyền này.</span></label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-panel" data-step="3">
+            <div class="question">
+              <h3>Những yêu cầu nào cần triển khai trước?</h3>
+              <div class="choices">
+                <div class="choice"><input type="checkbox" id="approval-leave" name="approvalTypes" value="Nghỉ phép"><label for="approval-leave"><span class="choice-title">Nghỉ phép</span><span class="choice-copy">Kiểm tra phép và chuyển quản lý duyệt.</span></label></div>
+                <div class="choice"><input type="checkbox" id="approval-advance" name="approvalTypes" value="Tạm ứng"><label for="approval-advance"><span class="choice-title">Tạm ứng</span><span class="choice-copy">Mục đích, số tiền và hạn hoàn ứng.</span></label></div>
+                <div class="choice"><input type="checkbox" id="approval-expense" name="approvalTypes" value="Hoàn ứng và chi phí"><label for="approval-expense"><span class="choice-title">Chi phí & hoàn ứng</span><span class="choice-copy">Hóa đơn, chứng từ và ngân sách.</span></label></div>
+                <div class="choice"><input type="checkbox" id="approval-purchase" name="approvalTypes" value="Mua sắm nội bộ"><label for="approval-purchase"><span class="choice-title">Mua sắm nội bộ</span><span class="choice-copy">Nhu cầu, báo giá và đơn vị sử dụng.</span></label></div>
+              </div>
+            </div>
+            <div class="question">
+              <h3>Mức quyền của CEO AI trong bản đầu</h3>
+              <div class="choices three">
+                <div class="choice"><input type="radio" id="mode-advisory" name="approvalMode" value="Chỉ tư vấn và trả lời" checked><label for="mode-advisory"><span class="choice-title">Chỉ tư vấn</span><span class="choice-copy">Không tạo hoặc chuyển yêu cầu.</span></label></div>
+                <div class="choice"><input type="radio" id="mode-assisted" name="approvalMode" value="Tiếp nhận, kiểm tra và chuyển người duyệt"><label for="mode-assisted"><span class="choice-title">Hỗ trợ quy trình</span><span class="choice-copy">Tạo hồ sơ và chuyển đúng người duyệt.</span></label></div>
+                <div class="choice"><input type="radio" id="mode-shadow" name="approvalMode" value="Đề xuất quyết định nhưng người thật duyệt"><label for="mode-shadow"><span class="choice-title">Đề xuất quyết định</span><span class="choice-copy">AI đề xuất, người có quyền quyết định.</span></label></div>
+              </div>
+              <div class="notice"><div><strong>Chưa bật tự duyệt trong bản đầu</strong>Quyền tự duyệt chỉ cấu hình sau khi có ma trận hạn mức, chạy đối chiếu và có ủy quyền rõ ràng.</div></div>
+            </div>
+          </div>
+
+          <div class="step-panel" data-step="4">
+            <div class="question">
+              <h3>Bản quyết định Giai đoạn 0</h3>
+              <p class="question-help">Kiểm tra lại trước khi xuất. Bạn vẫn có thể quay lại sửa bất kỳ bước nào.</p>
+              <div class="summary" id="summary"></div>
+            </div>
+            <div class="question">
+              <h3>Ghi chú thêm</h3>
+              <textarea class="field" name="notes" rows="4" placeholder="Các yêu cầu hoặc trường hợp đặc biệt cần lưu ý..."></textarea>
+            </div>
+          </div>
+
+          <footer class="actions">
+            <button class="button button-quiet" type="button" id="resetButton">Làm lại</button>
+            <div class="action-group">
+              <button class="button button-secondary" type="button" id="backButton" disabled>Quay lại</button>
+              <button class="button button-primary" type="button" id="nextButton">Tiếp tục</button>
+            </div>
+          </footer>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const form = document.getElementById('questionForm');
+    const panels = [...document.querySelectorAll('.step-panel')];
+    const links = [...document.querySelectorAll('[data-step-link]')];
+    const progressBar = document.getElementById('progressBar');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelDescription = document.getElementById('panelDescription');
+    const stepCount = document.getElementById('stepCount');
+    const backButton = document.getElementById('backButton');
+    const nextButton = document.getElementById('nextButton');
+    const resetButton = document.getElementById('resetButton');
+    const summary = document.getElementById('summary');
+    const toast = document.getElementById('toast');
+    const saveState = document.getElementById('saveState');
+    const storageKey = 'feline-ceo-ai-stage-0-v1';
+    let currentStep = 0;
+    let toastTimer;
+
+    const stepMeta = [
+      ['CEO AI làm gì trước?', 'Chọn các công việc cần triển khai trong phiên bản đầu tiên.'],
+      ['Dữ liệu nào được phép đọc?', 'Chỉ mở những nhóm dữ liệu thực sự cần cho phạm vi ban đầu.'],
+      ['Ai được xem thông tin gì?', 'Phân biệt dữ liệu của nhân viên và phạm vi quản lý của Manager.'],
+      ['CEO AI tham gia phê duyệt đến đâu?', 'Chọn loại yêu cầu và mức hỗ trợ phù hợp với hiện tại.'],
+      ['Kiểm tra và chốt', 'Đây là bản đầu vào để thiết kế dữ liệu, quyền và quy trình tiếp theo.']
+    ];
+
+    const labels = {
+      scope: 'Phạm vi đầu tiên', channel: 'Kênh sử dụng', data: 'Dữ liệu được đọc',
+      dataSource: 'Nguồn dữ liệu', employeeAccess: 'Quyền của nhân viên',
+      managerAccess: 'Quyền của Manager', approvalTypes: 'Loại yêu cầu',
+      approvalMode: 'Mức tham gia phê duyệt', notes: 'Ghi chú'
+    };
+
+    function formValues() {
+      const data = new FormData(form);
+      const result = {};
+      for (const [key, value] of data.entries()) {
+        if (result[key]) result[key] = Array.isArray(result[key]) ? [...result[key], value] : [result[key], value];
+        else result[key] = value;
+      }
+      return result;
+    }
+
+    function persist() {
+      localStorage.setItem(storageKey, JSON.stringify(formValues()));
+      saveState.textContent = 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function restore() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      Object.entries(saved).forEach(([name, value]) => {
+        const values = Array.isArray(value) ? value : [value];
+        document.querySelectorAll(`[name="${name}"]`).forEach(input => {
+          if (input.type === 'checkbox' || input.type === 'radio') input.checked = values.includes(input.value);
+          else input.value = value;
+        });
+      });
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add('is-visible');
+      toastTimer = setTimeout(() => toast.classList.remove('is-visible'), 2200);
+    }
+
+    function renderSummary() {
+      const data = formValues();
+      const groups = [
+        ['Phạm vi triển khai', ['scope', 'channel']],
+        ['Dữ liệu', ['data', 'dataSource']],
+        ['Phân quyền', ['employeeAccess', 'managerAccess']],
+        ['Phê duyệt', ['approvalTypes', 'approvalMode']]
+      ];
+      summary.innerHTML = groups.map(([title, keys]) => {
+        const rows = keys.flatMap(key => {
+          const values = data[key] ? (Array.isArray(data[key]) ? data[key] : [data[key]]) : [];
+          return values.filter(Boolean).map(value => `<li><span class="check">✓</span><span><strong>${labels[key]}:</strong> ${escapeHtml(value)}</span></li>`);
+        });
+        return `<section class="summary-section"><h3>${title}</h3>${rows.length ? `<ul class="summary-list">${rows.join('')}</ul>` : '<p class="empty-summary">Chưa có lựa chọn.</p>'}</section>`;
+      }).join('');
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
+    }
+
+    function goToStep(index) {
+      currentStep = Math.max(0, Math.min(index, panels.length - 1));
+      panels.forEach((panel, i) => panel.classList.toggle('is-active', i === currentStep));
+      links.forEach((link, i) => {
+        link.toggleAttribute('aria-current', i === currentStep);
+        if (i === currentStep) link.setAttribute('aria-current', 'step');
+        link.classList.toggle('is-done', i < currentStep);
+      });
+      progressBar.style.width = `${((currentStep + 1) / panels.length) * 100}%`;
+      panelTitle.textContent = stepMeta[currentStep][0];
+      panelDescription.textContent = stepMeta[currentStep][1];
+      stepCount.textContent = `Bước ${currentStep + 1} / ${panels.length}`;
+      backButton.disabled = currentStep === 0;
+      nextButton.textContent = currentStep === panels.length - 1 ? 'Xuất quyết định' : 'Tiếp tục';
+      if (currentStep === panels.length - 1) renderSummary();
+      document.querySelector('.panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function markdownOutput() {
+      const data = formValues();
+      const line = key => {
+        const value = data[key];
+        if (!value || (Array.isArray(value) && !value.length)) return `- **${labels[key]}:** Chưa chốt`;
+        return `- **${labels[key]}:** ${Array.isArray(value) ? value.join('; ') : value}`;
+      };
+      return `# Quyết định Giai đoạn 0 - CEO AI\n\n**Ngày chốt:** ${new Date().toLocaleDateString('vi-VN')}\n\n## Phạm vi\n${line('scope')}\n${line('channel')}\n\n## Dữ liệu\n${line('data')}\n${line('dataSource')}\n\n## Phân quyền\n${line('employeeAccess')}\n${line('managerAccess')}\n\n## Phê duyệt\n${line('approvalTypes')}\n${line('approvalMode')}\n\n## Ghi chú\n${data.notes || 'Không có.'}\n\n## Nguyên tắc an toàn đã chốt\n- Tài liệu vector và lịch sử không tự tạo quyền phê duyệt.\n- CEO AI không tự chuyển tiền, ký hợp đồng, thay đổi lương hoặc cấp quyền.\n- Chỉ xác nhận đã duyệt khi có quyền hợp lệ và hệ thống ghi nhận thành công.\n`;
+    }
+
+    function exportDecision() {
+      const content = markdownOutput();
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'CEO_AI_Giai_doan_0_Quyet_dinh.md';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('Đã tải bản quyết định');
+    }
+
+    form.addEventListener('input', () => { persist(); if (currentStep === 4) renderSummary(); });
+    backButton.addEventListener('click', () => goToStep(currentStep - 1));
+    nextButton.addEventListener('click', () => currentStep === panels.length - 1 ? exportDecision() : goToStep(currentStep + 1));
+    links.forEach(link => link.addEventListener('click', () => goToStep(Number(link.dataset.stepLink))));
+    resetButton.addEventListener('click', () => {
+      if (!confirm('Xóa toàn bộ lựa chọn và làm lại từ đầu?')) return;
+      localStorage.removeItem(storageKey);
+      form.reset();
+      saveState.textContent = 'Tự động lưu trên thiết bị này';
+      goToStep(0);
+      showToast('Đã làm mới câu trả lời');
+    });
+
+    restore();
+    goToStep(0);
+  </script>
+</body>
+</html>

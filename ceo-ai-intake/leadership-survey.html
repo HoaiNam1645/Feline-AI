@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Khảo sát phong cách điều hành và nguyên tắc ra quyết định cho CEO AI.">
+  <title>Khảo sát điều hành dành cho lãnh đạo</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,600&display=swap');
+    :root {
+      --ink:#18221c; --body:#47554c; --muted:#5a685f; --paper:#f5f2e9; --surface:#fffef9;
+      --line:#d9ddd4; --green:#126146; --green-deep:#0b4935; --green-soft:#e1eee6;
+      --orange:#d86f42; --orange-soft:#fae9df; --danger:#9b3f37; --shadow:0 22px 64px rgba(36,49,40,.11);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;min-height:100vh;color:var(--ink);background:radial-gradient(circle at 92% 4%,rgba(216,111,66,.12),transparent 30rem),radial-gradient(circle at 2% 94%,rgba(18,97,70,.11),transparent 34rem),var(--paper);font-family:Manrope,sans-serif;-webkit-font-smoothing:antialiased}
+    ::selection{color:#fff;background:var(--green)} *{scrollbar-color:#a8b6ac transparent;scrollbar-width:thin}
+    button,input,textarea{font:inherit} button{color:inherit} button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(216,111,66,.38);outline-offset:3px}
+    .page{width:min(1220px,calc(100% - 40px));margin:0 auto;padding:28px 0 48px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;color:#fff;background:var(--green);box-shadow:0 8px 20px rgba(18,97,70,.24)}.brand-mark svg{width:20px;height:20px}.top-actions{display:flex;align-items:center;gap:15px}.survey-switch{color:var(--green-deep);font-size:12px;font-weight:800;text-underline-offset:4px}.save{color:var(--muted);font-size:13px}
+    .workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:38px;align-items:start;min-width:0}.sidebar{position:sticky;top:22px}.sidebar h1{max-width:10ch;margin:0 0 14px;font:600 clamp(39px,4.5vw,60px)/.96 Newsreader,serif;letter-spacing:-.035em}.intro{max-width:32ch;margin:0 0 18px;color:var(--body);font-size:14px;line-height:1.68}
+    .time{display:flex;align-items:center;gap:8px;width:fit-content;margin-bottom:24px;padding:7px 11px;border-radius:99px;color:var(--green-deep);background:var(--green-soft);font-size:12px;font-weight:800}.time svg{width:15px;height:15px}
+    .steps{display:grid;gap:4px}.step-link{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;width:100%;padding:8px;border:0;border-radius:12px;color:var(--muted);background:transparent;text-align:left;cursor:pointer}.step-link:hover{background:rgba(255,255,255,.55)}.step-link[aria-current="step"]{color:var(--ink);background:var(--surface)}
+    .step-index{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--line);border-radius:50%;font-size:12px;font-weight:800}.step-link[aria-current="step"] .step-index{color:#fff;border-color:var(--green);background:var(--green)}.step-link.is-done .step-index{color:var(--green);border-color:var(--green);background:var(--green-soft)}.step-label{font-size:12px;font-weight:700}.progress{height:5px;margin-top:22px;overflow:hidden;border-radius:99px;background:#e3e2d9}.progress-bar{width:12.5%;height:100%;background:var(--orange);transition:width .34s ease}
+    .survey{min-width:0;overflow:hidden;border-radius:24px;background:var(--surface);box-shadow:var(--shadow)}.survey-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:34px 40px 24px;border-bottom:1px solid var(--line)}.survey-head h2{margin:0 0 7px;font-size:clamp(25px,3vw,35px);letter-spacing:-.03em}.survey-head p{max-width:66ch;margin:0;color:var(--body);font-size:14px;line-height:1.6}.chip{flex:none;padding:7px 11px;border-radius:99px;color:var(--green-deep);background:var(--green-soft);font-size:12px;font-weight:800}
+    .survey-body{min-height:590px;padding:28px 40px 40px}.question{min-width:0;padding:4px 0 28px}.question+.question{padding-top:28px;border-top:1px solid var(--line)}.question h3{margin:0 0 6px;font-size:16px;letter-spacing:-.012em}.help{max-width:72ch;margin:0 0 16px;color:var(--muted);font-size:13px;line-height:1.55}.limit{color:var(--green);font-weight:800}
+    .choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.choices.compact{grid-template-columns:repeat(3,minmax(0,1fr))}.choice{position:relative;min-width:0}.choice input{position:absolute;opacity:0;pointer-events:none}.choice label{display:block;height:100%;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}.choice label:hover{border-color:#aab8ae;transform:translateY(-1px)}.choice input:focus-visible+label{outline:3px solid rgba(216,111,66,.38);outline-offset:2px}.choice input:checked+label{border-color:var(--green);background:var(--green-soft)}.choice-title{display:block;font-size:13px;font-weight:800}.choice-copy{display:block;margin-top:3px;color:var(--muted);font-size:12px;line-height:1.45}
+    .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field-wrap{display:grid;min-width:0;gap:7px}.field-wrap label{font-size:12px;font-weight:800}.field{width:100%;min-width:0;min-height:46px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;color:var(--ink);background:#fff}.field::placeholder{color:#647168}textarea.field{min-height:96px;resize:vertical;line-height:1.55}.required{color:var(--danger)}.field.is-invalid{border-color:var(--danger);background:#fff9f8}
+    .scenario{padding:18px;border:1px solid var(--line);border-radius:16px;background:#fff}.scenario+.scenario{margin-top:12px}.scenario-title{margin:0 0 7px;font-size:14px}.scenario-context{margin:0 0 14px;color:var(--body);font-size:13px;line-height:1.55}.scenario .choices{grid-template-columns:repeat(3,minmax(0,1fr))}.scenario-note{margin-top:11px}
+    .notice{display:flex;gap:12px;margin-top:18px;padding:14px 16px;border-radius:14px;color:#59362b;background:var(--orange-soft);font-size:13px;line-height:1.55}.notice svg{flex:none;width:19px;height:19px;margin-top:1px}.notice strong{display:block;margin-bottom:2px}
+    .review{display:grid;gap:18px}.review-block{padding-bottom:18px;border-bottom:1px solid var(--line)}.review-block:last-child{border-bottom:0}.review-block h3{margin:0 0 9px;font-size:14px}.review-list{display:grid;gap:7px;margin:0;padding:0;list-style:none}.review-list li{display:flex;gap:9px;color:var(--body);font-size:13px;line-height:1.5}.mark{flex:none;display:grid;place-items:center;width:19px;height:19px;margin-top:1px;border-radius:50%;color:var(--green-deep);background:var(--green-soft);font-size:12px;font-weight:900}.completion{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px;padding:16px 18px;border-radius:14px;background:var(--green-soft)}.completion strong{font-size:14px}.completion span{color:var(--green-deep);font-size:13px;font-weight:800}
+    .actions{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 40px;border-top:1px solid var(--line);background:#fbfaf5}.action-set{display:flex;gap:10px}.button{min-height:44px;padding:0 17px;border:1px solid transparent;border-radius:12px;font-weight:800;cursor:pointer}.button:hover{transform:translateY(-1px)}.button:disabled{opacity:.42;cursor:not-allowed;transform:none}.primary{color:#fff;background:var(--green);box-shadow:0 8px 18px rgba(18,97,70,.19)}.primary:hover{background:var(--green-deep)}.secondary{border-color:var(--line);background:#fff}.quiet{padding-inline:8px;color:var(--muted);background:transparent}
+    .toast{position:fixed;right:24px;bottom:24px;z-index:10;padding:13px 16px;border-radius:12px;color:#fff;background:var(--ink);box-shadow:var(--shadow);font-size:13px;font-weight:700;opacity:0;transform:translateY(12px);pointer-events:none;transition:.22s ease}.toast.show{opacity:1;transform:translateY(0)}
+    @media(max-width:880px){.page{width:min(100% - 24px,720px);padding-top:18px}.workspace{grid-template-columns:1fr;gap:18px}.sidebar{position:static;min-width:0}.sidebar h1{max-width:14ch;font-size:41px}.intro{max-width:60ch}.steps{grid-template-columns:repeat(9,minmax(0,1fr));gap:2px}.step-link{place-items:center;min-width:0;padding:3px}.step-label{display:none}.progress{margin-top:12px}.survey{border-radius:20px}.survey-head,.survey-body,.actions{padding-left:22px;padding-right:22px}.scenario .choices{grid-template-columns:1fr 1fr}}
+    @media(max-width:580px){.save{display:none}.survey-head{padding-top:24px}.survey-head h2{font-size:27px}.chip{display:none}.choices,.choices.compact,.field-grid,.scenario .choices{grid-template-columns:1fr}.actions{flex-direction:column-reverse;align-items:stretch}.action-set{display:grid;grid-template-columns:1fr 1fr}.button{width:100%}.completion{align-items:flex-start;flex-direction:column;gap:5px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6.8 16.4c1.3-3.7 3.7-6.5 7.8-8.8M9.1 19c3.2-.9 6.5-3.4 8.6-7.6M5 11.4c1.2.3 2.2.9 2.9 1.8M14.3 5c.6 1.1.8 2.2.6 3.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>Feline AI</div>
+      <div class="top-actions"><a class="survey-switch" href="/company-knowledge-survey">Khảo sát tri thức doanh nghiệp</a><span class="save" id="saveState">Tự động lưu trên thiết bị này</span></div>
+    </header>
+    <div class="workspace">
+      <aside class="sidebar">
+        <h1>Cách sếp nghĩ và điều hành.</h1>
+        <p class="intro">Chỉ cần chọn phương án gần đúng nhất. Không có câu trả lời đúng hoặc sai, và không cần tự viết tài liệu.</p>
+        <div class="time"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.5v5l3 1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Khoảng 25–35 phút</div>
+        <nav class="steps" id="stepNav" aria-label="Các phần khảo sát"></nav>
+        <div class="progress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+      </aside>
+      <section class="survey">
+        <header class="survey-head"><div><h2 id="sectionTitle"></h2><p id="sectionDescription"></p></div><span class="chip" id="stepChip"></span></header>
+        <form id="surveyForm" novalidate>
+          <div class="survey-body" id="surveyBody"></div>
+          <footer class="actions"><button class="button quiet" type="button" id="resetButton">Làm lại</button><div class="action-set"><button class="button secondary" type="button" id="backButton">Quay lại</button><button class="button primary" type="button" id="nextButton">Tiếp tục</button></div></footer>
+        </form>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const decisionOptions = [
+      ['approve','Đồng ý','Có thể thực hiện ngay.'], ['more','Hỏi thêm','Cần bổ sung thông tin trước.'],
+      ['delegate','Chuyển người phụ trách','Thuộc thẩm quyền hoặc chuyên môn của người khác.'],
+      ['reject','Không đồng ý','Không phù hợp hoặc rủi ro quá cao.'], ['escalate','Trao đổi trực tiếp với sếp','Tình huống cần sếp quyết định.']
+    ];
+    const sections = [
+      {
+        short:'Thông tin', title:'Vai trò và phạm vi điều hành', description:'Giúp CEO AI hiểu trách nhiệm thực tế của người trả lời.',
+        questions:[
+          {id:'leaderName',type:'fields',fields:[['leaderName','Họ và tên','Tên người trả lời',true],['leaderTitle','Chức danh','Chức danh hiện tại',true],['companyName','Công ty','Tên công ty',false],['answerDate','Ngày trả lời','',false,'date']]},
+          {id:'responsibilities',type:'multi',title:'Sếp đang trực tiếp chịu trách nhiệm những mảng nào?',help:'Chọn tất cả phạm vi đang trực tiếp quyết định hoặc chịu trách nhiệm cuối.',options:['Chiến lược và mục tiêu','Tài chính và dòng tiền','Nhân sự và văn hóa','Vận hành hằng ngày','Bán hàng và khách hàng','Sản phẩm và chất lượng','Nhà cung cấp và mua sắm','Pháp lý và tuân thủ','Công nghệ và dữ liệu','Truyền thông và thương hiệu']},
+          {id:'directReports',type:'single',title:'Số người báo cáo trực tiếp cho sếp',options:['Không có','1–3 người','4–7 người','8–15 người','Trên 15 người']},
+          {id:'decisionFrequency',type:'single',title:'Sếp thường phải xử lý yêu cầu nội bộ với tần suất nào?',options:['Nhiều lần mỗi ngày','Mỗi ngày','Vài lần mỗi tuần','Chủ yếu theo lịch họp','Chỉ các trường hợp đặc biệt']}
+        ]
+      },
+      {
+        short:'Ưu tiên', title:'Ưu tiên khi điều hành', description:'Xác định điều sếp bảo vệ trước tiên khi các mục tiêu xung đột.',
+        questions:[
+          {id:'topPriorities',type:'multi',title:'5 ưu tiên quan trọng nhất hiện tại',help:'Chọn tối đa 5 mục.',max:5,options:['Dòng tiền an toàn','Lợi nhuận','Tăng trưởng doanh thu','Tốc độ xử lý','Chất lượng sản phẩm/dịch vụ','Trải nghiệm khách hàng','Giữ người giỏi','Kỷ luật và trách nhiệm','Ổn định vận hành','Đổi mới và thử nghiệm','Tuân thủ pháp lý','Bảo mật dữ liệu','Uy tín thương hiệu','Giảm phụ thuộc vào cá nhân']},
+          {id:'priorityOne',type:'text',title:'Nếu chỉ được giữ lại một ưu tiên, đó là gì?',placeholder:'Một cụm từ ngắn là đủ'},
+          {id:'speedQuality',type:'single',title:'Khi tốc độ và chất lượng xung đột, sếp thường chọn',options:['Ưu tiên tốc độ, sửa dần sau','Ưu tiên chất lượng, chấp nhận chậm hơn','Tùy mức độ ảnh hưởng khách hàng','Tùy khả năng sửa sai','Luôn hỏi lại trước khi đánh đổi']},
+          {id:'costPeople',type:'single',title:'Khi tiết kiệm chi phí ảnh hưởng đến con người, sếp thường',options:['Ưu tiên tiết kiệm để bảo vệ công ty','Ưu tiên ổn định đội ngũ','Cân theo mức ảnh hưởng và thời gian','Tìm phương án thứ ba trước','Trao đổi trực tiếp từng trường hợp']},
+          {id:'shortLong',type:'single',title:'Khi kết quả ngắn hạn xung đột với lợi ích dài hạn',options:['Ưu tiên kết quả ngắn hạn','Ưu tiên nền tảng dài hạn','Cân theo dòng tiền hiện tại','Chia nhỏ để đạt cả hai','Không có nguyên tắc cố định']},
+          {id:'customerEmployee',type:'single',title:'Khi khách hàng và nhân viên cùng có lý',options:['Ưu tiên giữ khách hàng','Ưu tiên bảo vệ nhân viên','Xem bằng chứng và mức ảnh hưởng','Manager xử lý trước','Sếp trực tiếp quyết định']}
+        ]
+      },
+      {
+        short:'Quyết định', title:'Cách sếp ra quyết định', description:'Làm rõ lượng thông tin, tốc độ và mức ủy quyền phù hợp.',
+        questions:[
+          {id:'requiredInputs',type:'multi',title:'Trước một quyết định quan trọng, sếp muốn thấy gì?',options:['Mục tiêu rõ ràng','Số liệu hiện tại','Chi phí dự kiến','Lợi ích dự kiến','Rủi ro và hậu quả','Các phương án thay thế','Ý kiến người chịu trách nhiệm','Tiền lệ trước đây','Tác động đến khách hàng','Tác động đến nhân sự','Thời hạn cần quyết định','Kế hoạch theo dõi sau quyết định']},
+          {id:'dataConfidence',type:'single',title:'Khi dữ liệu chưa đầy đủ nhưng cần quyết định sớm',options:['Quyết ngay theo kinh nghiệm','Quyết tạm thời và đặt mốc kiểm tra','Yêu cầu thêm dữ liệu tối thiểu','Chuyển người gần vấn đề nhất quyết','Chờ đủ dữ liệu']},
+          {id:'reversibleDecision',type:'single',title:'Với quyết định dễ sửa sai',options:['Cho phép tự quyết rộng','Cho thử trong phạm vi nhỏ','Vẫn cần xin phép trước','Tùy người thực hiện','Tùy chi phí/rủi ro']},
+          {id:'irreversibleDecision',type:'single',title:'Với quyết định khó đảo ngược',options:['Sếp luôn duyệt trực tiếp','Yêu cầu hai người kiểm tra','Cần phương án dự phòng','Cần dữ liệu và ý kiến chuyên môn','Kết hợp tất cả điều trên']},
+          {id:'consultStyle',type:'single',title:'Sếp thích nhận đề xuất theo cách nào?',options:['Một phương án tốt nhất','2–3 phương án kèm so sánh','Số liệu trước, đề xuất sau','Kết luận trước, căn cứ sau','Trao đổi miệng ngắn gọn']},
+          {id:'delegation',type:'single',title:'Mức độ ủy quyền mong muốn',options:['Nhân sự tự quyết trong phạm vi công việc','Manager quyết phần lớn, chỉ báo cáo kết quả','Việc quan trọng phải xin phép trước','Ủy quyền tùy năng lực từng người','Ủy quyền nhưng cần cập nhật theo mốc']},
+          {id:'followUp',type:'multi',title:'Sau khi đã quyết định, sếp muốn theo dõi điều gì?',options:['Người chịu trách nhiệm','Thời hạn hoàn thành','Chi phí thực tế','Kết quả đo được','Vấn đề phát sinh','Phản hồi của người liên quan','Bài học sau thực hiện','Chỉ báo cáo khi có vấn đề']}
+        ]
+      },
+      {
+        short:'Con người', title:'Cách quản lý và phản hồi nhân sự', description:'Giúp CEO AI phản hồi đúng tinh thần quản lý của sếp.',
+        questions:[
+          {id:'valuedTraits',type:'multi',title:'Sếp đánh giá cao nhất những phẩm chất nào?',max:6,help:'Chọn tối đa 6 mục.',options:['Trung thực','Chủ động','Trách nhiệm','Kỷ luật','Tốc độ','Cẩn thận','Sáng tạo','Biết phối hợp','Dám nhận sai','Tự học','Tư duy dữ liệu','Hướng đến khách hàng','Giữ cam kết','Biết ưu tiên']},
+          {id:'mistakeResponse',type:'single',title:'Khi nhân viên mắc lỗi lần đầu',options:['Tập trung sửa hậu quả trước','Hỏi nguyên nhân và hướng dẫn','Yêu cầu tự đề xuất cách sửa','Nhắc nhở rõ trách nhiệm','Tùy mức độ ảnh hưởng']},
+          {id:'repeatedMistake',type:'single',title:'Khi lỗi đã được nhắc nhưng tiếp tục lặp lại',options:['Đào tạo lại','Giao cam kết cải thiện','Giảm phạm vi trách nhiệm','Xử lý kỷ luật','Manager đánh giá rồi đề xuất']},
+          {id:'initiative',type:'single',title:'Khi nhân viên chủ động làm khác quy trình để giải quyết việc',options:['Khuyến khích nếu kết quả tốt','Chấp nhận nếu rủi ro thấp','Phải báo trước','Đánh giá cả cách làm và kết quả','Không chấp nhận phá quy trình']},
+          {id:'feedbackStyle',type:'single',title:'Cách phản hồi sếp thấy phù hợp nhất',options:['Thẳng và ngắn','Nêu điểm tốt trước, góp ý sau','Hỏi để người đó tự nhận ra','Đưa ví dụ và tiêu chuẩn rõ','Tùy tính cách người nhận']},
+          {id:'underperformance',type:'multi',title:'Khi hiệu suất thấp, cần kiểm tra những gì trước?',options:['Mục tiêu có rõ không','Năng lực có phù hợp không','Khối lượng công việc','Công cụ và dữ liệu','Quản lý trực tiếp','Động lực và thái độ','Vấn đề cá nhân','Kết quả lịch sử','Mức hỗ trợ đã cung cấp']},
+          {id:'conflict',type:'single',title:'Khi hai bộ phận xung đột',options:['Yêu cầu hai bên tự thống nhất','Manager cấp trên xử lý','Xem dữ liệu và trách nhiệm','Ưu tiên mục tiêu chung của công ty','Sếp trực tiếp họp và quyết']},
+          {id:'recognition',type:'multi',title:'Khi nhân viên làm tốt, cách ghi nhận phù hợp là',options:['Khen trực tiếp','Khen trước đội nhóm','Thưởng theo kết quả','Giao thêm quyền','Cơ hội thăng tiến','Ghi nhận bằng văn bản','Không cần hình thức, chỉ cần công bằng']}
+        ]
+      },
+      {
+        short:'Giao tiếp', title:'Giọng điệu và cách trả lời', description:'Chọn cách CEO AI nên trò chuyện thay mặt phong cách điều hành.',
+        questions:[
+          {id:'tone',type:'multi',title:'Giọng trả lời mong muốn',max:4,help:'Chọn tối đa 4 đặc điểm.',options:['Ngắn gọn','Đi thẳng vấn đề','Lịch sự','Ấm áp','Quyết đoán','Bình tĩnh','Khuyến khích','Trung lập','Mang tính hướng dẫn','Nêu rõ trách nhiệm']},
+          {id:'answerLength',type:'single',title:'Độ dài câu trả lời mặc định',options:['1–2 câu','3–5 câu','Ngắn trước, chi tiết khi hỏi thêm','Đầy đủ ngay từ đầu','Tùy độ phức tạp']},
+          {id:'answerStructure',type:'multi',title:'CEO AI nên trình bày câu trả lời như thế nào?',options:['Kết luận trước','Lý do sau kết luận','Danh sách việc cần làm','Nêu người chịu trách nhiệm','Nêu thời hạn','Nêu phần chưa chắc chắn','Nêu tài liệu/chính sách liên quan','Đề xuất bước tiếp theo']},
+          {id:'badNews',type:'single',title:'Khi phải từ chối hoặc thông báo điều không thuận lợi',options:['Nói thẳng ngay','Giải thích lý do ngắn gọn','Đưa phương án thay thế','Đề nghị trao đổi với quản lý','Kết hợp lý do và phương án thay thế']},
+          {id:'uncertainty',type:'single',title:'Khi chưa đủ thông tin để trả lời',options:['Nói rõ chưa đủ dữ liệu','Hỏi từng câu cần bổ sung','Đưa câu trả lời tạm thời có cảnh báo','Chuyển người phụ trách','Không trả lời cho đến khi đủ']},
+          {id:'preferredPhrases',type:'textarea',title:'Cụm từ hoặc cách nói sếp thường dùng',help:'Không bắt buộc. Có thể nhập 3–5 ví dụ ngắn.',placeholder:'Ví dụ: Em kiểm tra thêm giúp anh/chị..., Việc này ưu tiên xử lý trước...'},
+          {id:'avoidPhrases',type:'textarea',title:'Cách nói CEO AI nên tránh',help:'Không bắt buộc.',placeholder:'Ví dụ: tránh hứa chắc khi chưa kiểm tra; tránh nói quá máy móc...'}
+        ]
+      },
+      {
+        short:'Yêu cầu', title:'Cách đánh giá yêu cầu nội bộ', description:'Xác định CEO AI cần kiểm tra gì trước khi tư vấn hoặc chuyển xử lý.',
+        questions:[
+          {id:'requestTypes',type:'multi',title:'CEO AI có thể tiếp nhận các nhóm yêu cầu nào?',options:['Nghỉ phép','Chấm công','Tạm ứng','Hoàn ứng/chi phí','Mua sắm nội bộ','Công tác','Tuyển dụng','Đào tạo','Điều chuyển nhân sự','Đánh giá hiệu suất','Khiếu nại nội bộ','Hỏi chính sách']},
+          {id:'requestChecks',type:'multi',title:'Trước khi đưa ý kiến, CEO AI cần kiểm tra',options:['Người gửi có đúng thẩm quyền','Mục đích yêu cầu','Thông tin bắt buộc','Chứng từ kèm theo','Ngân sách hoặc nguồn lực','Mức độ khẩn cấp','Tác động đến công việc','Người chịu trách nhiệm','Chính sách đang hiệu lực','Tiền lệ tương tự','Xung đột lợi ích','Rủi ro pháp lý/bảo mật']},
+          {id:'missingInfo',type:'single',title:'Khi yêu cầu thiếu thông tin',options:['Hỏi bổ sung từng mục','Gửi danh sách thông tin còn thiếu','Chuyển Manager hỗ trợ','Từ chối và yêu cầu gửi lại','Tùy loại yêu cầu']},
+          {id:'policyException',type:'single',title:'Khi nhân viên xin ngoại lệ so với chính sách',options:['Chuyển sếp quyết định','Manager đánh giá trước','Yêu cầu nêu lý do và tác động','Không chấp nhận ngoại lệ','Xem tiền lệ tương tự trước']},
+          {id:'approvalLanguage',type:'single',title:'CEO AI được dùng từ “đã duyệt” khi nào?',options:['Chỉ khi hệ thống đã ghi nhận quyết định hợp lệ','Khi sếp từng xử lý tương tự','Khi Manager đồng ý qua chat','Khi AI đánh giá yêu cầu hợp lý','Không bao giờ dùng']},
+          {id:'escalationTriggers',type:'multi',title:'Trường hợp nào bắt buộc chuyển sếp hoặc người có thẩm quyền?',options:['Ảnh hưởng nhiều phòng ban','Rủi ro pháp lý','Dữ liệu nhân sự nhạy cảm','Cam kết với bên ngoài','Thay đổi lương/chức danh','Tuyển dụng hoặc chấm dứt','Chi phí ngoài kế hoạch','Xung đột lợi ích','Chính sách mâu thuẫn','Không có tiền lệ','Người quản lý không thống nhất','Nguy cơ ảnh hưởng uy tín']}
+        ]
+      },
+      {
+        short:'Giới hạn', title:'Giới hạn, rủi ro và bảo mật', description:'Những điều CEO AI phải dừng lại và chuyển cho con người.',
+        questions:[
+          {id:'neverAutonomous',type:'multi',title:'CEO AI tuyệt đối không được tự thực hiện',options:['Chuyển tiền hoặc thanh toán','Ký/chấp nhận hợp đồng','Tuyển dụng hoặc sa thải','Thay đổi lương/thưởng','Kỷ luật nhân sự','Thay đổi quyền truy cập','Công bố dữ liệu cá nhân','Gửi cam kết ra bên ngoài','Xóa dữ liệu hoặc log','Thay đổi chính sách','Đại diện phát ngôn pháp lý','Tự tạo quyền cho chính mình']},
+          {id:'sensitiveData',type:'multi',title:'Dữ liệu cần hạn chế đặc biệt',options:['Lương và thưởng','CCCD/hộ chiếu','Tài khoản ngân hàng','Hồ sơ sức khỏe','Kỷ luật và khiếu nại','Đánh giá hiệu suất','Kế hoạch nhân sự','Hợp đồng lao động','Thông tin gia đình','Điều tra nội bộ']},
+          {id:'confidentialResponse',type:'single',title:'Khi người hỏi không có quyền xem dữ liệu',options:['Từ chối ngắn gọn','Nêu loại quyền cần có','Chuyển người phụ trách','Chỉ trả lời thông tin công khai','Kết hợp từ chối và hướng dẫn đúng kênh']},
+          {id:'conflictingDocs',type:'single',title:'Khi hai tài liệu quy định mâu thuẫn',options:['Dùng tài liệu mới nhất','Dùng tài liệu do cấp cao hơn ban hành','Nêu mâu thuẫn và chuyển xác nhận','Chọn quy định an toàn hơn','Không trả lời']},
+          {id:'auditExpectations',type:'multi',title:'Những gì cần được lưu để kiểm tra lại',options:['Người hỏi','Nội dung câu hỏi','Tài liệu đã dùng','Dữ liệu đã đọc','Câu trả lời của AI','Người quyết định cuối','Thay đổi trạng thái','Thời gian xử lý','Lỗi phát sinh','Chi phí sử dụng AI']},
+          {id:'emergencyStop',type:'text',title:'Ai có quyền yêu cầu CEO AI dừng hoạt động ngay?',placeholder:'Tên người hoặc chức danh'}
+        ]
+      },
+      {
+        short:'Tình huống', title:'Sếp sẽ xử lý thế nào?', description:'Chọn phản ứng gần nhất với cách sếp thường làm; có thể ghi thêm một câu ngắn.',
+        questions:[
+          {id:'scenarioUrgentLeave',type:'scenario',title:'Nhân viên xin nghỉ gấp trong ngày',context:'Lý do hợp lý nhưng chưa hoàn tất bàn giao.',options:decisionOptions},
+          {id:'scenarioMissingExpense',type:'scenario',title:'Yêu cầu thanh toán thiếu chứng từ',context:'Khoản chi có vẻ phục vụ công việc nhưng thông tin chưa đầy đủ.',options:decisionOptions},
+          {id:'scenarioRepeatLate',type:'scenario',title:'Nhân viên đi muộn nhiều lần',context:'Đã được nhắc một lần nhưng kết quả công việc vẫn tốt.',options:decisionOptions},
+          {id:'scenarioUrgentPurchase',type:'scenario',title:'Bộ phận cần mua gấp để tránh gián đoạn',context:'Chưa đủ thời gian lấy nhiều báo giá.',options:decisionOptions},
+          {id:'scenarioPolicyException',type:'scenario',title:'Manager xin ngoại lệ chính sách cho một nhân viên',context:'Có lý do đặc biệt nhưng dễ tạo tiền lệ cho người khác.',options:decisionOptions},
+          {id:'scenarioHighPerformerConflict',type:'scenario',title:'Nhân viên giỏi nhưng thường gây xung đột',context:'Hiệu suất cá nhân cao nhưng ảnh hưởng tinh thần đội nhóm.',options:decisionOptions},
+          {id:'scenarioCustomerComplaint',type:'scenario',title:'Khách hàng phản ánh nghiêm trọng',context:'Chưa rõ lỗi thuộc nhân viên hay quy trình.',options:decisionOptions},
+          {id:'scenarioManagerDisagree',type:'scenario',title:'Hai Manager không thống nhất quyết định',context:'Cả hai đều có dữ liệu và lý do hợp lý.',options:decisionOptions},
+          {id:'scenarioGoodIdeaRisk',type:'scenario',title:'Nhân viên đề xuất thử cách mới',context:'Có tiềm năng tốt nhưng chưa có tiền lệ và vẫn tồn tại rủi ro.',options:decisionOptions},
+          {id:'scenarioPrivateInfo',type:'scenario',title:'Manager hỏi thông tin nhạy cảm của nhân viên',context:'Manager cho rằng cần biết để sắp xếp công việc.',options:decisionOptions}
+        ]
+      },
+      {short:'Hoàn tất',title:'Kiểm tra và gửi kết quả',description:'Xem mức độ hoàn thành, bổ sung ghi chú rồi tải hoặc sao chép kết quả.',review:true,questions:[]}
+    ];
+
+    const form=document.getElementById('surveyForm'),body=document.getElementById('surveyBody'),nav=document.getElementById('stepNav'),title=document.getElementById('sectionTitle'),description=document.getElementById('sectionDescription'),chip=document.getElementById('stepChip'),progress=document.getElementById('progressBar'),back=document.getElementById('backButton'),next=document.getElementById('nextButton'),reset=document.getElementById('resetButton'),saveState=document.getElementById('saveState'),toast=document.getElementById('toast');
+    const storageKey='feline-leadership-survey-v1'; let step=0,timer,firstRender=true;
+
+    function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]))}
+    function showToast(message){clearTimeout(timer);toast.textContent=message;toast.classList.add('show');timer=setTimeout(()=>toast.classList.remove('show'),2300)}
+    function saved(){try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{return {}}}
+    function persist(){localStorage.setItem(storageKey,JSON.stringify(values()));saveState.textContent='Đã lưu lúc '+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}
+    function currentValues(){const d=new FormData(form),r={};for(const [k,v] of d.entries()){if(r[k])r[k]=Array.isArray(r[k])?[...r[k],v]:[r[k],v];else r[k]=v}return r}
+    function values(){const result=saved(),current=currentValues(),visible=new Set([...body.querySelectorAll('[name]')].map(el=>el.name));visible.forEach(name=>delete result[name]);return Object.assign(result,current)}
+    function optionMarkup(q,option,index){const tuple=Array.isArray(option)?option:[option,option,''];const [value,label,copy]=tuple;const id=`${q.id}-${index}`;return `<div class="choice"><input type="${q.type==='multi'?'checkbox':'radio'}" id="${id}" name="${q.id}" value="${esc(value)}"><label for="${id}"><span class="choice-title">${esc(label)}</span>${copy?`<span class="choice-copy">${esc(copy)}</span>`:''}</label></div>`}
+    function questionMarkup(q){
+      if(q.type==='fields')return `<div class="question"><div class="field-grid">${q.fields.map(([id,label,placeholder,required,type='text'])=>`<div class="field-wrap"><label for="${id}">${label}${required?' <span class="required">*</span>':''}</label><input class="field" id="${id}" name="${id}" type="${type}" placeholder="${placeholder}" ${required?'required':''}></div>`).join('')}</div></div>`;
+      if(q.type==='text'||q.type==='textarea')return `<div class="question"><h3>${q.title}</h3>${q.help?`<p class="help">${q.help}</p>`:''}${q.type==='textarea'?`<textarea class="field" name="${q.id}" rows="4" placeholder="${q.placeholder||''}"></textarea>`:`<input class="field" name="${q.id}" placeholder="${q.placeholder||''}">`}</div>`;
+      if(q.type==='scenario')return `<div class="scenario question"><h3 class="scenario-title">${q.title}</h3><p class="scenario-context">${q.context}</p><div class="choices">${q.options.map((o,i)=>optionMarkup({...q,type:'single'},o,i)).join('')}</div><input class="field scenario-note" name="${q.id}Note" placeholder="Ghi chú ngắn nếu cần"></div>`;
+      return `<div class="question"><h3>${q.title}</h3>${q.help?`<p class="help">${q.help}${q.max?` <span class="limit">Tối đa ${q.max} lựa chọn.</span>`:''}</p>`:''}<div class="choices ${q.options.length<=5?'compact':''}">${q.options.map((o,i)=>optionMarkup(q,o,i)).join('')}</div></div>`;
+    }
+    function restoreVisible(){const d=saved();body.querySelectorAll('input,textarea').forEach(input=>{const v=d[input.name];if(input.type==='checkbox'||input.type==='radio')input.checked=Array.isArray(v)?v.includes(input.value):v===input.value;else if(v!==undefined)input.value=v});if(!document.getElementById('answerDate')?.value&&document.getElementById('answerDate'))document.getElementById('answerDate').value=new Date().toISOString().slice(0,10)}
+    function answeredCount(){const d=saved();const ids=sections.flatMap(s=>s.questions.map(q=>q.id));return {answered:ids.filter(id=>d[id]&&(!Array.isArray(d[id])||d[id].length)).length,total:ids.length}}
+    function renderReview(){const d=saved(),count=answeredCount();const groups=sections.filter(s=>!s.review).map(s=>{const rows=s.questions.flatMap(q=>{if(q.type==='fields')return q.fields.flatMap(([id,label])=>d[id]?[`<li><span class="mark">✓</span><span><strong>${label}:</strong> ${esc(d[id])}</span></li>`]:[]);const v=d[q.id];if(!v)return[];return [`<li><span class="mark">✓</span><span><strong>${q.title||q.id}:</strong> ${esc(Array.isArray(v)?v.join('; '):v)}</span></li>`]}).join('');return `<div class="review-block"><h3>${s.title}</h3>${rows?`<ul class="review-list">${rows}</ul>`:'<p class="help">Chưa có câu trả lời.</p>'}</div>`}).join('');body.innerHTML=`<div class="completion"><strong>Mức độ hoàn thành</strong><span>${count.answered} / ${count.total} nhóm câu hỏi</span></div><div class="review">${groups}</div><div class="question"><h3>Điều CEO AI cần hiểu thêm về cách sếp điều hành</h3><textarea class="field" name="finalLeadershipNotes" rows="5" placeholder="Không bắt buộc. Có thể ghi một vài lưu ý cuối..."></textarea></div><div class="notice"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8.5v4.2M12 16.2h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg><div><strong>Kết quả chưa tự gửi lên hệ thống</strong>Hãy tải file hoặc sao chép kết quả rồi gửi cho người phụ trách dự án.</div></div>`;restoreVisible()}
+    function render(){const s=sections[step];title.textContent=s.title;description.textContent=s.description;chip.textContent=`Phần ${step+1} / ${sections.length}`;progress.style.width=`${((step+1)/sections.length)*100}%`;nav.innerHTML=sections.map((x,i)=>`<button class="step-link ${i<step?'is-done':''}" type="button" data-go="${i}" ${i===step?'aria-current="step"':''}><span class="step-index">${i+1}</span><span class="step-label">${x.short}</span></button>`).join('');if(s.review)renderReview();else{body.innerHTML=s.questions.map(questionMarkup).join('');restoreVisible()}back.disabled=step===0;next.textContent=s.review?'Tải kết quả':'Tiếp tục';body.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',onInput));nav.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.go))));if(!firstRender)document.querySelector('.survey').scrollIntoView({behavior:'smooth',block:'start'});firstRender=false}
+    function onInput(e){const q=sections[step].questions.find(x=>x.id===e.target.name);if(q?.max&&e.target.type==='checkbox'){const checked=body.querySelectorAll(`input[name="${q.id}"]:checked`);if(checked.length>q.max){e.target.checked=false;showToast(`Chỉ chọn tối đa ${q.max} mục`);return}}persist()}
+    function validate(){let ok=true;body.querySelectorAll('[required]').forEach(f=>{const missing=!f.value.trim();f.classList.toggle('is-invalid',missing);if(missing)ok=false});if(!ok){body.querySelector('.is-invalid')?.focus();showToast('Vui lòng điền thông tin bắt buộc')}return ok}
+    function go(i){if(i>step&&!validate())return;persist();step=Math.max(0,Math.min(i,sections.length-1));render()}
+    function flattenAnswers(){const d=values(),lines=[];sections.filter(s=>!s.review).forEach(s=>{lines.push(`## ${s.title}`);s.questions.forEach(q=>{if(q.type==='fields')q.fields.forEach(([id,label])=>lines.push(`- **${label}:** ${d[id]||'Chưa trả lời'}`));else{const v=d[q.id];lines.push(`- **${q.title||q.id}:** ${Array.isArray(v)?v.join('; '):(v||'Chưa trả lời')}`);if(q.type==='scenario'&&d[`${q.id}Note`])lines.push(`  - Ghi chú: ${d[`${q.id}Note`]}`)}});lines.push('')});lines.push('## Ghi chú cuối');lines.push(d.finalLeadershipNotes||'Không có.');return `# Khảo sát phong cách điều hành cho CEO AI\n\n**Ngày xuất:** ${new Date().toLocaleDateString('vi-VN')}\n\n${lines.join('\n')}\n\n---\nCác câu trả lời mô tả xu hướng điều hành để tham khảo, không tự tạo quyền phê duyệt hoặc quy định hệ thống.\n`}
+    function download(){persist();const content=flattenAnswers(),d=values(),name=(d.leaderName||'Lanh_dao').replace(/[^a-zA-Z0-9À-ỹ_-]+/g,'_'),blob=new Blob([content],{type:'text/markdown;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Khao_sat_dieu_hanh_${name}.md`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);showToast('Đã tải kết quả khảo sát')}
+    back.addEventListener('click',()=>go(step-1));next.addEventListener('click',()=>step===sections.length-1?download():go(step+1));reset.addEventListener('click',()=>{if(!confirm('Xóa toàn bộ câu trả lời trên thiết bị này?'))return;localStorage.removeItem(storageKey);step=0;render();showToast('Đã làm mới khảo sát')});form.addEventListener('submit',e=>e.preventDefault());const requestedStep=Number(new URLSearchParams(location.search).get('step'));step=Number.isInteger(requestedStep)&&requestedStep>=0&&requestedStep<sections.length?requestedStep:0;render();
+  </script>
+</body>
+</html>

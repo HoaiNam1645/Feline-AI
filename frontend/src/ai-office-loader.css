@@ -1,0 +1,15 @@
+.office-module-loader {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  color: #7f2028;
+  background: #eee8de;
+  font: 600 12px/1.4 Manrope, sans-serif;
+}
+
+.office-module-loader svg {
+  width: 30px;
+  height: 30px;
+}

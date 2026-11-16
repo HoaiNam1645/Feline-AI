@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Multi-Agent AI vận hành doanh nghiệp — Tài liệu thiết kế v2.0</title>
+<style>
+  @page { size: A4; margin: 18mm 18mm 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: #222; font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1 { color: #16365c; font-size: 20pt; margin: 22px 0 10px; page-break-after: avoid; }
+  h2 { color: #2c5b8a; font-size: 13.5pt; margin: 16px 0 6px; page-break-after: avoid; }
+  h3 { color: #2c5b8a; font-size: 11.5pt; margin: 12px 0 4px; page-break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 4px 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 9.5pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th { background: #1f3a5f; color: #fff; text-align: left; padding: 6px 8px; font-weight: 600; }
+  td { border: 1px solid #d5dbe3; padding: 5px 8px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f5f8fb; }
+  .box { background: #eef3fa; border: 1px solid #c9d6e8; padding: 10px 12px; margin: 10px 0; font-weight: 600; color: #16365c; page-break-inside: avoid; }
+  .note { background: #fff8e6; border-left: 4px solid #e0a800; padding: 8px 12px; margin: 10px 0; page-break-inside: avoid; }
+  pre { background: #f4f6f8; border: 1px solid #dde2e8; padding: 8px 10px; font-size: 8.8pt; line-height: 1.4; white-space: pre-wrap; page-break-inside: avoid; }
+  code { font-family: Menlo, Consolas, monospace; }
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+  .cover .kicker { color: #4a6584; font-size: 12pt; letter-spacing: .5px; }
+  .cover .title { color: #16365c; font-size: 30pt; font-weight: 800; line-height: 1.15; margin: 14px 0; }
+  .cover .sub { color: #4a6584; font-size: 13pt; margin-bottom: 24px; }
+  .cover hr { border: 0; border-top: 2px solid #2c5b8a; margin: 18px 0; }
+  .cover .meta { font-size: 10pt; color: #444; }
+  .cover .ver { margin-top: 60px; font-size: 9pt; color: #666; }
+  .phase { border: 1px solid #c9d6e8; border-left: 5px solid #2c5b8a; padding: 8px 12px; margin: 12px 0; page-break-inside: avoid; }
+  .phase h3 { margin-top: 2px; }
+  .tag { display: inline-block; background: #2c5b8a; color: #fff; font-size: 8.5pt; padding: 1px 7px; border-radius: 3px; margin-right: 4px; }
+  .pb { page-break-before: always; }
+  .gantt td { text-align: center; padding: 4px 2px; font-size: 8.5pt; }
+  .gantt td.l { text-align: left; padding-left: 8px; white-space: nowrap; }
+  .gantt td.on { background: #2c5b8a !important; }
+  .gantt td.cont { background: #9fb8d6 !important; }
+  .toc li { margin: 1px 0; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="kicker">TÀI LIỆU THIẾT KẾ DỰ ÁN · PHIÊN BẢN 2.0</div>
+  <div class="title">MULTI-AGENT AI<br>VẬN HÀNH DOANH NGHIỆP</div>
+  <div class="sub">Đánh giá thiết kế · Kiến trúc tối ưu · Company Brain · Lộ trình triển khai theo giai đoạn</div>
+  <hr>
+  <div class="meta">
+    <p><b>Mục tiêu</b><br>Xây dựng nền tảng AI hiểu dữ liệu và quy trình doanh nghiệp, chủ động phát hiện vấn đề, điều phối công việc giữa các Agent và chỉ thực hiện tác vụ trong phạm vi được cho phép.</p>
+    <p><b>Thay đổi so với v1.0</b><br>Bổ sung đánh giá rủi ro; chuyển Agent sang mô hình cấu hình tổng quát (các Agent phòng ban chỉ là ví dụ); tách tính toán khỏi suy luận; thiết kế cơ chế thu thập tri thức cho Company Brain; sắp xếp lại lộ trình theo hướng tạo giá trị sớm.</p>
+    <p><b>Định hướng công nghệ</b><br>NestJS/TypeScript (modular monolith) · PostgreSQL · Hàng đợi (BullMQ hoặc pg-boss) · Claude API · Dashboard web responsive · Máy chủ tại chỗ chạy 24/24</p>
+  </div>
+  <div class="ver">Phiên bản 2.1 · 29/10/2026 · Cập nhật quyết định Giai đoạn 0 · Kế thừa và thay thế bản 1.0</div>
+</div>
+
+<!-- ============ MỤC LỤC ============ -->
+<h1>Mục lục</h1>
+<ol class="toc">
+  <li>Tóm tắt điều hành</li>
+  <li>Đánh giá thiết kế phiên bản 1.0</li>
+  <li>Nguyên tắc thiết kế</li>
+  <li>Kiến trúc tổng thể</li>
+  <li>Agent là cấu hình — mô hình Agent tổng quát</li>
+  <li>Company Brain và cơ chế thu thập tri thức</li>
+  <li>Điều phối: từ Playbook đến AI CEO</li>
+  <li>Chính sách, phê duyệt và an toàn</li>
+  <li>Dữ liệu và tích hợp</li>
+  <li>Chi phí Claude API</li>
+  <li>Hạ tầng và vận hành 24/24</li>
+  <li>Mô hình dữ liệu lõi</li>
+  <li>Lộ trình thực hiện theo giai đoạn</li>
+  <li>Tổng hợp tiến độ</li>
+  <li>Chỉ số thành công của dự án</li>
+  <li>Rủi ro và biện pháp giảm thiểu</li>
+  <li>Các quyết định cần chốt</li>
+  <li>Kết luận và bước tiếp theo</li>
+</ol>
+
+<!-- ============ 1 ============ -->
+<h1>1. Tóm tắt điều hành</h1>
+<p>Dự án xây dựng một hệ thống điều hành doanh nghiệp bằng AI, không chỉ là chatbot hỏi đáp. Chủ doanh nghiệp đặt mục tiêu và phê duyệt hành động quan trọng; các Agent chuyên trách xử lý nghiệp vụ; Company Brain cung cấp tri thức và ngữ cảnh; lớp Policy &amp; Approval kiểm soát quyền thực thi; AI CEO điều phối khi hệ thống đã đủ trưởng thành.</p>
+<p>Phiên bản 1.0 có định hướng đúng về an toàn và kiến trúc. Phiên bản 2.0 giữ nguyên các nguyên tắc đó nhưng điều chỉnh ba điểm lớn:</p>
+<ul>
+  <li><b>Tạo giá trị sớm:</b> có một luồng nghiệp vụ chạy thật sau 4–6 tuần thay vì dựng toàn bộ nền tảng trước.</li>
+  <li><b>Agent tổng quát:</b> Agent được định nghĩa bằng cấu hình; thêm Agent cho bất kỳ phòng ban nào mà không sửa mã lõi.</li>
+  <li><b>Tin cậy số liệu:</b> số liệu do SQL/mã tính toán; AI chỉ diễn giải, so sánh, điều tra và đề xuất.</li>
+</ul>
+<div class="box">Nguyên tắc cốt lõi: Hệ thống tính số — AI diễn giải — Policy quyết định quyền — Con người phê duyệt việc quan trọng. Mỗi giai đoạn phải tạo ra kết quả dùng được trước khi mở rộng.</div>
+
+<!-- ============ 2 ============ -->
+<h1>2. Đánh giá thiết kế phiên bản 1.0</h1>
+<h2>2.1. Điểm mạnh cần giữ</h2>
+<ul>
+  <li><b>Policy đứng trước AI:</b> quyền do hệ thống quyết định, lời khẳng định của LLM không thay thế kiểm tra quyền.</li>
+  <li><b>An toàn từ thiết kế:</b> idempotency, audit log, phân 4 mức rủi ro, chống prompt injection.</li>
+  <li><b>Modular monolith:</b> phù hợp quy mô nhóm nhỏ, chưa tách microservice sớm.</li>
+  <li><b>Triển khai một Agent trước</b> để kiểm chứng luồng dữ liệu và vận hành.</li>
+  <li><b>Có ý thức về ngân sách</b> và theo dõi chi phí theo Agent/task.</li>
+</ul>
+
+<h2>2.2. Rủi ro và điểm cần điều chỉnh</h2>
+<table>
+  <tr><th style="width:4%">#</th><th style="width:26%">Vấn đề</th><th style="width:35%">Rủi ro</th><th>Điều chỉnh trong v2.0</th></tr>
+  <tr><td>1</td><td>Phạm vi nền tảng giai đoạn đầu quá rộng (11 module)</td><td>Mất 2–3 tháng trước khi có kết quả dùng được; dễ xây thứ không ai dùng.</td><td>Cắt lát dọc: một luồng giá trị hoàn chỉnh trong 3–4 tuần, module bổ sung khi có nhu cầu thật.</td></tr>
+  <tr><td>2</td><td>AI CEO tự điều phối nằm trong lõi từ đầu</td><td>Phần tốn chi phí, khó kiểm thử và kém ổn định nhất; vòng lặp LLM có thể đốt ngân sách.</td><td>Điều phối 3 cấp: Playbook cố định → Router → AI CEO. AI CEO ở giai đoạn cuối.</td></tr>
+  <tr><td>3</td><td>Chưa tách "tính toán" và "suy luận"</td><td>LLM tính sai số liệu tài chính làm mất niềm tin vào toàn hệ thống.</td><td>KPI và phát hiện bất thường bằng SQL/quy tắc thống kê; LLM chỉ diễn giải.</td></tr>
+  <tr><td>4</td><td>Ổn định vận hành đặt ở giai đoạn 5</td><td>Mất dữ liệu hoặc trạng thái ngay trong giai đoạn thử nghiệm.</td><td>Backup, health check, audit log có từ giai đoạn 1.</td></tr>
+  <tr><td>5</td><td>Windows + Docker Desktop chạy 24/24</td><td>Windows Update tự khởi động lại; Docker Desktop trên WSL2 kém ổn định khi chạy dài; điều kiện license cho doanh nghiệp.</td><td>Ưu tiên Ubuntu Server trên cùng phần cứng; nếu giữ Windows thì dùng Docker Engine trong WSL2, khóa lịch update, backup ra ngoài máy.</td></tr>
+  <tr><td>6</td><td>Agent được hình dung theo phòng ban cụ thể</td><td>Mỗi Agent viết mã riêng, chi phí mở rộng cao.</td><td>Agent = cấu hình; chỉ Connector và Tool mới cần viết mã.</td></tr>
+  <tr><td>7</td><td>Chưa có cơ chế đo chất lượng Agent</td><td>Không biết thay đổi prompt/model làm tốt lên hay tệ đi.</td><td>Mỗi Agent có bộ eval, chạy lại khi thay đổi prompt, model hoặc dữ liệu nguồn.</td></tr>
+  <tr><td>8</td><td>Company Brain chưa có cách thu thập tri thức</td><td>Kho tri thức rỗng hoặc lỗi thời; AI trả lời theo phỏng đoán.</td><td>4 nguồn tri thức, Interview Agent, tự phát hiện lỗ hổng tri thức, quy trình duyệt.</td></tr>
+  <tr><td>9</td><td>Chưa có chỉ số thành công của dự án</td><td>Không xác định được khi nào "xong" và có đáng đầu tư.</td><td>Bộ chỉ số thành công ở mục 15, đo từ giai đoạn 1.</td></tr>
+</table>
+
+<!-- ============ 3 ============ -->
+<h1>3. Nguyên tắc thiết kế</h1>
+<table>
+  <tr><th style="width:30%">Nguyên tắc</th><th>Ý nghĩa</th></tr>
+  <tr><td>1. Hệ thống tính số, AI diễn giải</td><td>Mọi con số trong báo cáo đến từ truy vấn có thể kiểm tra lại. AI không tự cộng trừ số liệu nghiệp vụ.</td></tr>
+  <tr><td>2. Agent là cấu hình</td><td>Vai trò, prompt, nguồn dữ liệu, công cụ, lịch chạy, ngân sách, chính sách đều khai báo; không viết mã riêng cho từng Agent.</td></tr>
+  <tr><td>3. Quyền tối thiểu</td><td>Agent chỉ thấy dữ liệu và công cụ được cấp; mặc định chỉ đọc.</td></tr>
+  <tr><td>4. Mọi hành động đều truy vết được</td><td>Agent, phiên bản cấu hình, dữ liệu đầu vào, tool call, quyết định chính sách và kết quả đều ghi audit.</td></tr>
+  <tr><td>5. Trạng thái bền vững</td><td>PostgreSQL là nguồn sự thật; hàng đợi chỉ dùng để phân phối việc. Khởi động lại không mất hoặc lặp việc.</td></tr>
+  <tr><td>6. Chi phí có trần</td><td>Mỗi lần chạy có giới hạn số bước, token, thời gian; mỗi Agent có ngân sách ngày/tháng.</td></tr>
+  <tr><td>7. Dữ liệu truy xuất không phải lệnh</td><td>Nội dung tài liệu, email, dữ liệu nguồn được đánh dấu là dữ liệu; không thể thay đổi chỉ dẫn hệ thống.</td></tr>
+  <tr><td>8. Tạo giá trị theo lát dọc</td><td>Mỗi giai đoạn kết thúc bằng một tính năng người dùng thật sự dùng được.</td></tr>
+</table>
+
+<!-- ============ 4 ============ -->
+<h1>4. Kiến trúc tổng thể</h1>
+<h2>4.1. Các lớp</h2>
+<table>
+  <tr><th style="width:26%">Lớp</th><th>Trách nhiệm</th></tr>
+  <tr><td>Người dùng (chủ doanh nghiệp, quản lý)</td><td>Đặt mục tiêu, xem báo cáo, phê duyệt, quản lý chính sách và tri thức.</td></tr>
+  <tr><td>Kênh tương tác</td><td>Dashboard web (xem chi tiết, quản trị) và kênh thông báo Telegram/Zalo/email (cảnh báo, phê duyệt nhanh).</td></tr>
+  <tr><td>Điều phối</td><td>Playbook, Router, AI CEO (theo cấp độ trưởng thành — mục 7).</td></tr>
+  <tr><td>Agent Runtime</td><td>Nạp cấu hình Agent, dựng ngữ cảnh, gọi Claude, thực thi tool qua Tool Gateway, áp giới hạn bước/token/thời gian.</td></tr>
+  <tr><td>Task &amp; Workflow</td><td>State machine của task, phụ thuộc, retry, timeout, resume, reconcile sau khởi động lại.</td></tr>
+  <tr><td>Scheduler &amp; Events</td><td>Lịch chạy, sự kiện từ dữ liệu (bất thường, đồng bộ xong), sự kiện từ người dùng.</td></tr>
+  <tr><td>Company Brain</td><td>Tri thức có phiên bản, chủ sở hữu, trạng thái duyệt; tìm kiếm và trích dẫn nguồn.</td></tr>
+  <tr><td>Metrics Engine</td><td>Định nghĩa KPI bằng SQL, tính toán định kỳ, phát hiện bất thường bằng quy tắc thống kê.</td></tr>
+  <tr><td>Data Gateway &amp; Connectors</td><td>Kết nối nguồn dữ liệu, đồng bộ, chuẩn hóa, phân quyền truy cập theo phạm vi.</td></tr>
+  <tr><td>Policy &amp; Approval</td><td>Đánh giá quyền và rủi ro trước khi thực thi; tạo và xử lý yêu cầu phê duyệt.</td></tr>
+  <tr><td>Tool Gateway</td><td>Thực thi công cụ theo allowlist, idempotency key, ghi kết quả.</td></tr>
+  <tr><td>Claude Provider</td><td>Chọn model theo cấp, prompt caching, batch, ghi nhận token và chi phí, áp ngân sách.</td></tr>
+  <tr><td>Audit &amp; Observability</td><td>Audit log, log hệ thống, giám sát sức khỏe, cảnh báo vận hành.</td></tr>
+</table>
+
+<h2>4.2. Luồng xử lý chuẩn</h2>
+<pre>Lịch chạy / Sự kiện / Yêu cầu người dùng
+   → Scheduler &amp; Events tạo Task (lưu PostgreSQL, trạng thái queued)
+   → Điều phối chọn Agent (Playbook / Router / AI CEO)
+   → Agent Runtime dựng ngữ cảnh:
+        · số liệu từ Metrics Engine (đã tính sẵn)
+        · dữ liệu chi tiết qua Data Gateway (theo phạm vi quyền)
+        · tri thức từ Company Brain (kèm nguồn)
+   → Claude suy luận, đề xuất tool call
+   → Tool Gateway hỏi Policy Engine
+        · cho phép → thực thi (idempotency key) → ghi kết quả
+        · cần duyệt → tạo Approval Request → chờ (waiting_approval)
+        · từ chối  → ghi lý do
+   → Lưu kết quả + audit log
+   → Dashboard / Thông báo</pre>
+
+<h2>4.3. Ba lớp xử lý theo chi phí</h2>
+<table>
+  <tr><th style="width:22%">Lớp</th><th style="width:40%">Công việc</th><th>Đặc điểm</th></tr>
+  <tr><td>Quy tắc / SQL</td><td>Tính KPI, so sánh kỳ, phát hiện bất thường theo ngưỡng/thống kê, kiểm tra dữ liệu thiếu.</td><td>Miễn phí, chính xác, kiểm tra lại được. Xử lý phần lớn khối lượng.</td></tr>
+  <tr><td>Model nhẹ (Claude Haiku)</td><td>Phân loại sự kiện, định tuyến, tóm tắt, trích xuất thông tin, soạn nháp đơn giản.</td><td>Rẻ, nhanh; dùng cho tác vụ định kỳ.</td></tr>
+  <tr><td>Model mạnh (Claude Sonnet; Opus khi thật cần)</td><td>Điều tra nguyên nhân nhiều bước, phân tích tổng hợp, đề xuất hành động, phân rã mục tiêu.</td><td>Đắt; chỉ kích hoạt khi lớp dưới phát hiện vấn đề hoặc người dùng yêu cầu.</td></tr>
+</table>
+
+<!-- ============ 5 ============ -->
+<h1>5. Agent là cấu hình — mô hình Agent tổng quát</h1>
+<p>Các Agent phòng ban (Tài chính, Bán hàng, Marketing, Vận hành, Nhân sự...) chỉ là ví dụ. Nền tảng không gắn với phòng ban nào; mỗi Agent là một bản khai báo được quản lý phiên bản.</p>
+
+<h2>5.1. Đặc tả Agent (Agent Spec)</h2>
+<pre>agent: sales-analyst            # định danh ổn định
+version: 3                       # mỗi thay đổi tạo phiên bản mới
+role: "Phân tích doanh số theo kênh bán hàng"
+objectives:
+  - "Báo cáo doanh số hằng ngày"
+  - "Điều tra khi doanh số biến động bất thường"
+model_tier: standard             # light | standard | heavy
+prompt_ref: prompts/sales-analyst@v3
+data_scopes: [orders:read, products:read, ads_spend:read]
+knowledge_scopes: [sales-sop, pricing-policy]
+tools: [query_metrics, query_data, search_knowledge, create_task, draft_report]
+triggers:
+  - schedule: "0 8 * * *"
+  - event: metric.anomaly.orders
+limits: { max_steps: 12, max_tokens_per_run: 60000, timeout_sec: 300 }
+budget: { daily_usd: 1.5, monthly_usd: 30 }
+policy_profile: read_only
+eval_suite: evals/sales-analyst
+owner: "Trưởng bộ phận bán hàng"</pre>
+
+<h2>5.2. Phần mở rộng bằng mã</h2>
+<table>
+  <tr><th style="width:18%">Thành phần</th><th style="width:42%">Vai trò</th><th>Ghi chú</th></tr>
+  <tr><td>Connector</td><td>Kết nối một nguồn dữ liệu: xác thực, đồng bộ, chuẩn hóa, ánh xạ vào bảng chuẩn.</td><td>Interface chung (test kết nối, sync, schema, trạng thái). Có thể theo chuẩn MCP để tái sử dụng connector có sẵn.</td></tr>
+  <tr><td>Tool</td><td>Một hành động Agent được phép gọi: đầu vào có schema, mức rủi ro, có hỗ trợ idempotency hay không.</td><td>Khai báo mức rủi ro ngay trong định nghĩa tool để Policy Engine dùng.</td></tr>
+  <tr><td>Metric</td><td>Định nghĩa KPI bằng SQL, kỳ so sánh, quy tắc xử lý dữ liệu thiếu, ngưỡng bất thường.</td><td>Có thể khai báo bằng cấu hình; chỉ viết mã khi logic phức tạp.</td></tr>
+</table>
+
+<h2>5.3. Vòng đời Agent</h2>
+<pre>Nháp → Chạy eval → Thử nghiệm (shadow: chạy nhưng không gửi/không thực thi)
+     → Kích hoạt → Theo dõi chất lượng/chi phí → Phiên bản mới hoặc Ngừng</pre>
+<ul>
+  <li><b>Shadow mode:</b> Agent mới chạy song song, kết quả chỉ người phụ trách xem để so sánh trước khi bật thật.</li>
+  <li><b>Eval:</b> bộ câu hỏi/tình huống mẫu và kết quả kỳ vọng; chạy tự động khi đổi prompt, model hoặc nguồn dữ liệu.</li>
+  <li><b>Rollback:</b> có thể quay về phiên bản cấu hình trước bất kỳ lúc nào.</li>
+</ul>
+
+<h2>5.4. Cách chọn Agent tiếp theo</h2>
+<p>Ưu tiên theo thang điểm: (giá trị nghiệp vụ) × (mức sẵn có của dữ liệu) × (tần suất sử dụng) ÷ (rủi ro hành động). Agent đầu tiên nên là Agent chỉ đọc, dữ liệu dễ lấy, kết quả dễ đối chiếu.</p>
+
+<!-- ============ 6 ============ -->
+<h1>6. Company Brain và cơ chế thu thập tri thức</h1>
+<p>Company Brain là lớp tri thức được quản lý: có nguồn, chủ sở hữu, phiên bản, trạng thái duyệt và hạn rà soát. Khảo sát chỉ là một kênh khởi động; tri thức phải được thu thập liên tục từ vận hành thật.</p>
+
+<h2>6.1. Phân loại tri thức</h2>
+<table>
+  <tr><th style="width:18%">Nhóm</th><th style="width:34%">Ví dụ</th><th>Cách quản lý</th></tr>
+  <tr><td>Tri thức tĩnh</td><td>SOP, chính sách, hướng dẫn, định nghĩa nghiệp vụ</td><td>Phiên bản, chủ sở hữu, ngày hiệu lực, hạn rà soát, quyền đọc.</td></tr>
+  <tr><td>Dữ liệu nghiệp vụ</td><td>Đơn hàng, giao dịch, khách hàng, chi phí</td><td>Không lưu trong Brain; truy vấn qua Data Gateway/Metrics Engine.</td></tr>
+  <tr><td>Tri thức vận hành</td><td>Sự cố đã xử lý, quyết định duyệt/từ chối, cách xử lý đã xác nhận</td><td>Có nguồn và người xác nhận; đầu ra AI chưa duyệt không được coi là sự thật.</td></tr>
+  <tr><td>Ngữ cảnh hiện tại</td><td>Mục tiêu, KPI, cảnh báo, nhiệm vụ đang chạy</td><td>Dữ liệu có cấu trúc, thời điểm cập nhật rõ ràng.</td></tr>
+  <tr><td>Kinh nghiệm thực tế</td><td>Quy tắc ngầm, mẹo xử lý, ngoại lệ thường gặp</td><td>Đánh dấu riêng với quy định chính thức; mức tin cậy thấp hơn.</td></tr>
+</table>
+
+<h2>6.2. Bốn nguồn thu thập tri thức</h2>
+<table>
+  <tr><th style="width:24%">Nguồn</th><th style="width:46%">Cách thu thập</th><th>Thời điểm</th></tr>
+  <tr><td>1. Tài liệu có sẵn</td><td>Nhập SOP, chính sách, file quy trình, hướng dẫn nội bộ, nội dung trao đổi quan trọng; AI chuẩn hóa về mẫu chung, người phụ trách duyệt.</td><td>Giai đoạn 0–2</td></tr>
+  <tr><td>2. Phỏng vấn có cấu trúc</td><td>Interview Agent hỏi người nắm việc theo từng chủ đề, hỏi tiếp dựa trên câu trả lời, soạn nháp SOP để duyệt.</td><td>Giai đoạn 2 trở đi</td></tr>
+  <tr><td>3. Dữ liệu hệ thống</td><td>Connector đồng bộ dữ liệu; Metrics Engine tính KPI. Đây là tri thức "định lượng".</td><td>Giai đoạn 1 trở đi</td></tr>
+  <tr><td>4. Từ vận hành</td><td>Quyết định duyệt/từ chối kèm lý do, chỉnh sửa của người dùng lên báo cáo AI, kết quả xử lý sự cố.</td><td>Giai đoạn 3 trở đi</td></tr>
+</table>
+
+<h2>6.3. Interview Agent — phỏng vấn thay cho khảo sát tĩnh</h2>
+<ol>
+  <li>Chọn chủ đề tri thức và người phụ trách (ví dụ: "Quy trình xử lý hoàn hàng").</li>
+  <li>Agent hỏi theo khung: mục đích → các bước → người thực hiện → công cụ/dữ liệu dùng → ngưỡng và ngoại lệ → khi nào báo cấp trên → lỗi thường gặp.</li>
+  <li>Câu hỏi tiếp theo dựa trên câu trả lời trước; có thể trả lời qua Telegram/Zalo hoặc Dashboard, từng phần, không cần một lần.</li>
+  <li>Agent soạn bản nháp theo mẫu chuẩn, đánh dấu điểm chưa rõ.</li>
+  <li>Người phụ trách sửa và duyệt; bản đã duyệt trở thành tri thức chính thức.</li>
+</ol>
+
+<h2>6.4. Tự phát hiện lỗ hổng tri thức</h2>
+<pre>Agent không tìm thấy câu trả lời / độ tin cậy thấp / người dùng sửa câu trả lời AI
+   → tạo "Câu hỏi tri thức" gắn chủ đề, gửi đúng người phụ trách
+   → người phụ trách trả lời ngắn
+   → AI chuẩn hóa thành mục tri thức (trạng thái: nháp)
+   → người phụ trách duyệt → đã duyệt → Company Brain</pre>
+<p>Cơ chế này giúp Company Brain chỉ hỏi những gì thực sự cần, đúng lúc cần, thay vì khảo sát diện rộng từ đầu.</p>
+
+<h2>6.5. Quy tắc quản trị tri thức</h2>
+<ul>
+  <li>Trạng thái: <code>nháp → chờ duyệt → đã duyệt → cần rà soát → hết hiệu lực</code>.</li>
+  <li>AI không tự đưa suy luận của mình thành tri thức chính thức.</li>
+  <li>Mỗi mục có chủ sở hữu và hạn rà soát; quá hạn sẽ được đánh dấu "chưa chắc còn đúng" khi trích dẫn.</li>
+  <li>Câu trả lời của Agent luôn kèm nguồn tri thức đã dùng.</li>
+  <li>Truy xuất: PostgreSQL full-text search trước; bổ sung pgvector trong cùng database khi thực tế cần tìm theo ngữ nghĩa.</li>
+</ul>
+
+<!-- ============ 7 ============ -->
+<h1>7. Điều phối: từ Playbook đến AI CEO</h1>
+<table>
+  <tr><th style="width:16%">Cấp độ</th><th style="width:42%">Cách hoạt động</th><th style="width:24%">Ưu điểm</th><th>Giai đoạn</th></tr>
+  <tr><td>1. Playbook</td><td>Quy trình nhiều bước do người viết: sự kiện X → Agent A → Agent B → tổng hợp. AI thực thi từng bước.</td><td>Dự đoán được, dễ kiểm thử, chi phí thấp.</td><td>Giai đoạn 4</td></tr>
+  <tr><td>2. Router</td><td>AI chọn playbook phù hợp với sự kiện/yêu cầu; nếu không có playbook phù hợp thì chuyển người.</td><td>Linh hoạt hơn nhưng vẫn trong khung có sẵn.</td><td>Giai đoạn 5</td></tr>
+  <tr><td>3. AI CEO</td><td>Nhận mục tiêu, phân rã thành task có tiêu chí hoàn thành, giao Agent, theo dõi, tổng hợp.</td><td>Xử lý được yêu cầu mới, chưa có quy trình.</td><td>Giai đoạn 5</td></tr>
+</table>
+<h3>Giới hạn bắt buộc với AI CEO</h3>
+<ul>
+  <li>Độ sâu phân rã tối đa, số task con tối đa, số vòng điều phối tối đa cho một mục tiêu.</li>
+  <li>Ngân sách riêng cho mỗi mục tiêu; vượt ngưỡng phải hỏi người dùng.</li>
+  <li>Chỉ được giao việc cho Agent và dùng tool đã đăng ký; không tự cấp quyền cho mình hoặc Agent khác.</li>
+  <li>Báo cáo tổng hợp tách rõ: <b>đã xác minh</b> (có dữ liệu) / <b>suy luận</b> / <b>chưa xác minh</b>.</li>
+</ul>
+
+<!-- ============ 8 ============ -->
+<h1>8. Chính sách, phê duyệt và an toàn</h1>
+<h2>8.1. Phân mức hành động</h2>
+<table>
+  <tr><th style="width:20%">Mức</th><th style="width:36%">Ví dụ</th><th>Xử lý</th></tr>
+  <tr><td>R0 — Chỉ đọc</td><td>Đọc dữ liệu, tính toán, tìm tri thức, soạn nháp</td><td>Tự động trong phạm vi quyền.</td></tr>
+  <tr><td>R1 — Nội bộ</td><td>Tạo task, gửi thông báo nội bộ, cập nhật trạng thái</td><td>Tự động nếu chính sách cho phép; ghi audit.</td></tr>
+  <tr><td>R2 — Bên ngoài</td><td>Gửi email khách hàng, đăng nội dung, thay đổi giá, điều chỉnh quảng cáo</td><td>Yêu cầu phê duyệt hoặc tự động trong hạn mức cụ thể (ví dụ thay đổi giá ≤ 5%).</td></tr>
+  <tr><td>R3 — Rủi ro cao / khó đảo ngược</td><td>Chuyển tiền, chi vượt hạn mức, xóa dữ liệu, thay đổi quyền</td><td>Luôn phê duyệt và xác thực lại; có thể yêu cầu hai người duyệt.</td></tr>
+</table>
+
+<h2>8.2. Quy tắc</h2>
+<ul>
+  <li>Policy Engine quyết định trước khi tool chạy; quyết định dựa trên Agent, tool, mức rủi ro, tham số và hạn mức — không dựa trên lời giải thích của LLM.</li>
+  <li>Approval Request lưu: hành động dự kiến, tham số, dữ liệu liên quan, lý do, mức rủi ro, người duyệt, thời hạn. Hết hạn thì tự hủy.</li>
+  <li>Phê duyệt nhanh qua Telegram/Zalo có nút Duyệt/Từ chối; R3 bắt buộc xác thực lại trên Dashboard.</li>
+  <li>Mọi thực thi có idempotency key; chạy lại không gây tác động kép.</li>
+  <li>Audit log lưu Agent, phiên bản cấu hình, nguồn dữ liệu, tool call, quyết định chính sách, người duyệt, kết quả.</li>
+  <li>Chống prompt injection: nội dung truy xuất được bọc và đánh dấu là dữ liệu; tool có tác động không được kích hoạt chỉ dựa trên nội dung từ nguồn bên ngoài.</li>
+  <li>Bí mật (API key, mật khẩu nguồn dữ liệu) lưu mã hóa, không nằm trong mã nguồn hay prompt.</li>
+</ul>
+
+<!-- ============ 9 ============ -->
+<h1>9. Dữ liệu và tích hợp</h1>
+<ul>
+  <li><b>Mô hình lai:</b> dữ liệu chuẩn hóa và chỉ số cần thiết lưu tập trung; truy vấn trực tiếp nguồn khi cần thông tin mới nhất hoặc chi tiết.</li>
+  <li><b>Data Gateway</b> là cổng duy nhất; Agent không kết nối thẳng vào database nguồn.</li>
+  <li>Mỗi nguồn có cấu hình kết nối, phạm vi quyền, lịch đồng bộ, trạng thái, lịch sử lỗi. Tài khoản kết nối nguồn dùng quyền chỉ đọc khi có thể.</li>
+  <li>Dữ liệu đồng bộ có timestamp, nguồn, khóa chống trùng, xử lý bản ghi cập nhật.</li>
+  <li><b>Độ tươi dữ liệu:</b> mọi báo cáo ghi rõ khoảng thời gian, định nghĩa KPI, nguồn và thời điểm lấy dữ liệu; dữ liệu cũ hoặc thiếu được đánh dấu.</li>
+  <li><b>Metrics Engine:</b> KPI định nghĩa một lần, dùng chung cho mọi Agent và Dashboard, tránh mỗi nơi tính một kiểu.</li>
+</ul>
+<h3>Ví dụ luồng cảnh báo</h3>
+<pre>Metrics Engine: doanh số kênh A hôm nay giảm 32% so với trung bình 4 tuần (vượt ngưỡng)
+   → sự kiện metric.anomaly.orders
+   → Agent phân tích bán hàng (model nhẹ) kiểm tra: dữ liệu có thiếu? có ngày lễ?
+   → nếu bất thường thật: playbook "Điều tra sụt giảm doanh số"
+        · Agent bán hàng: theo sản phẩm, theo khu vực
+        · Agent marketing: chi phí và hiệu quả quảng cáo cùng kỳ
+   → tổng hợp: nguyên nhân khả dĩ, mức độ tin cậy, đề xuất
+   → thông báo chủ doanh nghiệp; đề xuất có tác động → Approval Request</pre>
+
+<!-- ============ 10 ============ -->
+<h1>10. Chi phí Claude API</h1>
+<p>Ngân sách mục tiêu: 30–100 USD/tháng. Đây là mục tiêu cần đo thực tế, không phải cam kết cho mọi khối lượng công việc.</p>
+<table>
+  <tr><th style="width:30%">Biện pháp</th><th>Cách làm</th></tr>
+  <tr><td>Đẩy tính toán xuống SQL</td><td>KPI, so sánh, phát hiện bất thường không gọi LLM. Ước tính giảm phần lớn số lần gọi.</td></tr>
+  <tr><td>Chọn model theo cấp</td><td>Haiku cho tác vụ định kỳ/phân loại; Sonnet cho phân tích; Opus chỉ khi thật cần.</td></tr>
+  <tr><td>Prompt caching</td><td>System prompt, định nghĩa tool, tri thức dùng lặp lại được cache.</td></tr>
+  <tr><td>Batch API</td><td>Báo cáo định kỳ không cần ngay lập tức chạy theo lô với chi phí thấp hơn.</td></tr>
+  <tr><td>Ngữ cảnh gọn</td><td>Đưa số liệu đã tổng hợp thay vì dữ liệu thô; chỉ đưa tri thức liên quan.</td></tr>
+  <tr><td>Giới hạn mỗi lần chạy</td><td>max_steps, max_tokens, timeout; vượt giới hạn thì dừng và báo.</td></tr>
+  <tr><td>Ngân sách nhiều tầng</td><td>Theo task, Agent, ngày, tháng. Cảnh báo ở 70% và 90%; chạm hard cap thì dừng tác vụ không thiết yếu.</td></tr>
+  <tr><td>Theo dõi chi tiết</td><td>Ghi model, Agent, task, token vào/ra, token cache, chi phí ước tính cho từng lần gọi; đối chiếu với hóa đơn thực tế hằng tháng.</td></tr>
+</table>
+<p>API key chỉ nằm ở backend. Tần suất chạy, số Agent và mức tự động hóa được quyết định sau khi đo chi phí thực tế ở giai đoạn 1–2.</p>
+
+<!-- ============ 11 ============ -->
+<h1>11. Hạ tầng và vận hành 24/24</h1>
+<h2>11.1. Lựa chọn máy chủ</h2>
+<table>
+  <tr><th style="width:24%">Phương án</th><th style="width:38%">Ưu điểm</th><th>Lưu ý</th></tr>
+  <tr><td>A. Ubuntu Server trên máy hiện có <b>(khuyến nghị)</b></td><td>Ổn định khi chạy dài, Docker Engine native, không tự reboot do update.</td><td>Cần người quen Linux cơ bản.</td></tr>
+  <tr><td>B. Windows + Docker Engine trong WSL2</td><td>Giữ Windows cho mục đích khác.</td><td>Khóa lịch Windows Update; cấu hình WSL tự khởi động; kiểm tra sau mỗi lần update.</td></tr>
+  <tr><td>C. VPS/cloud nhỏ</td><td>Không phụ thuộc điện/mạng tại chỗ.</td><td>Chi phí hàng tháng; cân nhắc nếu nguồn dữ liệu đều ở trên mạng.</td></tr>
+</table>
+
+<h2>11.2. Yêu cầu vận hành (áp dụng từ giai đoạn 1)</h2>
+<ul>
+  <li>Docker Compose với restart policy và health check cho backend, worker, PostgreSQL, (Redis nếu dùng).</li>
+  <li>Trạng thái task bền vững: <code>queued, running, waiting_approval, succeeded, failed, cancelled</code>; khi khởi động lại phải reconcile các task đang <code>running</code>.</li>
+  <li>Backup PostgreSQL hằng ngày, lưu thêm một bản <b>ngoài máy chủ</b> (cloud storage); diễn tập khôi phục ít nhất mỗi quý.</li>
+  <li>Truy cập từ xa qua Tailscale; Dashboard vẫn có đăng nhập riêng. Không mở cổng database, Redis hoặc trang quản trị ra Internet.</li>
+  <li>Giám sát: dung lượng đĩa, RAM, CPU, lỗi Claude API, queue backlog, độ trễ, trạng thái connector; cảnh báo qua Telegram.</li>
+  <li>Cân nhắc UPS cho máy chủ tại chỗ để tránh hỏng dữ liệu khi mất điện.</li>
+</ul>
+
+<h2>11.3. Đơn giản hóa thành phần</h2>
+<ul>
+  <li>PostgreSQL đảm nhận dữ liệu nghiệp vụ, trạng thái, audit, tri thức, full-text search và (sau này) vector search.</li>
+  <li>Hàng đợi: BullMQ (cần Redis) hoặc pg-boss (chạy trên PostgreSQL, bớt một dịch vụ cần vận hành và backup). Chốt ở giai đoạn 0.</li>
+</ul>
+
+<!-- ============ 12 ============ -->
+<h1>12. Mô hình dữ liệu lõi</h1>
+<p>Nhóm thực thể dưới đây phục vụ thiết kế ERD ở giai đoạn 0; bảng nghiệp vụ chuyên biệt chỉ thêm khi xác định được nguồn và trường dữ liệu.</p>
+<table>
+  <tr><th style="width:22%">Nhóm</th><th>Thực thể chính</th><th style="width:14%">Giai đoạn</th></tr>
+  <tr><td>Agent</td><td>agents, agent_versions, tools, agent_tools, eval_suites, eval_runs</td><td>1</td></tr>
+  <tr><td>Công việc</td><td>tasks, task_dependencies, agent_runs, run_steps</td><td>1</td></tr>
+  <tr><td>Mô hình &amp; chi phí</td><td>model_requests, usage_records, budget_limits</td><td>1</td></tr>
+  <tr><td>Nguồn dữ liệu</td><td>data_sources, sync_runs, source_records</td><td>1</td></tr>
+  <tr><td>Chỉ số</td><td>metric_definitions, metric_values, anomaly_rules, anomalies</td><td>1–2</td></tr>
+  <tr><td>Kiểm toán &amp; thông báo</td><td>audit_events, notifications, notification_deliveries</td><td>1</td></tr>
+  <tr><td>Sự kiện</td><td>events, event_deliveries, schedules</td><td>2</td></tr>
+  <tr><td>Tri thức</td><td>knowledge_topics, knowledge_items, knowledge_versions, knowledge_chunks, knowledge_questions, retrieval_logs</td><td>2</td></tr>
+  <tr><td>Quyền &amp; phê duyệt</td><td>users, roles, policies, approval_requests, approval_decisions, action_executions</td><td>3</td></tr>
+  <tr><td>Điều phối</td><td>playbooks, playbook_versions, goals, agent_messages</td><td>4–5</td></tr>
+  <tr><td>Vận hành</td><td>system_health</td><td>1</td></tr>
+</table>
+<p>Mọi bảng có khóa định danh ổn định, <code>created_at/updated_at</code>, trạng thái khi cần, và liên kết truy vết (run_id, task_id, agent_version_id).</p>
+
+<!-- ============ 13 ============ -->
+<h1 class="pb">13. Lộ trình thực hiện theo giai đoạn</h1>
+<p>Thời gian ước tính cho nhóm 1–2 lập trình viên. Mỗi giai đoạn chỉ bắt đầu khi giai đoạn trước đạt tiêu chí nghiệm thu.</p>
+
+<div class="phase">
+  <h3>Giai đoạn 0 — Chốt nền móng <span class="tag">1–2 tuần</span></h3>
+  <p><b>Mục tiêu:</b> chốt use case đầu tiên và các đặc tả kỹ thuật lõi.</p>
+  <ul>
+    <li>Chọn use case đầu tiên theo thang điểm ở mục 5.4 (không bắt buộc là tài chính).</li>
+    <li>Xác định nguồn dữ liệu, quyền truy cập, danh sách KPI và định nghĩa chính xác cho use case này.</li>
+    <li>Đặc tả: Agent Spec, interface Connector/Tool/Metric, state machine của task, ERD các bảng giai đoạn 1.</li>
+    <li>Chốt hạ tầng: hệ điều hành máy chủ, hàng đợi (BullMQ/pg-boss), nơi lưu backup ngoài máy, kênh thông báo.</li>
+    <li>Liệt kê 5–10 chủ đề tri thức quan trọng nhất; thu gom tài liệu sẵn có.</li>
+    <li>Xác định chỉ số thành công và số liệu nền (hiện tại mất bao lâu để làm báo cáo, phát hiện vấn đề...).</li>
+  </ul>
+  <p><b>Kết quả:</b> tài liệu đặc tả, ERD, danh sách KPI, danh sách chủ đề tri thức, quyết định hạ tầng.</p>
+  <p><b>Nghiệm thu:</b> các quyết định ở mục 17 thuộc giai đoạn 0 đã được chốt.</p>
+
+  <h3>Trạng thái: đã chốt quyết định ngày 29/10/2026</h3>
+  <p><b>Bối cảnh:</b> doanh nghiệp bán hàng online đa kênh (TikTok Shop, Etsy, Shopify...) kết hợp xưởng thêu fulfillment. Đơn hàng các kênh đã được đồng bộ về database riêng (PostgreSQL/MySQL), chi phí có đủ theo từng đơn. Chủ doanh nghiệp tự lập trình và vận hành cùng Claude Code.</p>
+  <table>
+    <tr><th style="width:4%">#</th><th style="width:28%">Quyết định</th><th style="width:34%">Đã chốt</th><th>Ghi chú</th></tr>
+    <tr><td>1</td><td>Use case / Agent đầu tiên</td><td><b>Báo cáo doanh số hằng ngày</b></td><td>Agent chỉ đọc (R0), chưa thực hiện hành động.</td></tr>
+    <tr><td>2</td><td>Nguồn dữ liệu</td><td><b>Database riêng</b> đã đồng bộ các kênh</td><td>Chưa cần connector API sàn ở giai đoạn 1.</td></tr>
+    <tr><td>3</td><td>Truy cập dữ liệu</td><td><b>Tài khoản DB chỉ đọc</b></td><td>Chỉ SELECT trên bảng cần thiết; không cấp cột thông tin cá nhân khách hàng. Truy vấn tổng hợp theo lịch, lưu kết quả vào DB của hệ thống AI.</td></tr>
+    <tr><td>4</td><td>KPI bản đầu</td><td>Doanh thu &amp; số đơn theo kênh · Theo sản phẩm/mẫu thêu · Lợi nhuận gộp · Fulfillment/sản xuất</td><td>So sánh: hôm qua, cùng thứ tuần trước, trung bình cùng thứ 4 tuần. Định nghĩa chi tiết đang chờ xác nhận.</td></tr>
+    <tr><td>5</td><td>Giờ gửi &amp; kỳ chốt số liệu</td><td><b>8h sáng, chốt theo giờ Việt Nam</b></td><td>Số liệu ngày sẽ lệch so với dashboard sàn (giờ Mỹ); dữ liệu lưu UTC để có thể đổi múi giờ sau.</td></tr>
+    <tr><td>6</td><td>Kênh thông báo</td><td><b>Telegram</b></td><td>Bot chỉ phản hồi trong chat/group đã đăng ký.</td></tr>
+    <tr><td>7</td><td>Người nhận</td><td><b>Nhóm Telegram quản lý xem tất cả</b>, kể cả lợi nhuận</td><td>Cập nhật 29/10/2026, thay cho quyết định ban đầu "lợi nhuận chỉ gửi riêng". Mọi thành viên group đều thấy báo cáo tài chính.</td></tr>
+    <tr><td>8</td><td>Ngưỡng cảnh báo bất thường</td><td><b>Chạy thử 2 tuần rồi đặt</b></td><td>Giai đoạn 1 chỉ báo cáo; ngưỡng chốt dựa trên biến động thực tế.</td></tr>
+    <tr><td>9</td><td>Ngân sách Claude API</td><td><b>Hard cap 100 USD/tháng</b></td><td>Cảnh báo 70% và 90%; đặt spend limit cả trên Anthropic Console.</td></tr>
+    <tr><td>10</td><td>Máy chủ</td><td><b>Windows + WSL2</b></td><td>Docker Engine trong WSL2 (không dùng Docker Desktop); hoãn Windows Update; tự khởi động sau reboot; tắt sleep; nên có UPS.</td></tr>
+    <tr><td>11</td><td>Hàng đợi</td><td><b>BullMQ + Redis</b></td><td>Redis bật AOF để không mất job khi khởi động lại.</td></tr>
+    <tr><td>12</td><td>Backup ngoài máy chủ</td><td><b>Ổ cứng / NAS trong xưởng</b></td><td>Rủi ro chấp nhận: chung địa điểm. NAS dùng tài khoản riêng, giữ 7 bản ngày + 4 bản tuần. Khuyến nghị thêm bản mã hóa lên cloud sau giai đoạn 1.</td></tr>
+  </table>
+  <p><b>Lưu ý tiến độ:</b> một người phát triển nên cộng thêm 30–50% thời gian so với ước tính, giữ phạm vi giai đoạn 1 thật gọn.</p>
+
+  <p><b>Còn cần bổ sung trước khi sang giai đoạn 1:</b></p>
+  <ul>
+    <li>Loại và phiên bản database; cấu trúc bảng đơn hàng, chi tiết đơn, sản phẩm, chi phí, trạng thái sản xuất.</li>
+    <li>Xác nhận định nghĩa KPI: cách tính đơn hủy/hoàn, tiền tệ báo cáo (USD/VND), các khoản trừ trong lợi nhuận gộp, hạn xử lý chuẩn của đơn thêu, cách nhóm sản phẩm.</li>
+    <li>Danh sách kênh đang hoạt động và mã kênh trong DB.</li>
+    <li>Cấu hình máy chủ (CPU, RAM, SSD, phiên bản Windows, Internet).</li>
+    <li>Bot Telegram + chat ID; API key Claude; thư mục backup trên NAS.</li>
+    <li>5–10 chủ đề tri thức ưu tiên (quy trình sản xuất đơn thêu, xử lý đơn lỗi/hoàn...) và số liệu nền thời gian tổng hợp báo cáo hiện tại.</li>
+  </ul>
+  <p>Chi tiết đầy đủ: <i>Giai_doan_0_Quyet_dinh.md</i>.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 1 — MVP: một Agent, một luồng giá trị <span class="tag">3–4 tuần</span></h3>
+  <p><b>Mục tiêu:</b> có báo cáo tự động, đúng số liệu, chạy ổn định hằng ngày.</p>
+  <ul>
+    <li>Khung NestJS modular monolith; Docker Compose; CI cơ bản.</li>
+    <li>Agent Registry đọc cấu hình; Agent Runtime với giới hạn bước/token/thời gian.</li>
+    <li>Task store + hàng đợi + scheduler; reconcile khi khởi động lại.</li>
+    <li>Claude Provider: chọn model theo cấp, prompt caching, ghi nhận token/chi phí, ngân sách hard cap.</li>
+    <li>1–2 Connector chỉ đọc; Metrics Engine tính KPI bằng SQL.</li>
+    <li>Agent đầu tiên chạy theo lịch, gửi báo cáo hằng ngày qua Telegram/email.</li>
+    <li>Audit log, backup tự động (có bản ngoài máy), health check, cảnh báo vận hành.</li>
+    <li>Dashboard tối giản: đăng nhập, danh sách run, báo cáo, chi phí.</li>
+    <li>Policy tối thiểu: toàn bộ ở mức R0 (chỉ đọc).</li>
+  </ul>
+  <p><b>Nghiệm thu:</b> số liệu báo cáo khớp đối chiếu thủ công; chạy liên tục 2 tuần không gián đoạn; khôi phục đúng trạng thái sau reboot; chi phí trong hạn mức; mỗi báo cáo truy vết được nguồn dữ liệu.</p>
+</div>
+
+
+<div class="phase" style="border-left-color:#e0a800">
+  <h3>Giai đoạn 1 — Quyết định đã chốt ngày 29/10/2026</h3>
+  <table>
+    <tr><th style="width:4%">#</th><th style="width:26%">Quyết định</th><th style="width:36%">Đã chốt</th><th>Ghi chú</th></tr>
+    <tr><td>1</td><td>Mẫu báo cáo hằng ngày</td><td>Tổng quan doanh thu &amp; số đơn · Chi tiết theo kênh · Top sản phẩm/mẫu thêu · Tình trạng xưởng · Đơn lỗi/hoàn/hủy</td><td>Số liệu do SQL tính. Cần xác nhận lợi nhuận gộp nằm trong phần tổng quan.</td></tr>
+    <tr><td>2</td><td>Vai trò AI trong báo cáo</td><td><b>Số liệu + phân tích chi tiết</b>; Haiku soạn số liệu, Sonnet viết phân tích</td><td>Phân tích tách "dữ liệu cho thấy" và "có thể do".</td></tr>
+    <tr><td>3</td><td>Dữ liệu thiếu/trễ</td><td><b>Gửi đúng giờ, đánh dấu kênh thiếu</b></td><td>Gửi bản cập nhật khi đủ dữ liệu.</td></tr>
+    <tr><td>4</td><td>Hỏi đáp qua Telegram</td><td><b>Có, hỏi tự do bằng AI trong Giai đoạn 1 (đợt 1B)</b>; giới hạn 100 câu/ngày toàn group</td><td>Làm sớm hơn kế hoạch gốc: cộng thêm khoảng 1–2 tuần. AI chỉ gọi truy vấn/metric định sẵn, không viết SQL tự do; có giới hạn token mỗi câu.</td></tr>
+    <tr><td>5</td><td>Phân quyền trong group</td><td><b>Group xem tất cả</b></td><td>Gồm cả lợi nhuận và chi phí.</td></tr>
+    <tr><td>6</td><td>Nghiệm thu số liệu</td><td><b>Khớp 100% trong 7 ngày đối chiếu</b></td><td>Đối chiếu theo cùng khung giờ VN.</td></tr>
+    <tr><td>7</td><td>Mặc định kỹ thuật</td><td><b>Đồng ý tất cả</b></td><td>Dashboard đăng nhập mật khẩu qua Tailscale; đồng bộ KPI 6h, soạn 7h30, gửi 8h; giữ log 12 tháng; một repo + Docker Compose + Prisma.</td></tr>
+    <tr><td>9</td><td>Cách chia Giai đoạn 1</td><td><b>1A: báo cáo hằng ngày ổn định → 1B: thêm hỏi đáp</b></td><td>1A đạt nghiệm thu thì mới làm 1B.</td></tr>
+    <tr><td>8</td><td>Chủ đề tri thức cho Giai đoạn 2</td><td><b>Claude đề xuất, chủ doanh nghiệp duyệt</b></td><td>Chưa thực hiện.</td></tr>
+  </table>
+  <p><b>Còn cần làm rõ:</b> lợi nhuận gộp có nằm trong phần tổng quan không; mẫu báo cáo cụ thể để duyệt trước khi code. Chi tiết: <i>Giai_doan_0_Quyet_dinh.md</i>, mục 7–8.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 2 — Chủ động và có tri thức <span class="tag">3–4 tuần</span></h3>
+  <p><b>Mục tiêu:</b> hệ thống tự phát hiện vấn đề, điều tra và trả lời dựa trên tri thức doanh nghiệp.</p>
+  <ul>
+    <li>Event bus nội bộ; trigger theo sự kiện.</li>
+    <li>Quy tắc phát hiện bất thường (ngưỡng, so sánh kỳ, thống kê); kiểm tra dữ liệu thiếu trước khi cảnh báo.</li>
+    <li>Agent điều tra khi có bất thường; cảnh báo có dẫn chứng và mức tin cậy.</li>
+    <li>Company Brain bản đầu: nhập tài liệu, chuẩn hóa theo mẫu, quy trình duyệt, phiên bản, full-text search, trích dẫn nguồn.</li>
+    <li>Interview Agent bản đầu cho các chủ đề tri thức đã chọn.</li>
+    <li>Hỏi đáp với Agent qua Dashboard/Telegram.</li>
+    <li>Bộ eval đầu tiên cho Agent; chạy tự động khi thay đổi cấu hình.</li>
+  </ul>
+  <p><b>Nghiệm thu:</b> tỷ lệ cảnh báo đúng đạt mức thỏa thuận; mọi câu trả lời có nguồn; ít nhất 5 chủ đề tri thức đã được duyệt; eval đạt ngưỡng.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 3 — Hành động có kiểm soát <span class="tag">3–4 tuần</span></h3>
+  <p><b>Mục tiêu:</b> Agent được đề xuất và thực hiện hành động trong khuôn khổ chính sách.</p>
+  <ul>
+    <li>Người dùng, vai trò, phân quyền trên Dashboard.</li>
+    <li>Policy Engine đầy đủ theo R0–R3 với hạn mức cụ thể.</li>
+    <li>Tool Gateway cho thao tác ghi, idempotency key, ghi kết quả.</li>
+    <li>Approval inbox trên Dashboard; phê duyệt nhanh qua Telegram/Zalo; xác thực lại cho R3; tự hủy khi hết hạn.</li>
+    <li>Tự phát hiện lỗ hổng tri thức; thu tri thức từ quyết định duyệt/từ chối và chỉnh sửa của người dùng.</li>
+  </ul>
+  <p><b>Nghiệm thu:</b> không hành động cần duyệt nào chạy khi chưa có quyết định hợp lệ; chạy lại không gây tác động kép; kiểm thử prompt injection đạt.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 4 — Mở rộng Agent và phối hợp <span class="tag">3–4 tuần</span></h3>
+  <p><b>Mục tiêu:</b> chứng minh nền tảng tổng quát; nhiều Agent phối hợp theo quy trình.</p>
+  <ul>
+    <li>Thêm Agent thứ 2 và thứ 3 chỉ bằng cấu hình + connector mới; áp dụng shadow mode trước khi kích hoạt.</li>
+    <li>Playbook phối hợp nhiều Agent (điều phối cấp 1), có phiên bản.</li>
+    <li>Giao tiếp giữa Agent bằng message có cấu trúc.</li>
+    <li>Dashboard: drill-down theo Agent, task history, chi phí theo Agent/playbook.</li>
+  </ul>
+  <p><b>Nghiệm thu:</b> thêm một Agent mới trong ≤ 3 ngày không sửa mã lõi; playbook đầu tiên chạy ổn định; chi phí vẫn trong ngân sách.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 5 — Router và AI CEO <span class="tag">3–4 tuần</span></h3>
+  <p><b>Mục tiêu:</b> hệ thống tự điều phối các yêu cầu mới trong giới hạn an toàn.</p>
+  <ul>
+    <li>Router chọn playbook phù hợp (điều phối cấp 2).</li>
+    <li>AI CEO nhận mục tiêu, phân rã task có tiêu chí hoàn thành, giao Agent, theo dõi, tổng hợp (cấp 3).</li>
+    <li>Giới hạn độ sâu, số task con, số vòng, ngân sách theo mục tiêu.</li>
+    <li>Báo cáo điều hành định kỳ cho chủ doanh nghiệp: đã xác minh / suy luận / chưa xác minh.</li>
+  </ul>
+  <p><b>Nghiệm thu:</b> AI CEO không vượt giới hạn trong mọi kịch bản kiểm thử; mọi quyết định điều phối truy vết được; chủ doanh nghiệp đánh giá báo cáo điều hành hữu ích.</p>
+</div>
+
+<div class="phase">
+  <h3>Giai đoạn 6 — Vận hành và tối ưu <span class="tag">liên tục</span></h3>
+  <ul>
+    <li>Tối ưu chi phí: chuyển tác vụ sang model nhẹ hơn, tăng cache, dùng batch.</li>
+    <li>Bổ sung vector search khi full-text không đáp ứng.</li>
+    <li>Diễn tập khôi phục backup, rà soát bảo mật và quyền định kỳ.</li>
+    <li>Theo dõi chỉ số thành công; thêm Agent theo thang điểm ưu tiên.</li>
+    <li>Cân nhắc tách dịch vụ chỉ khi tải, bảo mật hoặc triển khai độc lập thực sự yêu cầu.</li>
+  </ul>
+</div>
+
+<!-- ============ 14 ============ -->
+<h1>14. Tổng hợp tiến độ</h1>
+<p>Tổng thời gian dự kiến đến hết giai đoạn 5: khoảng 17–24 tuần (4–6 tháng). Giá trị đầu tiên có sau khoảng 4–6 tuần.</p>
+<table class="gantt">
+  <tr><th style="width:30%">Giai đoạn</th><th>T1–2</th><th>T3–4</th><th>T5–6</th><th>T7–8</th><th>T9–10</th><th>T11–12</th><th>T13–14</th><th>T15–16</th><th>T17–18</th><th>T19–20</th><th>T21+</th></tr>
+  <tr><td class="l">0. Chốt nền móng</td><td class="on"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td class="l">1. MVP một Agent</td><td></td><td class="on"></td><td class="on"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td class="l">2. Chủ động + tri thức</td><td></td><td></td><td></td><td class="on"></td><td class="on"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td class="l">3. Hành động có kiểm soát</td><td></td><td></td><td></td><td></td><td></td><td class="on"></td><td class="on"></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td class="l">4. Mở rộng Agent</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="on"></td><td class="on"></td><td></td><td></td></tr>
+  <tr><td class="l">5. Router + AI CEO</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="on"></td><td class="on"></td></tr>
+  <tr><td class="l">6. Vận hành &amp; tối ưu</td><td></td><td></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td><td class="cont"></td></tr>
+</table>
+
+<table>
+  <tr><th style="width:22%">Mốc</th><th>Người dùng nhận được</th></tr>
+  <tr><td>Hết giai đoạn 1</td><td>Báo cáo tự động hằng ngày, đúng số liệu, xem chi phí AI.</td></tr>
+  <tr><td>Hết giai đoạn 2</td><td>Cảnh báo chủ động có giải thích; hỏi đáp dựa trên tri thức doanh nghiệp.</td></tr>
+  <tr><td>Hết giai đoạn 3</td><td>AI đề xuất và thực hiện hành động; duyệt nhanh trên điện thoại.</td></tr>
+  <tr><td>Hết giai đoạn 4</td><td>Nhiều Agent cho nhiều bộ phận, phối hợp theo quy trình.</td></tr>
+  <tr><td>Hết giai đoạn 5</td><td>Giao mục tiêu cho AI CEO; nhận báo cáo điều hành tổng hợp.</td></tr>
+</table>
+
+<!-- ============ 15 ============ -->
+<h1>15. Chỉ số thành công của dự án</h1>
+<table>
+  <tr><th style="width:30%">Chỉ số</th><th>Cách đo</th></tr>
+  <tr><td>Thời gian tiết kiệm</td><td>Số giờ làm báo cáo/tổng hợp thủ công giảm được mỗi tuần (so với số liệu nền ở giai đoạn 0).</td></tr>
+  <tr><td>Độ chính xác số liệu</td><td>Tỷ lệ báo cáo khớp đối chiếu thủ công (mục tiêu 100% với số liệu tính bằng SQL).</td></tr>
+  <tr><td>Chất lượng cảnh báo</td><td>Tỷ lệ cảnh báo đúng / tổng cảnh báo; số vấn đề bị bỏ sót.</td></tr>
+  <tr><td>Tốc độ phản ứng</td><td>Thời gian từ khi vấn đề phát sinh đến khi được phát hiện và xử lý.</td></tr>
+  <tr><td>Mức độ sử dụng</td><td>Số lần xem báo cáo, hỏi đáp, phê duyệt mỗi tuần.</td></tr>
+  <tr><td>Độ phủ tri thức</td><td>Số chủ đề đã duyệt; tỷ lệ câu hỏi Agent trả lời được có nguồn; số mục quá hạn rà soát.</td></tr>
+  <tr><td>Chi phí</td><td>Chi phí Claude API theo tháng và theo kết quả (ví dụ chi phí mỗi báo cáo, mỗi cuộc điều tra).</td></tr>
+  <tr><td>Độ ổn định</td><td>Uptime, số task thất bại, thời gian khôi phục sau sự cố.</td></tr>
+</table>
+
+<!-- ============ 16 ============ -->
+<h1>16. Rủi ro và biện pháp giảm thiểu</h1>
+<table>
+  <tr><th style="width:28%">Rủi ro</th><th style="width:12%">Mức</th><th>Giảm thiểu</th></tr>
+  <tr><td>AI đưa số liệu sai</td><td>Cao</td><td>Số liệu chỉ từ Metrics Engine; AI không tự tính; đối chiếu ở nghiệm thu.</td></tr>
+  <tr><td>Hành động ngoài ý muốn</td><td>Cao</td><td>Policy Engine, phê duyệt R2/R3, idempotency, shadow mode cho Agent mới.</td></tr>
+  <tr><td>Prompt injection từ dữ liệu ngoài</td><td>Cao</td><td>Đánh dấu dữ liệu truy xuất; tool có tác động cần policy; kiểm thử tấn công.</td></tr>
+  <tr><td>Vượt ngân sách API</td><td>Trung bình</td><td>Ba lớp xử lý; hard cap nhiều tầng; cảnh báo 70%/90%.</td></tr>
+  <tr><td>Mất dữ liệu / máy chủ hỏng</td><td>Trung bình</td><td>Backup ngoài máy, diễn tập khôi phục, UPS, giám sát đĩa.</td></tr>
+  <tr><td>Tri thức lỗi thời</td><td>Trung bình</td><td>Chủ sở hữu, hạn rà soát, đánh dấu khi quá hạn, thu tri thức từ vận hành.</td></tr>
+  <tr><td>Người dùng không dùng</td><td>Trung bình</td><td>Giá trị sớm ở giai đoạn 1; thông báo qua kênh quen thuộc; đo mức sử dụng.</td></tr>
+  <tr><td>Nguồn dữ liệu thay đổi API/định dạng</td><td>Trung bình</td><td>Connector có kiểm tra schema, cảnh báo lỗi đồng bộ, đánh dấu dữ liệu cũ.</td></tr>
+  <tr><td>Phụ thuộc một nhà cung cấp AI</td><td>Thấp</td><td>Claude Provider là lớp trừu tượng; prompt và eval có phiên bản.</td></tr>
+</table>
+
+<!-- ============ 17 ============ -->
+<h1>17. Các quyết định cần chốt</h1>
+<table>
+  <tr><th style="width:5%">#</th><th style="width:38%">Quyết định</th><th style="width:18%">Người quyết định</th><th style="width:13%">Hạn chốt</th><th>Trạng thái (29/10/2026)</th></tr>
+  <tr><td>1</td><td>Use case và Agent đầu tiên</td><td>Chủ doanh nghiệp</td><td>Giai đoạn 0</td><td>Đã chốt: báo cáo doanh số hằng ngày</td></tr>
+  <tr><td>2</td><td>Nguồn dữ liệu đầu tiên và cách cấp quyền truy cập</td><td>Chủ DN + kỹ thuật</td><td>Giai đoạn 0</td><td>Đã chốt: database riêng, tài khoản chỉ đọc</td></tr>
+  <tr><td>3</td><td>Định nghĩa KPI, kỳ so sánh, quy tắc xử lý dữ liệu thiếu</td><td>Bộ phận nghiệp vụ</td><td>Giai đoạn 0</td><td>Đã chọn nhóm KPI; định nghĩa chi tiết chờ xác nhận</td></tr>
+  <tr><td>4</td><td>Hệ điều hành máy chủ, cấu hình phần cứng, nơi backup ngoài máy</td><td>Kỹ thuật</td><td>Giai đoạn 0</td><td>Đã chốt: Windows + WSL2, backup NAS. Cấu hình phần cứng chờ bổ sung</td></tr>
+  <tr><td>5</td><td>Hàng đợi: BullMQ hay pg-boss</td><td>Kỹ thuật</td><td>Giai đoạn 0</td><td>Đã chốt: BullMQ + Redis</td></tr>
+  <tr><td>6</td><td>Kênh thông báo/phê duyệt: Telegram, Zalo, email</td><td>Chủ doanh nghiệp</td><td>Giai đoạn 0</td><td>Đã chốt: Telegram, group quản lý xem tất cả</td></tr>
+  <tr><td>7</td><td>Hard cap ngân sách tháng, ngưỡng cảnh báo</td><td>Chủ doanh nghiệp</td><td>Giai đoạn 0</td><td>Đã chốt: 100 USD/tháng; ngưỡng bất thường chốt sau 2 tuần chạy thử</td></tr>
+  <tr><td>8</td><td>Danh sách chủ đề tri thức và người phụ trách từng chủ đề</td><td>Chủ DN + trưởng bộ phận</td><td>Giai đoạn 1</td><td>Chưa chốt</td></tr>
+  <tr><td>9</td><td>Mô hình người dùng/vai trò và cách xác thực từ xa</td><td>Chủ DN + kỹ thuật</td><td>Giai đoạn 2</td><td>Chưa chốt</td></tr>
+  <tr><td>10</td><td>Danh mục hành động R1–R3 và hạn mức tự động cụ thể</td><td>Chủ doanh nghiệp</td><td>Giai đoạn 2</td><td>Chưa chốt</td></tr>
+  <tr><td>11</td><td>Agent thứ 2, thứ 3 và các playbook ưu tiên</td><td>Chủ doanh nghiệp</td><td>Giai đoạn 3</td><td>Chưa chốt</td></tr>
+  <tr><td>12</td><td>Giới hạn điều phối của AI CEO (độ sâu, số vòng, ngân sách)</td><td>Chủ DN + kỹ thuật</td><td>Giai đoạn 4</td><td>Chưa chốt</td></tr>
+</table>
+
+<!-- ============ 18 ============ -->
+<h1>18. Kết luận và bước tiếp theo</h1>
+<p>Nền tảng gồm Company Brain, Agent Runtime, Metrics Engine, Policy &amp; Approval, Dashboard và lớp điều phối (Playbook → Router → AI CEO). Agent được định nghĩa bằng cấu hình nên có thể mở rộng cho bất kỳ bộ phận nào. Hệ thống tính số, AI diễn giải, Policy kiểm soát quyền, con người phê duyệt việc quan trọng.</p>
+<div class="box">Bước tiếp theo: thực hiện Giai đoạn 0 — chọn use case đầu tiên, chốt các quyết định 1–7, hoàn thiện Agent Spec, interface Connector/Tool/Metric, state machine và ERD giai đoạn 1. Sau đó triển khai MVP để có báo cáo tự động đầu tiên trong khoảng 4–6 tuần.</div>
+
+</body>
+</html>

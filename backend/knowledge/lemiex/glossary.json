@@ -1,0 +1,15 @@
+{
+  "terms": [
+    { "id": "order", "label": "Đơn hàng", "meaning": "Header của một yêu cầu fulfillment hoặc gói hàng; không đồng nghĩa một sản phẩm." },
+    { "id": "item", "label": "Item", "meaning": "Một dòng sản phẩm vận hành. Item row không luôn bằng số lượng vật lý." },
+    { "id": "quantity", "label": "Số lượng", "meaning": "Số đơn vị vật lý; phải tính bằng tổng order_items.quantity." },
+    { "id": "production", "label": "Phân bổ phôi", "meaning": "Nhu cầu và trạng thái mapping kho của item; không phải tiến độ QC hoặc đóng gói." },
+    { "id": "workflow", "label": "Tiến độ công đoạn", "meaning": "Tiến độ theo từng item, vị trí và stage staff, qc, packing, shipout." },
+    { "id": "shipout", "label": "Xuất hàng", "meaning": "Xưởng hoàn tất công đoạn đưa kiện ra vận chuyển; không đồng nghĩa khách đã nhận hàng." },
+    { "id": "delivered", "label": "Đã giao", "meaning": "Carrier xác nhận giao thành công qua tracking; khác shipout." },
+    { "id": "backlog", "label": "Công việc tồn", "meaning": "Đơn hợp lệ chưa ở trạng thái kết thúc tại thời điểm snapshot." },
+    { "id": "remake", "label": "Làm lại", "meaning": "Một lần ghi nhận làm lại của item; một item có thể có nhiều lần remake." },
+    { "id": "total_cost", "label": "Phí fulfillment đã tính", "meaning": "Khoản phí hiện tính cho seller; không phải GMV bán lẻ hoặc lợi nhuận." },
+    { "id": "paid_cost", "label": "Phí đã chốt thu", "meaning": "Snapshot khoản đã chốt hoặc thu cho order; nên đối chiếu ledger khi hỏi dòng tiền." }
+  ]
+}

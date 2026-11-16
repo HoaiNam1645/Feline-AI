@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feline AI - Phân quyền và chức năng theo role v1.0</title>
+  <link rel="stylesheet" href="role-document-print.css">
+</head>
+<body>
+<h1>Feline AI — Đặc tả chức năng và phân quyền theo role</h1>
+<p><strong>Phiên bản:</strong> 1.0<br><strong>Ngày chốt:</strong> 02/11/2026<br><strong>Trạng thái:</strong> Đã chốt để triển khai<br><strong>Phạm vi:</strong> Dashboard, API, Agent Runtime, dữ liệu, báo cáo, audit và phê duyệt</p>
+<hr>
+<h2>1. Mục đích</h2>
+<p>Tài liệu này chốt mô hình người dùng và chức năng theo role cho nền tảng Feline AI. Mục tiêu là:</p>
+<ul>
+<li>Quản lý được nhiều AI theo từng domain, không thiết kế riêng cho Lemiex AI.</li>
+<li>Giới hạn agent, capability và dữ liệu theo đúng trách nhiệm người dùng.</li>
+<li>Cho phép Manager tự quản lý User trong phạm vi được Admin giao nhưng không thể tự nâng quyền.</li>
+<li>Giữ toàn bộ thay đổi quyền, lần chạy AI, tool call và phê duyệt trong audit log.</li>
+<li>Làm nguồn chuẩn cho thiết kế database, API, Dashboard và kiểm thử phân quyền.</li>
+</ul>
+<h2>2. Kết luận sau khi rà soát tài liệu cũ</h2>
+<h3>2.1. Các nội dung tiếp tục giữ nguyên</h3>
+<ul>
+<li>Dashboard responsive là kênh quản trị chính; truy cập từ xa qua Tailscale và vẫn phải đăng nhập riêng.</li>
+<li>Agent không truy cập trực tiếp database nguồn và không tự viết SQL.</li>
+<li>Metrics Engine định nghĩa KPI dùng chung cho Agent và Dashboard.</li>
+<li>Data Gateway/connector là cổng dữ liệu; tài khoản nguồn ưu tiên chỉ đọc.</li>
+<li>Tool chạy qua allowlist, có audit và chịu kiểm soát bởi mức rủi ro <code>R0–R3</code>.</li>
+<li>API key, mật khẩu và secret không xuất hiện trong mã nguồn, prompt hoặc response frontend.</li>
+</ul>
+<h3>2.2. Quyết định mới thay thế nội dung cũ</h3>
+<table>
+<thead>
+<tr>
+<th>Nội dung cũ</th>
+<th>Quyết định mới</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>“Group xem tất cả”</td>
+<td>Không còn là chính sách chung. Mỗi người chỉ xem agent và data scope được cấp.</td>
+</tr>
+<tr>
+<td>Role và phân quyền dự kiến ở Giai đoạn 3</td>
+<td>Đưa lên triển khai ngay sau Dashboard nền tảng vì hệ thống đã định hướng nhiều agent.</td>
+</tr>
+<tr>
+<td>Dashboard tối giản cho một Agent</td>
+<td>Dashboard cấp nền tảng hiển thị nhiều agent; mỗi agent có menu và dữ liệu riêng.</td>
+</tr>
+<tr>
+<td>Người dùng/vai trò chưa chốt</td>
+<td>Chốt 3 role: <code>Admin</code>, <code>Manager</code>, <code>User</code>.</td>
+</tr>
+</tbody></table>
+<h3>2.3. Telegram và kênh nhóm</h3>
+<ul>
+<li>Báo cáo gửi vào group chỉ được chứa data scope mà toàn bộ thành viên hợp lệ trong group đều được phép xem.</li>
+<li>Hỏi đáp có dữ liệu phân quyền riêng phải thực hiện qua Dashboard hoặc private chat đã liên kết tài khoản.</li>
+<li>Không dùng một group chung để trả dữ liệu nhạy cảm khác nhau theo từng người.</li>
+<li>Khi triển khai Telegram, <code>telegram_user_id</code> phải liên kết với một tài khoản Feline AI đang hoạt động.</li>
+</ul>
+<h2>3. Ba role đã chốt</h2>
+<h3>3.1. Admin — toàn quyền nền tảng</h3>
+<p>Admin quản lý toàn bộ nền tảng, người dùng, agent, nguồn dữ liệu, cấu hình, audit và chính sách.</p>
+<p>Admin được phép:</p>
+<ul>
+<li>Tạo, sửa, bật/tắt và gán chủ sở hữu cho agent.</li>
+<li>Tạo tài khoản, đổi role, khóa tài khoản và thu hồi phiên đăng nhập.</li>
+<li>Gán agent, capability, data scope và action cho Manager/User.</li>
+<li>Quản lý connector, lịch chạy, ngân sách, model và cấu hình hệ thống.</li>
+<li>Xem audit toàn hệ thống, usage và chi phí.</li>
+<li>Phê duyệt hành động theo chính sách <code>R1–R3</code>.</li>
+</ul>
+<p>Giới hạn bắt buộc:</p>
+<ul>
+<li>Không được xóa hoặc hạ quyền Admin cuối cùng.</li>
+<li>“Toàn quyền” không bỏ qua hard safety: không SQL tự do, không bypass tool allowlist, không tự động mở PII đã bị loại khỏi source view.</li>
+<li>Secret chỉ hiển thị trạng thái đã cấu hình; giá trị hiện tại không được trả lại frontend.</li>
+</ul>
+<h3>3.2. Manager — quản lý theo Agent</h3>
+<p>Manager chỉ quản lý các agent mà Admin đã giao.</p>
+<p>Manager được phép trong agent được giao:</p>
+<ul>
+<li>Xem dashboard, báo cáo, dữ liệu và audit theo data scope của chính mình.</li>
+<li>Chạy capability được cấp.</li>
+<li>Gán User vào agent và cấp quyền nằm trong phạm vi Manager đang sở hữu.</li>
+<li>Thu hồi quyền User trong agent mình quản lý.</li>
+<li>Xem usage, lỗi và hoạt động của agent được giao.</li>
+<li>Phê duyệt <code>R1</code>; có thể phê duyệt <code>R2</code> nếu Admin cấp action <code>approve</code> và Policy cho phép.</li>
+</ul>
+<p>Manager không được phép:</p>
+<ul>
+<li>Tạo Admin hoặc Manager khác.</li>
+<li>Tự thêm agent/data/capability cho chính mình.</li>
+<li>Cấp cho User quyền lớn hơn phạm vi của mình.</li>
+<li>Xem hoặc sửa API key, mật khẩu connector và secret.</li>
+<li>Thay đổi cấu hình toàn nền tảng.</li>
+<li>Phê duyệt <code>R3</code>.</li>
+</ul>
+<h3>3.3. User — sử dụng theo Agent và Data Scope</h3>
+<p>User chỉ thấy và sử dụng agent, capability, dữ liệu được cấp cụ thể.</p>
+<p>User có thể được cấp:</p>
+<ul>
+<li>Xem dashboard hoặc báo cáo của agent.</li>
+<li>Chạy capability <code>R0</code> được cho phép.</li>
+<li>Hỏi đáp trong phạm vi metric/query đã duyệt.</li>
+<li>Xem lịch sử chạy của chính mình hoặc lịch sử được chia sẻ trong agent.</li>
+<li>Xuất báo cáo nếu có action <code>export</code>.</li>
+</ul>
+<p>User không được phép:</p>
+<ul>
+<li>Cấp quyền cho người khác.</li>
+<li>Quản lý agent, connector, model hoặc ngân sách.</li>
+<li>Xem secret hoặc audit toàn hệ thống.</li>
+<li>Phê duyệt hành động <code>R1–R3</code>.</li>
+<li>Truy cập dữ liệu ngoài data scope dù biết URL hoặc run ID.</li>
+</ul>
+<h2>4. Role không phải là toàn bộ quyền</h2>
+<p>Quyết định truy cập phải được tính từ năm thành phần:</p>
+<pre><code class="language-text">User + Role + Agent + Capability + Data Scope + Action
+</code></pre>
+<p>Role xác định trần quản trị. Quyền thực tế được xác định theo từng assignment.</p>
+<p>Ví dụ:</p>
+<pre><code class="language-text">Manager A
+  Agent: Lemiex AI
+  Capabilities: daily-review, backlog-investigation
+  Data scopes: operations-basic, operations-costs
+  Actions: view, run, export, manage-members, approve-r1
+
+User B
+  Agent: Lemiex AI
+  Capabilities: daily-review
+  Data scopes: operations-basic
+  Actions: view
+</code></pre>
+<p>User B không thấy chi phí, không chạy backlog investigation và không quản lý thành viên dù cùng truy cập Lemiex AI.</p>
+<h2>5. Mô hình Data Scope</h2>
+<p>Một data scope có thể giới hạn theo:</p>
+<table>
+<thead>
+<tr>
+<th>Thành phần</th>
+<th>Ví dụ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Domain</td>
+<td>Xưởng Lemiex, Sales, Finance</td>
+</tr>
+<tr>
+<td>Nguồn</td>
+<td><code>shop-test</code>, hệ thống bán hàng, kế toán</td>
+</tr>
+<tr>
+<td>Dataset/metric</td>
+<td>KPI cơ bản, backlog, chi phí, lợi nhuận</td>
+</tr>
+<tr>
+<td>Field</td>
+<td>Ẩn tên, email, địa chỉ, API key</td>
+</tr>
+<tr>
+<td>Row scope</td>
+<td>Xưởng, team, kênh bán hàng, khu vực</td>
+</tr>
+<tr>
+<td>Time range</td>
+<td>30 ngày, 12 tháng, không giới hạn</td>
+</tr>
+<tr>
+<td>Aggregation</td>
+<td>Chỉ số tổng hợp hoặc chi tiết đơn</td>
+</tr>
+</tbody></table>
+<h3>5.1. Data scope ban đầu cho Lemiex AI</h3>
+<table>
+<thead>
+<tr>
+<th>Scope ID</th>
+<th>Nội dung</th>
+<th>Mặc định</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>lemiex.operations.basic</code></td>
+<td>Đơn, item, workflow, shipout, backlog, remake, data quality</td>
+<td>Manager/User được cấp</td>
+</tr>
+<tr>
+<td><code>lemiex.operations.costs</code></td>
+<td>Chi phí fulfillment đã được duyệt</td>
+<td>Chỉ cấp riêng</td>
+</tr>
+<tr>
+<td><code>lemiex.operations.detail</code></td>
+<td>Chi tiết vận hành theo đơn qua view đã loại PII</td>
+<td>Chỉ cấp khi cần</td>
+</tr>
+<tr>
+<td><code>lemiex.operations.audit</code></td>
+<td>Run, tool call, token và lỗi trong Lemiex AI</td>
+<td>Manager được cấp; User tùy chọn</td>
+</tr>
+</tbody></table>
+<p>Không role nào được truy cập trực tiếp bảng nguồn hoặc PII đã bị loại khỏi connector view.</p>
+<h2>6. Danh mục action chuẩn</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Ý nghĩa</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>view</code></td>
+<td>Xem màn hình, báo cáo hoặc dữ liệu</td>
+</tr>
+<tr>
+<td><code>run</code></td>
+<td>Chạy capability</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td>Xuất/tải báo cáo</td>
+</tr>
+<tr>
+<td><code>approve</code></td>
+<td>Duyệt hành động theo Policy</td>
+</tr>
+<tr>
+<td><code>manage_members</code></td>
+<td>Gán/thu hồi User trong agent</td>
+</tr>
+<tr>
+<td><code>manage_agent</code></td>
+<td>Sửa cấu hình agent</td>
+</tr>
+<tr>
+<td><code>manage_data_scope</code></td>
+<td>Tạo/sửa phạm vi dữ liệu</td>
+</tr>
+<tr>
+<td><code>manage_sources</code></td>
+<td>Quản lý connector và secret</td>
+</tr>
+<tr>
+<td><code>view_audit</code></td>
+<td>Xem audit được phép</td>
+</tr>
+<tr>
+<td><code>view_cost</code></td>
+<td>Xem token, usage và chi phí</td>
+</tr>
+<tr>
+<td><code>manage_platform</code></td>
+<td>Cấu hình toàn nền tảng</td>
+</tr>
+</tbody></table>
+<p>Mặc định từ chối nếu không có assignment phù hợp.</p>
+<h2>7. Ma trận chức năng theo role</h2>
+<p>Ký hiệu: <code>Toàn bộ</code> = toàn nền tảng; <code>Theo scope</code> = chỉ trong assignment; <code>Không</code> = không được phép.</p>
+<table>
+<thead>
+<tr>
+<th>Nhóm chức năng</th>
+<th align="right">Admin</th>
+<th align="right">Manager</th>
+<th align="right">User</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Đăng nhập, đổi mật khẩu, đăng xuất</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Cá nhân</td>
+<td align="right">Cá nhân</td>
+</tr>
+<tr>
+<td>Xem Dashboard chung</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Agent được giao</td>
+<td align="right">Agent được cấp</td>
+</tr>
+<tr>
+<td>Xem danh mục Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Agent được giao</td>
+<td align="right">Agent được cấp</td>
+</tr>
+<tr>
+<td>Xem Dashboard Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Theo scope</td>
+<td align="right">Theo scope</td>
+</tr>
+<tr>
+<td>Xem báo cáo</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Theo data scope</td>
+<td align="right">Theo data scope</td>
+</tr>
+<tr>
+<td>Xem KPI/metric</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Theo data scope</td>
+<td align="right">Theo data scope</td>
+</tr>
+<tr>
+<td>Xem chi phí nghiệp vụ</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Khi được cấp</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Xem token/chi phí AI</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Agent được giao</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Chạy capability R0</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Khi được cấp</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Hỏi đáp với Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Khi được cấp</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Xuất báo cáo</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Khi được cấp</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Xem run/tool call</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Agent được giao</td>
+<td align="right">Run của mình hoặc được chia sẻ</td>
+</tr>
+<tr>
+<td>Xem audit toàn hệ thống</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Xem audit theo Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Agent được giao</td>
+<td align="right">Khi được cấp</td>
+</tr>
+<tr>
+<td>Tạo/sửa/bật tắt Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Quản lý capability/tool allowlist</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Quản lý User trong Agent</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Theo scope</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Tạo hoặc khóa User</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Gán role Admin/Manager</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Gán Agent/Data Scope</td>
+<td align="right">Toàn bộ</td>
+<td align="right">User trong phạm vi của mình</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Quản lý connector/secret</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Quản lý model, budget, scheduler</td>
+<td align="right">Toàn bộ</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Phê duyệt R1</td>
+<td align="right">Có</td>
+<td align="right">Khi được cấp</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Phê duyệt R2</td>
+<td align="right">Có</td>
+<td align="right">Khi Policy + Admin cho phép</td>
+<td align="right">Không</td>
+</tr>
+<tr>
+<td>Phê duyệt R3</td>
+<td align="right">Có, bắt buộc xác thực lại</td>
+<td align="right">Không</td>
+<td align="right">Không</td>
+</tr>
+</tbody></table>
+<h2>8. Chức năng Dashboard theo role</h2>
+<h3>8.1. Menu Admin</h3>
+<pre><code class="language-text">Tổng quan
+  - Chung
+  - Hoạt động AI
+AI Agents
+  - Từng Agent
+      - Tổng quan
+      - Báo cáo
+      - Dữ liệu/Backlog
+      - Run history
+Quản trị
+  - Người dùng
+  - Role &amp; quyền
+  - Nguồn dữ liệu
+  - Agent Registry
+  - Audit
+  - Usage &amp; chi phí
+  - Cấu hình
+</code></pre>
+<h3>8.2. Menu Manager</h3>
+<pre><code class="language-text">Tổng quan
+  - Chung trong phạm vi được giao
+  - Hoạt động AI
+AI Agents
+  - Chỉ các Agent được giao
+      - Tổng quan
+      - Báo cáo
+      - Dữ liệu được phép
+      - Thành viên
+      - Audit theo Agent
+</code></pre>
+<h3>8.3. Menu User</h3>
+<pre><code class="language-text">Tổng quan
+AI Agents
+  - Chỉ các Agent được cấp
+      - Các submenu tương ứng action/data scope
+Lịch sử của tôi
+</code></pre>
+<p>Frontend chỉ ẩn menu để cải thiện trải nghiệm; backend vẫn phải kiểm tra quyền ở mọi API.</p>
+<h2>9. Quy tắc cấp và thu hồi quyền</h2>
+<ol>
+<li>Mặc định từ chối.</li>
+<li>Admin có thể cấp mọi assignment hợp lệ.</li>
+<li>Manager chỉ cấp User trong agent/data/action mà Manager đang sở hữu.</li>
+<li>Manager không thể cấp <code>manage_agent</code>, <code>manage_sources</code>, <code>manage_platform</code> hoặc role cao hơn.</li>
+<li>Thu hồi agent phải đồng thời thu hồi capability, data scope và phiên truy cập liên quan.</li>
+<li>Tài khoản bị khóa phải mất quyền ở request kế tiếp; không chờ token hết hạn dài.</li>
+<li>Mọi thay đổi quyền lưu người thực hiện, trước/sau thay đổi, lý do và thời gian.</li>
+<li>Quyền tạm thời phải có <code>expires_at</code> và tự hết hạn.</li>
+<li>Không cho phép người dùng tự sửa assignment của chính mình.</li>
+</ol>
+<h2>10. Quan hệ với mức rủi ro AI R0–R3</h2>
+<p>Role người dùng và risk level là hai lớp độc lập:</p>
+<table>
+<thead>
+<tr>
+<th>Risk</th>
+<th>Ví dụ</th>
+<th>Quy tắc role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>R0</td>
+<td>Đọc dữ liệu, tính KPI, soạn báo cáo</td>
+<td>User/Manager chạy khi được cấp <code>run</code></td>
+</tr>
+<tr>
+<td>R1</td>
+<td>Tạo task, thông báo nội bộ</td>
+<td>Manager/Admin có thể duyệt theo Policy</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Gửi ra ngoài, thay đổi giá trong hạn mức</td>
+<td>Admin hoặc Manager được cấp rõ ràng</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Chuyển tiền, xóa dữ liệu, thay đổi quyền</td>
+<td>Chỉ Admin; xác thực lại, có thể yêu cầu hai người duyệt</td>
+</tr>
+</tbody></table>
+<p>Role không tự động cho phép hành động. Policy Engine vẫn kiểm tra agent, capability, tool, tham số, hạn mức và approval.</p>
+<h2>11. Service Identity</h2>
+<p>API, worker, scheduler và connector sử dụng <code>Service Identity</code>, không dùng tài khoản người thật.</p>
+<ul>
+<li>Không xuất hiện trong lựa chọn role trên Dashboard.</li>
+<li>Chỉ có permission kỹ thuật tối thiểu.</li>
+<li>Credential có vòng đời và có thể rotate.</li>
+<li>Mọi job vẫn ghi <code>service_identity_id</code> và <code>triggered_by_user_id</code> nếu do người dùng kích hoạt.</li>
+</ul>
+<h2>12. Mô hình dữ liệu cần triển khai</h2>
+<p>Các entity tối thiểu:</p>
+<pre><code class="language-text">User
+RoleAssignment
+Session
+AgentDefinition
+CapabilityDefinition
+DataScope
+AgentAccessGrant
+ApprovalGrant
+AccessAuditEvent
+ServiceIdentity
+</code></pre>
+<p><code>AgentAccessGrant</code> tối thiểu gồm:</p>
+<pre><code class="language-text">user_id
+agent_id
+capability_ids[]
+data_scope_ids[]
+actions[]
+granted_by
+expires_at
+created_at
+revoked_at
+</code></pre>
+<p>Không lưu permission dưới dạng chuỗi không kiểm soát; dùng danh mục action có version.</p>
+<h2>13. API chức năng cần có</h2>
+<h3>Xác thực</h3>
+<ul>
+<li><code>POST /auth/login</code></li>
+<li><code>POST /auth/logout</code></li>
+<li><code>POST /auth/refresh</code></li>
+<li><code>GET /auth/me</code></li>
+<li><code>POST /auth/change-password</code></li>
+</ul>
+<h3>Agent Registry</h3>
+<ul>
+<li><code>GET /agents</code></li>
+<li><code>GET /agents/:agentId</code></li>
+<li><code>GET /agents/:agentId/capabilities</code></li>
+<li><code>GET /agents/:agentId/my-access</code></li>
+</ul>
+<h3>Quản lý người dùng và quyền</h3>
+<ul>
+<li><code>GET /admin/users</code></li>
+<li><code>POST /admin/users</code></li>
+<li><code>PATCH /admin/users/:id</code></li>
+<li><code>POST /admin/access-grants</code></li>
+<li><code>PATCH /admin/access-grants/:id</code></li>
+<li><code>DELETE /admin/access-grants/:id</code></li>
+<li><code>GET /admin/access-audit</code></li>
+</ul>
+<p>Manager dùng endpoint scope theo agent, không dùng API toàn hệ thống:</p>
+<ul>
+<li><code>GET /agents/:agentId/members</code></li>
+<li><code>POST /agents/:agentId/members</code></li>
+<li><code>PATCH /agents/:agentId/members/:userId</code></li>
+<li><code>DELETE /agents/:agentId/members/:userId</code></li>
+</ul>
+<h2>14. Quy tắc bảo mật bắt buộc</h2>
+<ul>
+<li>Mật khẩu hash bằng Argon2id hoặc bcrypt với cấu hình được kiểm thử.</li>
+<li>Khóa tạm thời sau nhiều lần đăng nhập sai; mọi lần sai ghi audit và rate limit.</li>
+<li>Session/cookie <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code>; CSRF protection nếu dùng cookie.</li>
+<li>Không tin role hoặc data scope do frontend gửi lên.</li>
+<li>Mọi truy vấn dữ liệu phải nhận scope từ access context phía server.</li>
+<li>Object-level authorization: biết <code>runId</code>, <code>reportId</code> hoặc <code>agentId</code> không đồng nghĩa được xem.</li>
+<li>Secret mã hóa khi lưu, mask trên UI, không ghi log.</li>
+<li>PII bị loại ở connector/view vẫn giữ nguyên, Admin không mặc định mở lại.</li>
+<li>Remote access qua Tailscale; không mở database, Redis hoặc trang quản trị trực tiếp ra Internet.</li>
+</ul>
+<h2>15. Audit bắt buộc</h2>
+<p>Phải ghi audit cho:</p>
+<ul>
+<li>Đăng nhập thành công/thất bại, đăng xuất, khóa tài khoản.</li>
+<li>Tạo/sửa/khóa User.</li>
+<li>Đổi role, cấp hoặc thu hồi access grant.</li>
+<li>Chạy agent/capability, tool call, model, token và chi phí.</li>
+<li>Xem hoặc xuất data scope nhạy cảm.</li>
+<li>Tạo và quyết định approval.</li>
+<li>Thay đổi connector, model, budget, scheduler hoặc Agent Registry.</li>
+</ul>
+<p>Audit bảo mật không cho Manager/User sửa hoặc xóa.</p>
+<h2>16. Thứ tự triển khai đã chốt</h2>
+<h3>Đợt A — nền phân quyền</h3>
+<ol>
+<li>User, đăng nhập, session và khóa đăng nhập sai.</li>
+<li>Ba role <code>Admin</code>, <code>Manager</code>, <code>User</code>.</li>
+<li>Agent Registry động và API <code>/agents</code>.</li>
+<li>Data Scope và Access Grant.</li>
+<li>Guard kiểm tra Agent + Capability + Data Scope + Action.</li>
+<li>Dashboard sinh menu từ access context.</li>
+</ol>
+<h3>Đợt B — quản trị</h3>
+<ol>
+<li>Màn hình người dùng và phân quyền Admin.</li>
+<li>Màn hình thành viên theo Agent cho Manager.</li>
+<li>Audit thay đổi quyền.</li>
+<li>Usage và chi phí theo Agent.</li>
+</ol>
+<h3>Đợt C — hành động có phê duyệt</h3>
+<ol>
+<li>Policy Engine <code>R1–R3</code>.</li>
+<li>Approval inbox.</li>
+<li>Xác thực lại cho R3.</li>
+<li>Quyền tạm thời và hạn mức.</li>
+</ol>
+<h2>17. Tiêu chí nghiệm thu</h2>
+<ul>
+<li>Admin thấy toàn bộ agent; Manager/User chỉ thấy agent được cấp.</li>
+<li>API trả <code>403</code> khi truy cập agent, report, run hoặc data scope ngoài quyền, kể cả gọi URL trực tiếp.</li>
+<li>Manager không thể cấp User quyền vượt quá phạm vi của mình.</li>
+<li>User không thể gọi capability không được cấp.</li>
+<li>Thu hồi quyền có hiệu lực ngay ở request tiếp theo.</li>
+<li>Menu Dashboard khớp access context nhưng không được dùng như lớp bảo mật duy nhất.</li>
+<li>Mọi lần cấp/thu hồi quyền có audit trước/sau.</li>
+<li>Secret không xuất hiện trong API response, frontend bundle hoặc log.</li>
+<li>Kiểm thử ngang quyền và leo thang quyền đều đạt.</li>
+</ul>
+<h2>18. Quyết định cuối cùng</h2>
+<p>Feline AI sử dụng đúng ba role người dùng:</p>
+<ol>
+<li><strong>Admin:</strong> toàn quyền quản trị nền tảng.</li>
+<li><strong>Manager:</strong> quản lý theo Agent, chỉ trong phạm vi Admin giao.</li>
+<li><strong>User:</strong> sử dụng theo Agent, Capability, Data Scope và Action được cấp.</li>
+</ol>
+<p>Mọi quyền mặc định bị từ chối. Manager không thể tự nâng quyền hoặc cấp vượt phạm vi. Hard safety của dữ liệu và Agent Runtime áp dụng cho tất cả role, kể cả Admin.</p>
+</body>
+</html>

@@ -1,0 +1,23 @@
+[Unit]
+Description=Feline AI read-only tunnel to TikTok MySQL
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=thao
+ExecStart=/usr/bin/ssh -NT \
+  -i /home/thao/.ssh/feline_tiktok_tunnel \
+  -o BatchMode=yes \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -o StrictHostKeyChecking=yes \
+  -L 172.17.0.1:13306:127.0.0.1:3306 \
+  feline-tunnel@165.22.58.187
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

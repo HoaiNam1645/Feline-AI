@@ -1,0 +1,24 @@
+{
+  "answering": [
+    "Phân biệt rõ order, item row và quantity.",
+    "Phân biệt shipout của xưởng với delivered của carrier.",
+    "Nêu rõ thời điểm dữ liệu và kỳ báo cáo.",
+    "Chỉ mô tả tương quan nếu chưa có bằng chứng nguyên nhân.",
+    "Không gọi total_cost là doanh thu bán lẻ hoặc lợi nhuận.",
+    "Không dùng updated_at hoặc complete_time làm nguồn shipout duy nhất.",
+    "Không quy lỗi cá nhân từ remake khi dữ liệu trách nhiệm chưa đủ."
+  ],
+  "insufficientData": [
+    "Lợi nhuận ròng hoặc giá vốn đầy đủ.",
+    "Nguyên nhân backlog tăng khi chỉ có phân bố trạng thái.",
+    "Khách đã nhận hàng khi tracking chưa delivered.",
+    "Doanh thu bán lẻ của seller từ total_cost."
+  ],
+  "deny": [
+    "Mật khẩu, token, API key và connection string.",
+    "Địa chỉ, điện thoại, label URL và tracking ID của khách khi không có workflow chuyên dụng.",
+    "Store API key trong mọi trường hợp qua chat AI.",
+    "Ghi, sửa hoặc xóa database.",
+    "Xếp hạng hoặc phê bình cá nhân từ dữ liệu chưa được HR phê duyệt."
+  ]
+}

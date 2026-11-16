@@ -1,0 +1,15 @@
+{
+  "entities": [
+    { "id": "orders", "purpose": "Đơn, trạng thái tổng, phí và vận chuyển", "allowedForAi": "aggregate_only", "sensitive": ["recipient_pii", "shipping_label", "tracking_id", "notes"] },
+    { "id": "order_items", "purpose": "Sản phẩm và số lượng trong đơn", "allowedForAi": "aggregate_only", "sensitive": ["mockup", "pdf", "external_item_id"] },
+    { "id": "productions", "purpose": "Nhu cầu và mapping phôi kho", "allowedForAi": "aggregate_only", "sensitive": [] },
+    { "id": "order_item_workflows", "purpose": "Tiến độ từng item, vị trí và công đoạn", "allowedForAi": "aggregate_only", "sensitive": ["completed_by"] },
+    { "id": "order_item_remakes", "purpose": "Mỗi lần báo lỗi và làm lại", "allowedForAi": "aggregate_only", "sensitive": ["operator_id", "responsible_name", "reason", "workflow_snapshot"] },
+    { "id": "tracking", "purpose": "Trạng thái vận chuyển từ carrier", "allowedForAi": "aggregate_only", "sensitive": ["tracking_id", "ssk"] },
+    { "id": "timeline", "purpose": "Nhật ký sự kiện nghiệp vụ", "allowedForAi": "restricted", "sensitive": ["owner_id", "note"] },
+    { "id": "stores", "purpose": "Store thuộc seller", "allowedForAi": "restricted", "sensitive": ["api_key"] },
+    { "id": "products", "purpose": "Danh mục sản phẩm đang hoạt động của xưởng", "allowedForAi": "management_role_only", "sensitive": ["mockup"] },
+    { "id": "product_variants", "purpose": "SKU, màu, size, tồn ghi nhận và tồn khả dụng", "allowedForAi": "management_role_only", "sensitive": ["supplier_price", "url_mockup"] },
+    { "id": "transactions", "purpose": "Thu tiền, hoàn tiền và biến động ledger", "allowedForAi": "financial_role_only", "sensitive": ["wallet_balance", "seller_finance"] }
+  ]
+}

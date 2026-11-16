@@ -1,0 +1,23 @@
+{
+  "metrics": [
+    { "id": "orders.new", "topic": "intake", "label": "Đơn mới", "definition": "Số order hợp lệ được tạo trong kỳ", "unit": "đơn", "availability": "available" },
+    { "id": "items.new", "topic": "intake", "label": "Item mới", "definition": "Số item row hợp lệ trong kỳ", "unit": "item", "availability": "available" },
+    { "id": "quantity.new", "topic": "intake", "label": "Số sản phẩm mới", "definition": "Tổng quantity của item hợp lệ", "unit": "sản phẩm", "availability": "available" },
+    { "id": "workflow.completed", "topic": "workflow", "label": "Hoàn tất công đoạn", "definition": "Order và item hoàn tất toàn bộ workflow row của stage trong kỳ", "unit": "đơn và item", "availability": "available" },
+    { "id": "shipout.orders", "topic": "shipout", "label": "Đơn shipout", "definition": "Order hoàn tất toàn bộ workflow shipout trong kỳ", "unit": "đơn", "availability": "available" },
+    { "id": "shipout.items", "topic": "shipout", "label": "Item shipout", "definition": "Item hoàn tất toàn bộ vị trí shipout trong kỳ", "unit": "item", "availability": "available" },
+    { "id": "backlog.orders.current", "topic": "backlog", "label": "Backlog hiện tại", "definition": "Đơn chưa final tại snapshot, loại deleted và test order", "unit": "đơn", "availability": "available" },
+    { "id": "backlog.age", "topic": "backlog", "label": "Tuổi backlog", "definition": "Thời gian từ lúc tạo đơn đến snapshot", "unit": "giờ", "availability": "available" },
+    { "id": "remake.events", "topic": "remake", "label": "Số lần remake", "definition": "Mỗi row remake là một lần làm lại", "unit": "lần", "availability": "available" },
+    { "id": "remake.quantity", "topic": "remake", "label": "Số lượng remake", "definition": "Tổng quantity cần làm lại", "unit": "sản phẩm", "availability": "available" },
+    { "id": "inventory.products", "topic": "inventory", "label": "Danh mục sản phẩm", "definition": "Sản phẩm đang hoạt động, chưa bị xóa và có biến thể đang hoạt động", "unit": "sản phẩm", "availability": "available_restricted" },
+    { "id": "inventory.stock", "topic": "inventory", "label": "Tồn ghi nhận", "definition": "Tổng stock của biến thể đang hoạt động", "unit": "sản phẩm", "availability": "available_restricted" },
+    { "id": "inventory.reserved", "topic": "inventory", "label": "Đang giữ", "definition": "Production pending của đơn còn hoạt động đang giữ phôi", "unit": "sản phẩm", "availability": "available_restricted" },
+    { "id": "inventory.available", "topic": "inventory", "label": "Tồn khả dụng", "definition": "Tồn ghi nhận trừ lượng đang giữ", "unit": "sản phẩm", "availability": "available_restricted" },
+    { "id": "tracking.delivered", "topic": "tracking", "label": "Carrier giao thành công", "definition": "Tracking được ghi nhận delivered", "unit": "đơn", "availability": "planned" },
+    { "id": "charges.calculated", "topic": "finance", "label": "Phí fulfillment đã tính", "definition": "Tổng total_cost của các đơn hợp lệ được tạo trong kỳ", "unit": "USD", "availability": "available_restricted" },
+    { "id": "charges.confirmed", "topic": "finance", "label": "Doanh thu fulfillment đã chốt", "definition": "Tổng paid_cost của các đơn hợp lệ được tạo trong kỳ; không phải dòng tiền ledger theo ngày thanh toán", "unit": "USD", "availability": "available_restricted" },
+    { "id": "charges.collected", "topic": "finance", "label": "Tiền thực thu theo ledger", "definition": "Cần bảng transaction và quy ước dấu amount; replica hiện chưa có", "unit": "USD", "availability": "unavailable" },
+    { "id": "profit.net", "topic": "finance", "label": "Lợi nhuận ròng", "definition": "Chưa đủ dữ liệu giá vốn, nhân công, hao hụt, carrier, overhead và thuế", "unit": "USD", "availability": "unavailable" }
+  ]
+}
