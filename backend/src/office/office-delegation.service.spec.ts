@@ -11,6 +11,9 @@ function session(access: AuthenticatedSession["access"]): AuthenticatedSession {
       email: "director@example.com",
       displayName: "Giám đốc",
       departmentCode: "EXECUTIVE",
+      departmentId: null,
+      teamId: null,
+      passwordResetRequired: false,
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     },

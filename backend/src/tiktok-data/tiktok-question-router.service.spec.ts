@@ -8,7 +8,7 @@ describe("TiktokQuestionRouterService - 15 câu hỏi nghiệm thu", () => {
     ["Doanh số đơn, doanh thu ước tính và tiền TikTok quyết toán tháng này khác nhau bao nhiêu?", "finance"],
     ["Team nào có contribution profit cao nhất tuần này?", "team"],
     ["Team G9B có những ai?", "team"],
-    ["Seller A có bao nhiêu store active, store nào mất auth?", "team"],
+    ["Seller A có bao nhiêu store active, store nào mất auth?", "stores"],
     ["Đơn 5768029137501234567 gồm sản phẩm nào, thuộc store nào và tracking ra sao?", "orders"],
     ["Có bao nhiêu đơn Pending hoặc On Hold quá SLA?", "fulfillment"],
     ["Vendor fulfillment nào có cost/order và refund rate cao nhất?", "fulfillment"],
@@ -28,5 +28,26 @@ describe("TiktokQuestionRouterService - 15 câu hỏi nghiệm thu", () => {
 
   it("giữ câu hỏi quy trình ở Knowledge Hub", () => {
     expect(router.route("Quy trình duyệt nội dung TikTok như thế nào?", now)).toEqual({ kind: "knowledge" });
+  });
+
+  it("hiểu tháng được gọi bằng số", () => {
+    expect(router.route("Tiền payout của Trịnh Văn Duy trong tháng 10", now)).toMatchObject({
+      kind: "data", domain: "finance", startDate: "2026-10-01", endDate: "2026-10-31"
+    });
+  });
+
+  it("ưu tiên store khi câu hỏi có cả seller và store", () => {
+    expect(router.route("Seller A có bao nhiêu store active, store nào mất auth?", now)).toMatchObject({ kind: "data", domain: "stores" });
+  });
+
+  it("hiểu quý và tuần trước", () => {
+    expect(router.route("Doanh thu quý 3 năm 2025", now)).toMatchObject({ startDate: "2025-07-01", endDate: "2025-09-30" });
+    expect(router.route("Team nào nhiều đơn nhất tuần trước", now)).toMatchObject({ startDate: "2026-11-02", endDate: "2026-11-08" });
+  });
+
+  it("ưu tiên danh sách đơn gần nhất dù câu hỏi có nhắc team", () => {
+    expect(router.route("Cho tôi 3 đơn hàng gần nhất của team G9B và trạng thái hiện tại", now)).toMatchObject({
+      kind: "data", domain: "orders", startDate: "2026-10-16", endDate: "2026-11-14"
+    });
   });
 });

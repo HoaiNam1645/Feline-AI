@@ -101,6 +101,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .agent-dot { width: 32px; height: 32px; border-radius: 10px; }
 .agent-dot.lemiex, .agent-dot.sales, .agent-dot.finance { color: #7a2630; background: #f0dfdc; }
 .agent-dot.tiktok { color: #286d68; background: #dcece8; }
+.agent-dot.etsy { color: #8a5a18; background: #f5e8ca; }
 .nav-parent.active .agent-dot { color: #fff8e9; background: var(--wine); }
 .agent-upcoming { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e9e1d8; }
 .agent-upcoming .nav-parent { min-height: 48px; }
@@ -185,6 +186,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   box-shadow: 0 12px 28px rgba(34,5,8,.2);
 }
 .platform-welcome button:hover, .agent-header-card button:hover, .empty-state button:hover { background: #f7db9c; transform: translateY(-1px); }
+.empty-state.analysis-state > svg { color: #7f2028; }
+.empty-state.analysis-state.is-running > svg { color: #47725b; }
+.empty-state.analysis-state p { max-width: 430px; line-height: 1.65; }
+.empty-state.analysis-state button:disabled { color: #75695e; background: #e9dfd2; box-shadow: none; transform: none; }
+.analysis-failure { max-width: 560px; margin-top: 10px; padding: 8px 11px; border: 1px solid #e5c4c1; border-radius: 8px; color: #8a3139; background: #fff4f2; font-size: 9px; line-height: 1.55; overflow-wrap: anywhere; }
 .network-visual { width: 310px; height: 230px; z-index: 1; opacity: .95; }
 .network-visual::before, .network-visual::after { border-color: rgba(239,201,116,.35); }
 .core-node { color: #661620; background: #f1ce83; }
@@ -300,6 +306,10 @@ td small { color: #76685e; font-size: 10px; }
 .platform-shell .tiktok-chat-shell .chat-bot-mini.tiktok { color: #effbf7; background: #286d68; box-shadow: none; }
 .platform-shell .tiktok-chat-shell .chat-spark.tiktok { color: #286d68; border-color: transparent; background: #e3f1ed; }
 .platform-shell .tiktok-chat-shell .chat-user-bubble { color: #f5fffb; background: #286d68; box-shadow: 0 12px 28px rgba(40,109,104,.16); }
+.platform-shell .etsy-chat-shell .chat-agent-avatar.etsy,
+.platform-shell .etsy-chat-shell .chat-bot-mini.etsy { color: #fffaf0; background: #9a6518; box-shadow: none; }
+.platform-shell .etsy-chat-shell .chat-spark.etsy { color: #8a5a18; border-color: transparent; background: #f5e8ca; }
+.platform-shell .etsy-chat-shell .chat-user-bubble { color: #fffaf0; background: #8a5a18; box-shadow: 0 12px 28px rgba(138,90,24,.16); }
 .platform-shell .ceo-chat-shell .chat-messages { background: #fff; }
 .platform-shell .ceo-chat-shell .chat-user-bubble { color: #fff8eb; background: var(--wine); box-shadow: 0 12px 28px rgba(95,19,27,.16); }
 .chat-agent-header h2 { color: var(--wine-deep); font-family: "Newsreader", serif; font-size: 18px; }

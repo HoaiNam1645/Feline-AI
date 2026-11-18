@@ -78,6 +78,8 @@ export function AdminUsersView() {
   const statusFilter = ["ALL", "ACTIVE", "LOCKED", "DISABLED"].includes(searchParams.get("status") || "")
     ? searchParams.get("status")!
     : "ALL";
+  const departmentFilter = searchParams.get("department") || "ALL";
+  const teamFilter = searchParams.get("team") || "ALL";
   const createOpen = searchParams.get("dialog") === "create";
 
   function updateQuery(updates: Record<string, string | null>, replace = false) {
@@ -118,12 +120,14 @@ export function AdminUsersView() {
     const keyword = search.trim().toLowerCase();
     return users.filter((user) => {
       const matchesKeyword = !keyword
-        || `${user.displayName} ${user.email} ${user.role} ${user.departmentCode || ""}`.toLowerCase().includes(keyword);
+        || `${user.displayName} ${user.email} ${user.role} ${user.department?.name || ""} ${user.team?.name || ""}`.toLowerCase().includes(keyword);
       const matchesRole = roleFilter === "ALL" || user.role === roleFilter;
       const matchesStatus = statusFilter === "ALL" || user.status === statusFilter;
-      return matchesKeyword && matchesRole && matchesStatus;
+      const matchesDepartment = departmentFilter === "ALL" || user.department?.id === departmentFilter;
+      const matchesTeam = teamFilter === "ALL" || user.team?.id === teamFilter;
+      return matchesKeyword && matchesRole && matchesStatus && matchesDepartment && matchesTeam;
     });
-  }, [roleFilter, search, statusFilter, users]);
+  }, [departmentFilter, roleFilter, search, statusFilter, teamFilter, users]);
   const selected = users.find((user) => user.id === selectedId) || null;
   const activeCount = users.filter((user) => user.status === "ACTIVE").length;
   const managerCount = users.filter((user) => user.role === "MANAGER").length;
@@ -151,12 +155,14 @@ export function AdminUsersView() {
       <div className="users-table-tools">
         <div className="user-search"><Search /><input value={search} onChange={(event) => updateQuery({ q: event.target.value }, true)} placeholder="Tìm theo tên, email, role..." /></div>
         <select value={roleFilter} onChange={(event) => updateQuery({ role: event.target.value })}><option value="ALL">Tất cả role</option><option value="ADMIN">Admin</option><option value="MANAGER">Manager</option><option value="USER">User</option></select>
+        <select value={departmentFilter} onChange={(event) => updateQuery({ department: event.target.value, team: null })}><option value="ALL">Tất cả phòng ban</option>{catalog?.organization.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select>
+        <select value={teamFilter} onChange={(event) => updateQuery({ team: event.target.value })} disabled={departmentFilter === "ALL"}><option value="ALL">Tất cả team</option>{catalog?.organization.find((department) => department.id === departmentFilter)?.teams?.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select>
         <select value={statusFilter} onChange={(event) => updateQuery({ status: event.target.value })}><option value="ALL">Tất cả trạng thái</option><option value="ACTIVE">Hoạt động</option><option value="LOCKED">Đang khóa</option><option value="DISABLED">Vô hiệu hóa</option></select>
         <span>{filteredUsers.length} tài khoản</span>
       </div>
       <UsersTable users={filteredUsers} onSelect={(user) => updateQuery({ user: user.id })} />
     </section>
-    {createOpen && <CreateUserDialog onClose={() => updateQuery({ dialog: null })} onCreated={async (user) => { updateQuery({ dialog: null, user: user.id }); await changed("Đã tạo tài khoản mới", user.id); }} />}
+    {createOpen && catalog && <CreateUserDialog catalog={catalog} onClose={() => updateQuery({ dialog: null })} onCreated={async (user) => { updateQuery({ dialog: null, user: user.id }); await changed("Đã tạo tài khoản mới", user.id); }} />}
     {selected && <UserDetailDrawer user={selected} catalog={catalog} onClose={() => updateQuery({ user: null })} onChanged={changed} onEditGrant={setGrantDraft} />}
     {grantDraft !== undefined && selected && catalog && <GrantDialog user={selected} catalog={catalog} grant={grantDraft} onClose={() => setGrantDraft(undefined)} onSaved={async () => { setGrantDraft(undefined); await changed("Đã cập nhật quyền truy cập", selected.id); }} />}
   </>;
@@ -167,12 +173,13 @@ function IamStat({ icon, label, value, detail, tone }: { icon: React.ReactNode; 
 }
 
 function UsersTable({ users, onSelect }: { users: ManagedUser[]; onSelect: (user: ManagedUser) => void }) {
-  return <div className="users-table-wrap"><table className="users-table"><thead><tr><th>Người dùng</th><th>Role</th><th>Trạng thái</th><th>Quyền Agent</th><th>Đăng nhập cuối</th><th>Ngày tạo</th><th /></tr></thead><tbody>{users.map((user) => <tr key={user.id} tabIndex={0} onClick={() => onSelect(user)} onKeyDown={(event) => { if (event.key === "Enter") onSelect(user); }}><td><div className="table-user"><span className={`user-avatar role-${user.role.toLowerCase()}`}>{user.displayName.slice(0, 1).toUpperCase()}</span><span><strong>{user.displayName}</strong><small>{user.email}</small></span></div></td><td><em className={`role-tag ${user.role.toLowerCase()}`}>{roleLabel(user.role)}</em></td><td><span className={`table-status ${user.status.toLowerCase()}`}><i />{user.status === "ACTIVE" ? "Hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Vô hiệu hóa"}</span></td><td><span className="grant-count"><ShieldCheck />{user.role === "ADMIN" ? "Toàn nền tảng" : `${user.grants.length} Agent`}</span></td><td>{formatTime(user.lastLoginAt)}</td><td>{formatTime(user.createdAt)}</td><td><button aria-label={`Xem ${user.displayName}`}><ChevronRight /></button></td></tr>)}</tbody></table>{!users.length && <div className="directory-empty"><Users /><span>Không tìm thấy tài khoản phù hợp</span></div>}</div>;
+  return <div className="users-table-wrap"><table className="users-table"><thead><tr><th>Người dùng</th><th>Role</th><th>Phòng ban / Team</th><th>Trạng thái</th><th>Quyền Agent</th><th>Đăng nhập cuối</th><th /></tr></thead><tbody>{users.map((user) => <tr key={user.id} tabIndex={0} onClick={() => onSelect(user)} onKeyDown={(event) => { if (event.key === "Enter") onSelect(user); }}><td><div className="table-user"><span className={`user-avatar role-${user.role.toLowerCase()}`}>{user.displayName.slice(0, 1).toUpperCase()}</span><span><strong>{user.displayName}</strong><small>{user.email}</small></span></div></td><td><em className={`role-tag ${user.role.toLowerCase()}`}>{roleLabel(user.role)}</em></td><td><span className="org-cell"><strong>{user.department?.name || "Toàn hệ thống"}</strong><small>{user.team?.name || "Chưa xếp team"}</small></span></td><td><span className={`table-status ${user.status.toLowerCase()}`}><i />{user.status === "ACTIVE" ? "Hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Vô hiệu hóa"}</span></td><td><span className="grant-count"><ShieldCheck />{user.role === "ADMIN" ? "Toàn nền tảng" : `${user.grants.length} Agent`}</span></td><td>{formatTime(user.lastLoginAt)}</td><td><button aria-label={`Xem ${user.displayName}`}><ChevronRight /></button></td></tr>)}</tbody></table>{!users.length && <div className="directory-empty"><Users /><span>Không tìm thấy tài khoản phù hợp</span></div>}</div>;
 }
 
 function UserDetailDrawer({ user, catalog, onClose, onChanged, onEditGrant }: { user: ManagedUser; catalog: AccessCatalog | null; onClose: () => void; onChanged: (message: string, preferredId?: string) => Promise<void>; onEditGrant: (grant: ManagedAccessGrant | null) => void }) {
   const [displayName, setDisplayName] = useState(user.displayName);
-  const [departmentCode, setDepartmentCode] = useState(user.departmentCode || "");
+  const [departmentId, setDepartmentId] = useState(user.department?.id || "");
+  const [teamId, setTeamId] = useState(user.team?.id || "");
   const [role, setRole] = useState<UserRole>(user.role);
   const [status, setStatus] = useState(user.status);
   const [password, setPassword] = useState("");
@@ -182,13 +189,16 @@ function UserDetailDrawer({ user, catalog, onClose, onChanged, onEditGrant }: { 
 
   useEffect(() => {
     setDisplayName(user.displayName);
-    setDepartmentCode(user.departmentCode || "");
+    setDepartmentId(user.department?.id || "");
+    setTeamId(user.team?.id || "");
     setRole(user.role);
     setStatus(user.status);
     setPassword("");
     setEditing(false);
     setError(null);
-  }, [user.id, user.displayName, user.departmentCode, user.role, user.status]);
+  }, [user.id, user.displayName, user.department?.id, user.team?.id, user.role, user.status]);
+
+  const department = catalog?.organization.find((item) => item.id === departmentId);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -197,7 +207,8 @@ function UserDetailDrawer({ user, catalog, onClose, onChanged, onEditGrant }: { 
     try {
       await api.updateUser(user.id, {
         displayName,
-        departmentCode,
+        departmentId,
+        teamId,
         role,
         status,
         ...(password ? { password } : {})
@@ -222,17 +233,18 @@ function UserDetailDrawer({ user, catalog, onClose, onChanged, onEditGrant }: { 
     }
   }
 
-  return <div className="user-drawer-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><aside className="user-drawer"><form onSubmit={save}><header className="drawer-header"><div><span>{editing ? "CHỈNH SỬA TÀI KHOẢN" : "CHI TIẾT TÀI KHOẢN"}</span><h2>{editing ? "Cập nhật người dùng" : user.displayName}</h2><p>{user.email}</p></div><button type="button" onClick={onClose}><X /></button></header><div className="drawer-profile"><span className={`user-avatar large role-${user.role.toLowerCase()}`}>{user.displayName.slice(0, 1).toUpperCase()}</span><div><strong>{user.displayName}</strong><small>{roleLabel(user.role)} · {user.grants.length} Agent Grant</small></div><span className={`account-state ${user.status.toLowerCase()}`}>{user.status === "ACTIVE" ? "Đang hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Đã vô hiệu hóa"}</span></div><div className="drawer-body">{error && <div className="login-error"><AlertTriangle />{error}</div>}<section className="drawer-section"><div className="drawer-section-title"><div><span>ACCOUNT PROFILE</span><h3>Thông tin tài khoản</h3></div>{user.role !== "ADMIN" && !editing && <button type="button" onClick={() => setEditing(true)}><Edit3 /> Chỉnh sửa</button>}</div>{editing ? <div className="settings-grid"><label><span>Tên hiển thị</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required /></label><label><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as UserRole)}><option value="MANAGER">Manager</option><option value="USER">User</option></select></label><label><span>Trạng thái</span><select value={status} onChange={(event) => setStatus(event.target.value as ManagedUser["status"])}><option value="ACTIVE">Hoạt động</option><option value="DISABLED">Vô hiệu hóa</option></select></label><label><span>Đặt mật khẩu mới</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" placeholder="Bỏ trống nếu không đổi" /></label></div> : <div className="detail-fields"><DetailField label="Tên hiển thị" value={user.displayName} /><DetailField label="Email" value={user.email} /><DetailField label="Role" value={roleLabel(user.role)} /><DetailField label="Trạng thái" value={user.status === "ACTIVE" ? "Đang hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Đã vô hiệu hóa"} /><DetailField label="Lần đăng nhập cuối" value={formatTime(user.lastLoginAt)} /><DetailField label="Ngày tạo" value={formatTime(user.createdAt)} /></div>}</section>{user.role === "ADMIN" ? <div className="admin-protected"><LockKeyhole /><div><strong>Admin được bảo vệ</strong><p>Tài khoản Admin không chỉnh sửa hoặc cấp Agent Grant tại màn hình này.</p></div></div> : <section className="drawer-section grant-section"><div className="drawer-section-title"><div><span>AGENT ACCESS</span><h3>Quyền theo Agent</h3></div>{editing && <button type="button" onClick={() => onEditGrant(null)} disabled={!catalog}><Plus /> Cấp quyền</button>}</div><div className="grant-list">{user.grants.map((grant) => { const agent = catalog?.agents.find((item) => item.id === grant.agentId); return <article key={grant.id} className="grant-card"><div className="grant-agent"><span><Bot /></span><div><strong>{agent?.name || grant.agentId}</strong><small>{agent?.domain || "Agent access"}</small></div><em>{grant.expiresAt ? `Hết hạn ${formatTime(grant.expiresAt)}` : "Không hết hạn"}</em></div><div className="grant-facts"><span><small>Actions</small><strong>{grant.actions.length}</strong></span><span><small>Capabilities</small><strong>{grant.capabilityIds.length}</strong></span><span><small>Data scopes</small><strong>{grant.dataScopeIds.length}</strong></span></div>{editing && <div className="grant-actions"><button type="button" onClick={() => onEditGrant(grant)}>Chỉnh quyền</button><button type="button" className="danger" onClick={() => void revoke(grant)}><Trash2 /> Thu hồi</button></div>}</article>; })}{!user.grants.length && <div className="grant-empty"><ShieldCheck /><strong>Chưa được cấp Agent</strong><p>Tài khoản chỉ đăng nhập được, chưa thể xem hoặc chạy AI nào.</p>{editing && <button type="button" onClick={() => onEditGrant(null)}><Plus /> Cấp quyền đầu tiên</button>}</div>}</div></section>}</div>{editing && <footer className="drawer-footer"><button type="button" onClick={() => { setEditing(false); setDisplayName(user.displayName); setRole(user.role); setStatus(user.status); setPassword(""); }}>Hủy thay đổi</button><button type="submit" disabled={saving}>{saving ? <RefreshCw className="spin" /> : <Check />}{saving ? "Đang lưu..." : "Lưu thay đổi"}</button></footer>}</form></aside></div>;
+  return <div className="user-drawer-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><aside className="user-drawer"><form onSubmit={save}><header className="drawer-header"><div><span>{editing ? "CHỈNH SỬA TÀI KHOẢN" : "CHI TIẾT TÀI KHOẢN"}</span><h2>{editing ? "Cập nhật người dùng" : user.displayName}</h2><p>{user.email}</p></div><button type="button" onClick={onClose}><X /></button></header><div className="drawer-profile"><span className={`user-avatar large role-${user.role.toLowerCase()}`}>{user.displayName.slice(0, 1).toUpperCase()}</span><div><strong>{user.displayName}</strong><small>{roleLabel(user.role)} · {user.department?.name || "Toàn hệ thống"} · {user.team?.name || "Chưa xếp team"}</small></div><span className={`account-state ${user.status.toLowerCase()}`}>{user.status === "ACTIVE" ? "Đang hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Đã vô hiệu hóa"}</span></div><div className="drawer-body">{error && <div className="login-error"><AlertTriangle />{error}</div>}<section className="drawer-section"><div className="drawer-section-title"><div><span>ACCOUNT PROFILE</span><h3>Thông tin tài khoản</h3></div>{user.role !== "ADMIN" && !editing && <button type="button" onClick={() => setEditing(true)}><Edit3 /> Chỉnh sửa</button>}</div>{editing ? <div className="settings-grid"><label><span>Tên hiển thị</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required /></label><label><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as UserRole)}><option value="MANAGER">Manager</option><option value="USER">User</option></select></label><label><span>Phòng ban</span><select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setTeamId(""); }}><option value="">Chưa xếp phòng ban</option>{catalog?.organization.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Team</span><select value={teamId} onChange={(event) => setTeamId(event.target.value)} disabled={!departmentId}><option value="">Chưa xếp team</option>{department?.teams?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Trạng thái</span><select value={status} onChange={(event) => setStatus(event.target.value as ManagedUser["status"])}><option value="ACTIVE">Hoạt động</option><option value="DISABLED">Vô hiệu hóa</option></select></label><label><span>Đặt mật khẩu mới</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" placeholder="Bỏ trống nếu không đổi" /></label></div> : <div className="detail-fields"><DetailField label="Tên hiển thị" value={user.displayName} /><DetailField label="Email" value={user.email} /><DetailField label="Role" value={roleLabel(user.role)} /><DetailField label="Phòng ban" value={user.department?.name || "Chưa xếp"} /><DetailField label="Team" value={user.team?.name || "Chưa xếp"} /><DetailField label="Mã nhân viên" value={user.employeeCode || "Chưa có"} /><DetailField label="Trạng thái" value={user.status === "ACTIVE" ? "Đang hoạt động" : user.status === "LOCKED" ? "Đang khóa" : "Đã vô hiệu hóa"} /><DetailField label="Lần đăng nhập cuối" value={formatTime(user.lastLoginAt)} /></div>}</section>{user.role === "ADMIN" ? <div className="admin-protected"><LockKeyhole /><div><strong>Admin được bảo vệ</strong><p>Tài khoản Admin không chỉnh sửa hoặc cấp Agent Grant tại màn hình này.</p></div></div> : <section className="drawer-section grant-section"><div className="drawer-section-title"><div><span>AGENT ACCESS</span><h3>Quyền theo Agent</h3></div>{editing && <button type="button" onClick={() => onEditGrant(null)} disabled={!catalog}><Plus /> Cấp quyền</button>}</div><div className="grant-list">{user.grants.map((grant) => { const agent = catalog?.agents.find((item) => item.id === grant.agentId); return <article key={grant.id} className="grant-card"><div className="grant-agent"><span><Bot /></span><div><strong>{agent?.name || grant.agentId}</strong><small>{agent?.domain || "Agent access"}</small></div><em>{grant.expiresAt ? `Hết hạn ${formatTime(grant.expiresAt)}` : "Không hết hạn"}</em></div><div className="grant-facts"><span><small>Actions</small><strong>{grant.actions.length}</strong></span><span><small>Capabilities</small><strong>{grant.capabilityIds.length}</strong></span><span><small>Data scopes</small><strong>{grant.dataScopeIds.length}</strong></span></div>{editing && <div className="grant-actions"><button type="button" onClick={() => onEditGrant(grant)}>Chỉnh quyền</button><button type="button" className="danger" onClick={() => void revoke(grant)}><Trash2 /> Thu hồi</button></div>}</article>; })}{!user.grants.length && <div className="grant-empty"><ShieldCheck /><strong>Chưa được cấp Agent</strong><p>Tài khoản chỉ đăng nhập được, chưa thể xem hoặc chạy AI nào.</p>{editing && <button type="button" onClick={() => onEditGrant(null)}><Plus /> Cấp quyền đầu tiên</button>}</div>}</div></section>}</div>{editing && <footer className="drawer-footer"><button type="button" onClick={() => { setEditing(false); setDisplayName(user.displayName); setDepartmentId(user.department?.id || ""); setTeamId(user.team?.id || ""); setRole(user.role); setStatus(user.status); setPassword(""); }}>Hủy thay đổi</button><button type="submit" disabled={saving}>{saving ? <RefreshCw className="spin" /> : <Check />}{saving ? "Đang lưu..." : "Lưu thay đổi"}</button></footer>}</form></aside></div>;
 }
 
 function DetailField({ label, value }: { label: string; value: string }) {
   return <div className="detail-field"><small>{label}</small><strong>{value}</strong></div>;
 }
 
-function CreateUserDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (user: ManagedUser) => Promise<void> }) {
+function CreateUserDialog({ catalog, onClose, onCreated }: { catalog: AccessCatalog; onClose: () => void; onCreated: (user: ManagedUser) => Promise<void> }) {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
-  const [departmentCode, setDepartmentCode] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [teamId, setTeamId] = useState("");
   const [role, setRole] = useState<UserRole>("USER");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +255,7 @@ function CreateUserDialog({ onClose, onCreated }: { onClose: () => void; onCreat
     setSaving(true);
     setError(null);
     try {
-      await onCreated(await api.createUser({ displayName, email, departmentCode, role, password }));
+      await onCreated(await api.createUser({ displayName, email, departmentId, teamId, role, password }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Không thể tạo tài khoản");
     } finally {
@@ -251,7 +263,8 @@ function CreateUserDialog({ onClose, onCreated }: { onClose: () => void; onCreat
     }
   }
 
-  return <div className="dialog-backdrop"><form className="iam-dialog" onSubmit={submit}><DialogHead eyebrow="NEW IDENTITY" title="Tạo Manager hoặc User" onClose={onClose} />{error && <div className="login-error"><AlertTriangle />{error}</div>}<div className="dialog-grid"><label><span>Tên hiển thị</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required autoFocus /></label><label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label><span>Mã phòng ban</span><input value={departmentCode} onChange={(event) => setDepartmentCode(event.target.value.toUpperCase())} placeholder="HR, FINANCE, OPERATIONS..." /></label><label><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as UserRole)}><option value="USER">User — theo Agent và Data Scope</option><option value="MANAGER">Manager — quản lý theo Agent</option></select></label><label><span>Mật khẩu ban đầu</span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required /><small>Tối thiểu 12 ký tự, có chữ hoa, chữ thường và số.</small></label></div><div className="dialog-actions"><button type="button" onClick={onClose}>Hủy</button><button className="login-submit" disabled={saving}>{saving ? <RefreshCw className="spin" /> : <UserPlus />}{saving ? "Đang tạo..." : "Tạo tài khoản"}</button></div></form></div>;
+  const department = catalog.organization.find((item) => item.id === departmentId);
+  return <div className="dialog-backdrop"><form className="iam-dialog" onSubmit={submit}><DialogHead eyebrow="NEW IDENTITY" title="Tạo Manager hoặc User" onClose={onClose} />{error && <div className="login-error"><AlertTriangle />{error}</div>}<div className="dialog-grid"><label><span>Tên hiển thị</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} required autoFocus /></label><label><span>Email</span><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label><label><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as UserRole)}><option value="USER">User</option><option value="MANAGER">Manager</option></select></label><label><span>Phòng ban</span><select value={departmentId} onChange={(event) => { setDepartmentId(event.target.value); setTeamId(""); }} required><option value="">Chọn phòng ban</option>{catalog.organization.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Team</span><select value={teamId} onChange={(event) => setTeamId(event.target.value)} disabled={!departmentId} required><option value="">Chọn team</option>{department?.teams?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Mật khẩu ban đầu</span><input type="password" minLength={8} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required /><small>Tối thiểu 8 ký tự.</small></label></div><div className="dialog-actions"><button type="button" onClick={onClose}>Hủy</button><button className="login-submit" disabled={saving}>{saving ? <RefreshCw className="spin" /> : <UserPlus />}{saving ? "Đang tạo..." : "Tạo tài khoản"}</button></div></form></div>;
 }
 
 function GrantDialog({ user, catalog, grant, onClose, onSaved }: { user: ManagedUser; catalog: AccessCatalog; grant: ManagedAccessGrant | null; onClose: () => void; onSaved: () => Promise<void> }) {

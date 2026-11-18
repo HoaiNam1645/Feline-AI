@@ -27,4 +27,21 @@ describe("TiktokScopeService", () => {
     expect(predicate.sql).toContain("o.user_id IN (?)");
     expect(predicate.params).toEqual([12]);
   });
+
+  it("cho phép grant theo team dùng mọi domain nhưng vẫn giữ row scope", () => {
+    const scope = service.fromActor({
+      role: UserRole.MANAGER,
+      access: {
+        platformAdmin: false,
+        grants: [{
+          id: "grant-team", agentId: "tiktok-ai", capabilityIds: ["tiktok.data.ask"],
+          dataScopeIds: ["tiktok.team:24"], actions: ["view", "run"], expiresAt: null
+        }]
+      }
+    });
+
+    expect(scope.domains).toEqual(expect.arrayContaining(["overview", "orders", "finance", "team", "stores"]));
+    expect(scope.teamIds).toEqual([24]);
+    expect(scope.unrestricted).toBe(false);
+  });
 });

@@ -72,6 +72,11 @@ export class AdminAccessController {
     return this.admin.createUser(body, request.auth!.user.id, requestMetadata(request));
   }
 
+  @Post("organization/sync-tiktok-team")
+  syncTiktokTeam(@Body() body: Record<string, unknown>, @Req() request: AuthenticatedRequest) {
+    return this.admin.syncTiktokTeam(body, request.auth!.user.id, requestMetadata(request));
+  }
+
   @Patch("users/:id")
   updateUser(
     @Param("id") id: string,

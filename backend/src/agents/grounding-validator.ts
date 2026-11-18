@@ -61,10 +61,17 @@ export function assertNumericallyGrounded(
   output: unknown,
   sourceContext: unknown
 ): void {
-  const allowed = numericTokens(sourceContext);
-  const claimed = numericTokens(output, true);
-  const unsupported = [...claimed].filter((token) => !allowed.has(token));
+  const unsupported = unsupportedNumericClaims(output, sourceContext);
   if (unsupported.length > 0) {
     throw new Error(`AI output contains unsupported numbers: ${unsupported.join(", ")}`);
   }
+}
+
+export function unsupportedNumericClaims(
+  output: unknown,
+  sourceContext: unknown
+): string[] {
+  const allowed = numericTokens(sourceContext);
+  const claimed = numericTokens(output, true);
+  return [...claimed].filter((token) => !allowed.has(token));
 }

@@ -3,7 +3,8 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException
+  NotFoundException,
+  Optional
 } from "@nestjs/common";
 import {
   AgentAccessGrant,
@@ -12,6 +13,8 @@ import {
   UserStatus
 } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { randomBytes } from "node:crypto";
+import { RowDataPacket } from "mysql2/promise";
 import { AGENT_DEFINITIONS, findAgentDefinition } from "../agents/agent-definition";
 import {
   ACCESS_ACTIONS,
@@ -20,6 +23,7 @@ import {
 import { assertValidPassword, normalizeEmail } from "../auth/auth.constants";
 import { RequestMetadata } from "../auth/auth-http";
 import { PrismaService } from "../database/prisma.service";
+import { TiktokMysqlService } from "../tiktok-data/tiktok-mysql.service";
 
 const MANAGED_ROLES = [UserRole.MANAGER, UserRole.USER] as const;
 const ROLE_ACTIONS: Record<"MANAGER" | "USER", AccessAction[]> = {
@@ -36,14 +40,28 @@ interface GrantInput {
   expiresAt?: unknown;
 }
 
+interface TiktokMemberRow extends RowDataPacket {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  employee_code: string | null;
+  membership_role: "MANAGER" | "MEMBER";
+}
+
 @Injectable()
 export class AdminAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly tiktokDb?: TiktokMysqlService
+  ) {}
 
   async listUsers() {
     const users = await this.prisma.user.findMany({
       orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       include: {
+        department: true,
+        team: true,
         accessGrants: {
           where: { revokedAt: null },
           orderBy: { createdAt: "asc" }
@@ -55,6 +73,10 @@ export class AdminAccessService {
       email: user.email,
       displayName: user.displayName,
       departmentCode: user.departmentCode,
+      department: user.department,
+      team: user.team,
+      employeeCode: user.employeeCode,
+      passwordResetRequired: user.passwordResetRequired,
       role: user.role,
       status: user.status,
       lastLoginAt: user.lastLoginAt,
@@ -64,12 +86,20 @@ export class AdminAccessService {
   }
 
   async accessCatalog() {
-    const scopes = await this.prisma.dataScope.findMany({
-      where: { isActive: true },
-      orderBy: [{ agentId: "asc" }, { name: "asc" }]
-    });
+    const [scopes, departments] = await Promise.all([
+      this.prisma.dataScope.findMany({
+        where: { isActive: true },
+        orderBy: [{ agentId: "asc" }, { name: "asc" }]
+      }),
+      this.prisma.department.findMany({
+        where: { isActive: true },
+        include: { teams: { where: { isActive: true }, orderBy: { name: "asc" } } },
+        orderBy: { name: "asc" }
+      })
+    ]);
     return {
       actions: ACCESS_ACTIONS,
+      organization: departments,
       agents: AGENT_DEFINITIONS.map((agent) => ({
         id: agent.id,
         name: agent.name,
@@ -100,7 +130,7 @@ export class AdminAccessService {
     const email = normalizeEmail(body.email);
     const displayName = this.requiredText(body.displayName, "Tên hiển thị", 120);
     const role = this.managedRole(body.role);
-    const departmentCode = this.optionalCode(body.departmentCode);
+    const organization = await this.resolveOrganization(body);
     if (!email || !email.includes("@")) throw new BadRequestException("Email không hợp lệ");
     try {
       assertValidPassword(body.password);
@@ -111,7 +141,17 @@ export class AdminAccessService {
     try {
       return await this.prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
-          data: { email, displayName, departmentCode, role, passwordHash }
+          data: {
+            email,
+            displayName,
+            departmentCode: organization.department?.code || null,
+            departmentId: organization.department?.id || null,
+            teamId: organization.team?.id || null,
+            role,
+            passwordHash,
+            passwordResetRequired: true
+          },
+          include: { department: true, team: true }
         });
         await tx.accessAuditEvent.create({
           data: {
@@ -129,6 +169,10 @@ export class AdminAccessService {
           email: user.email,
           displayName: user.displayName,
           departmentCode: user.departmentCode,
+          department: user.department,
+          team: user.team,
+          employeeCode: user.employeeCode,
+          passwordResetRequired: user.passwordResetRequired,
           role: user.role,
           status: user.status,
           lastLoginAt: user.lastLoginAt,
@@ -160,7 +204,12 @@ export class AdminAccessService {
     if (body.displayName !== undefined) {
       data.displayName = this.requiredText(body.displayName, "Tên hiển thị", 120);
     }
-    if (body.departmentCode !== undefined) data.departmentCode = this.optionalCode(body.departmentCode);
+    if (body.departmentId !== undefined || body.teamId !== undefined || body.departmentCode !== undefined) {
+      const organization = await this.resolveOrganization(body);
+      data.departmentCode = organization.department?.code || null;
+      data.department = organization.department ? { connect: { id: organization.department.id } } : { disconnect: true };
+      data.team = organization.team ? { connect: { id: organization.team.id } } : { disconnect: true };
+    }
     if (body.role !== undefined) data.role = this.managedRole(body.role);
     if (body.status !== undefined) {
       const status = String(body.status);
@@ -179,12 +228,13 @@ export class AdminAccessService {
       }
       data.passwordHash = await hash(body.password, 12);
       data.passwordChangedAt = new Date();
+      data.passwordResetRequired = true;
     }
     if (!Object.keys(data).length) throw new BadRequestException("Không có thay đổi hợp lệ");
 
     const revokeSessions = body.password !== undefined || data.status === UserStatus.DISABLED || data.role !== undefined;
     const updated = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.update({ where: { id: userId }, data });
+      const user = await tx.user.update({ where: { id: userId }, data, include: { department: true, team: true } });
       let grantsAdjusted = 0;
       if (data.role === UserRole.USER) {
         const grants = await tx.agentAccessGrant.findMany({
@@ -229,11 +279,155 @@ export class AdminAccessService {
       email: updated.email,
       displayName: updated.displayName,
       departmentCode: updated.departmentCode,
+      department: updated.department,
+      team: updated.team,
+      employeeCode: updated.employeeCode,
+      passwordResetRequired: updated.passwordResetRequired,
       role: updated.role,
       status: updated.status,
       lastLoginAt: updated.lastLoginAt,
       createdAt: updated.createdAt
     };
+  }
+
+  async syncTiktokTeam(
+    body: Record<string, unknown>,
+    actorUserId: string,
+    metadata: RequestMetadata
+  ) {
+    const externalTeamId = Number(body.externalTeamId || 24);
+    if (!Number.isSafeInteger(externalTeamId) || externalTeamId <= 0) {
+      throw new BadRequestException("Team TikTok không hợp lệ");
+    }
+    if (!this.tiktokDb) throw new BadRequestException("Nguồn dữ liệu TikTok chưa sẵn sàng");
+    const teams = await this.tiktokDb.query<RowDataPacket & { id: number; name: string; code: string | null; manager_id: number | null }>(
+      "SELECT id, name, code, manager_id FROM teams WHERE id = ? AND status = 'active' LIMIT 1",
+      [externalTeamId]
+    );
+    const sourceTeam = teams[0];
+    if (!sourceTeam) throw new NotFoundException("Không tìm thấy team đang hoạt động trong nguồn TikTok");
+    const members = await this.tiktokDb.query<TiktokMemberRow>(`
+      SELECT DISTINCT u.id, u.name, u.email, u.status, ud.employee_code,
+             CASE WHEN u.id = ? THEN 'MANAGER' ELSE 'MEMBER' END AS membership_role
+      FROM users u
+      LEFT JOIN user_details ud ON ud.user_id = u.id
+      WHERE (ud.team_id = ? OR u.id = ?) AND u.status = 'active'
+      ORDER BY membership_role, u.name
+    `, [sourceTeam.manager_id, externalTeamId, sourceTeam.manager_id]);
+    const validMembers = members.filter((member) => normalizeEmail(member.email)?.includes("@"));
+    const result = await this.prisma.$transaction(async (tx) => {
+      const department = await tx.department.upsert({
+        where: { code: "TIKTOK" },
+        update: { name: "Phòng Sell TikTok", agentId: "tiktok-ai", isActive: true },
+        create: { code: "TIKTOK", name: "Phòng Sell TikTok", agentId: "tiktok-ai" }
+      });
+      const team = await tx.organizationTeam.upsert({
+        where: { externalSource_externalId: { externalSource: "tiktok-mysql", externalId: String(externalTeamId) } },
+        update: { departmentId: department.id, code: sourceTeam.name.toUpperCase(), name: sourceTeam.name, isActive: true },
+        create: {
+          departmentId: department.id,
+          code: sourceTeam.name.toUpperCase(),
+          name: sourceTeam.name,
+          externalSource: "tiktok-mysql",
+          externalId: String(externalTeamId)
+        }
+      });
+      const scopeId = `tiktok.team:${externalTeamId}`;
+      await tx.dataScope.upsert({
+        where: { id: scopeId },
+        update: { name: `Team: ${sourceTeam.name}`, isActive: true },
+        create: {
+          id: scopeId,
+          agentId: "tiktok-ai",
+          name: `Team: ${sourceTeam.name}`,
+          description: `Giới hạn dữ liệu TikTok theo team #${externalTeamId}.`,
+          definition: { rowScope: "team", externalId: externalTeamId, pii: false }
+        }
+      });
+      let created = 0;
+      let updated = 0;
+      const syncedUsers = [];
+      for (const member of validMembers) {
+        const email = normalizeEmail(member.email)!;
+        const existing = await tx.user.findUnique({ where: { email } });
+        const role = member.membership_role === "MANAGER" ? UserRole.MANAGER : UserRole.USER;
+        let user;
+        if (existing) {
+          user = await tx.user.update({
+            where: { id: existing.id },
+            data: existing.role === UserRole.ADMIN ? {
+              departmentCode: department.code,
+              departmentId: department.id,
+              teamId: team.id,
+              externalSource: "tiktok-mysql",
+              externalUserId: String(member.id),
+              employeeCode: member.employee_code
+            } : {
+              displayName: member.name,
+              departmentCode: department.code,
+              departmentId: department.id,
+              teamId: team.id,
+              externalSource: "tiktok-mysql",
+              externalUserId: String(member.id),
+              employeeCode: member.employee_code,
+              role,
+              status: UserStatus.ACTIVE
+            }
+          });
+          updated += 1;
+        } else {
+          const generatedPassword = `${randomBytes(24).toString("base64url")}Aa1`;
+          user = await tx.user.create({
+            data: {
+              email,
+              displayName: member.name,
+              departmentCode: department.code,
+              departmentId: department.id,
+              teamId: team.id,
+              externalSource: "tiktok-mysql",
+              externalUserId: String(member.id),
+              employeeCode: member.employee_code,
+              role,
+              status: UserStatus.ACTIVE,
+              passwordHash: await hash(generatedPassword, 12),
+              passwordResetRequired: true
+            }
+          });
+          created += 1;
+        }
+        if (user.role !== UserRole.ADMIN) {
+          const activeGrant = await tx.agentAccessGrant.findFirst({
+            where: { userId: user.id, agentId: "tiktok-ai", revokedAt: null }
+          });
+          const grantData = {
+            capabilityIds: ["tiktok.knowledge.ask", "tiktok.data.ask"],
+            dataScopeIds: [scopeId],
+            actions: user.role === UserRole.MANAGER
+              ? ["view", "run", "export", "manage_members"]
+              : ["view", "run", "export"]
+          };
+          if (activeGrant) {
+            await tx.agentAccessGrant.update({ where: { id: activeGrant.id }, data: grantData });
+          } else {
+            await tx.agentAccessGrant.create({ data: { ...grantData, userId: user.id, agentId: "tiktok-ai", grantedById: actorUserId } });
+          }
+        }
+        syncedUsers.push({ id: user.id, email: user.email, displayName: user.displayName, role: user.role, employeeCode: user.employeeCode });
+      }
+      await tx.accessAuditEvent.create({
+        data: {
+          actorUserId,
+          eventType: "TIKTOK_TEAM_SYNCED",
+          targetType: "OrganizationTeam",
+          targetId: team.id,
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+          detail: { externalTeamId, sourceTeamName: sourceTeam.name, created, updated, activeMembers: validMembers.length }
+        }
+      });
+      return { department, team, created, updated, skipped: members.length - validMembers.length, users: syncedUsers };
+    }, { timeout: 60_000 });
+    return result;
   }
 
   async createGrant(
@@ -375,6 +569,32 @@ export class AdminAccessService {
       throw new BadRequestException("Chỉ có thể tạo hoặc cập nhật Manager/User tại màn hình này");
     }
     return role as "MANAGER" | "USER";
+  }
+
+  private async resolveOrganization(body: Record<string, unknown>) {
+    const teamId = String(body.teamId || "").trim();
+    const departmentId = String(body.departmentId || "").trim();
+    if (teamId) {
+      const team = await this.prisma.organizationTeam.findFirst({
+        where: { id: teamId, isActive: true },
+        include: { department: true }
+      });
+      if (!team || !team.department.isActive) throw new BadRequestException("Team không hợp lệ hoặc đã ngừng hoạt động");
+      if (departmentId && team.departmentId !== departmentId) throw new BadRequestException("Team không thuộc phòng ban đã chọn");
+      return { department: team.department, team };
+    }
+    if (departmentId) {
+      const department = await this.prisma.department.findFirst({ where: { id: departmentId, isActive: true } });
+      if (!department) throw new BadRequestException("Phòng ban không hợp lệ hoặc đã ngừng hoạt động");
+      return { department, team: null };
+    }
+    const departmentCode = this.optionalCode(body.departmentCode);
+    if (departmentCode) {
+      const department = await this.prisma.department.findFirst({ where: { code: departmentCode, isActive: true } });
+      if (!department) throw new BadRequestException("Phòng ban chưa được khai báo trong hệ thống");
+      return { department, team: null };
+    }
+    return { department: null, team: null };
   }
 
   private requiredText(value: unknown, label: string, max: number): string {

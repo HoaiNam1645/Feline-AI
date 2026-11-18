@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Khảo sát tri thức vận hành TikTok Shop US cho mô hình Print on Demand.">
+  <title>Tri thức TikTok US POD · Feline AI</title>
+  <link rel="stylesheet" href="./pod-knowledge-survey.css">
+</head>
+<body>
+  <div id="survey-root"></div>
+  <script>
+    const t=(id,label,placeholder="",hint="",required=false)=>({id,label,type:"text",placeholder,hint,required});
+    const a=(id,label,placeholder="",hint="",required=false)=>({id,label,type:"textarea",placeholder,hint,required});
+    const c=(id,label,options,hint="")=>({id,label,type:"checkbox",options,hint});
+    const r=(id,label,options,hint="",required=false)=>({id,label,type:"radio",options,hint,required});
+    const s=(id,label,options,hint="",required=false)=>({id,label,type:"select",options,hint,required});
+    window.SURVEY_CONFIG={
+      slug:"tiktok-us-pod", filePrefix:"Tri_thuc_TikTok_US_POD", exportTitle:"Kho tri thức vận hành TikTok Shop US POD",
+      title:"TikTok US POD — khảo sát tri thức vận hành",
+      intro:"Biểu mẫu này thu thập cách đội ngũ thực sự nghiên cứu sản phẩm, vận hành store, xử lý đơn, quản lý tiền, fulfillment và rủi ro trên TikTok Shop US. Hãy chọn phương án đang áp dụng và ghi thêm ngoại lệ thực tế; kết quả sẽ được chuẩn hóa để TikTok AI trả lời đúng theo quy trình công ty.",
+      meta:[
+        {title:"Người nên điền",copy:"Leader TikTok, seller senior, vận hành store, fulfillment và người phụ trách tài chính."},
+        {title:"Cách hoàn thành",copy:"Có thể chia cho nhiều người điền từng phần. Tiến độ tự lưu trên đúng trình duyệt đang sử dụng."},
+        {title:"Đầu ra",copy:"Tải file Markdown hoặc JSON để Admin đưa vào Knowledge Hub, kiểm duyệt và phân quyền."}
+      ],
+      sections:[
+        {shortTitle:"Phạm vi & người trả lời",title:"Phạm vi khảo sát và người chịu trách nhiệm",description:"Xác định ai cung cấp tri thức, phạm vi store/team nào được áp dụng và mức độ chính thức của câu trả lời.",fields:[
+          t("respondentName","Họ tên người trả lời","Ví dụ: Trịnh Hải Duy","",true),
+          t("respondentRole","Vai trò và trách nhiệm hiện tại","Ví dụ: Manager G9B, phụ trách store và KPI seller","",true),
+          t("teamName","Team hoặc nhóm TikTok áp dụng tài liệu này","Ví dụ: G9B, CashStorm","Nếu các team có quy trình khác nhau, hãy ghi rõ phần nào dùng chung và phần nào chỉ áp dụng riêng.",true),
+          c("responsibilityDomains","Anh/chị có thể xác nhận chính thức những nhóm nội dung nào?",["Mục tiêu kinh doanh","Team và KPI","Research sản phẩm","Design/content","Store và account health","Đơn hàng","Tài chính/ads","Fulfillment","CS/refund","Policy/vi phạm"]),
+          s("authorityLevel","Mức độ chính thức của câu trả lời",["Quy trình đã được duyệt và đang áp dụng","Thực tế team đang làm nhưng chưa thành văn","Đề xuất của người trả lời, cần cấp trên duyệt","Chỉ cung cấp thông tin tham khảo"],"",true),
+          a("scopeExceptions","Những store, seller, sản phẩm hoặc giai đoạn nào không áp dụng quy trình chung?","Nêu rõ ngoại lệ, lý do, người có quyền quyết định và thời gian áp dụng."),
+          a("approvers","Ai duyệt tài liệu này trước khi đưa vào AI?","Họ tên, vai trò, phần cần duyệt và cách liên hệ nội bộ."),
+          a("sourceLinks","Link tài liệu, sheet, dashboard, SOP hoặc video đang dùng","Mỗi dòng một link, ghi thêm tên tài liệu và người sở hữu.")
+        ]},
+        {shortTitle:"Mô hình kinh doanh",title:"Mô hình TikTok Shop US và mục tiêu kinh doanh",description:"Giúp AI hiểu công ty đang bán gì, tạo giá trị bằng cách nào và ưu tiên điều gì khi các mục tiêu xung đột.",fields:[
+          c("businessModels","Các mô hình bán đang áp dụng",["Organic content","Affiliate/creator","TikTok Ads","Shop Ads","Live commerce","Seller tự sản xuất content","Kết hợp nhiều mô hình","Mô hình khác"]),
+          c("podCategories","Nhóm sản phẩm POD đang bán hoặc dự kiến bán",["T-shirt","Sweatshirt/Hoodie","Embroidery apparel","Hat/Cap","Mug/Tumbler","Blanket","Poster/Canvas","Ornament","Pet product","Bag/Tote","Jewelry/Accessory","Home decor","Sản phẩm khác"]),
+          a("businessGoals","Mục tiêu theo thứ tự ưu tiên của phòng TikTok là gì?","Ví dụ: tăng đơn, tăng contribution, mở store mới, giữ account health, giảm refund, xây bestseller. Ghi rõ thứ tự khi phải đánh đổi."),
+          t("targetMarket","Khách hàng mục tiêu tại Mỹ","Độ tuổi, giới tính, bang/khu vực, sở thích, hành vi mua, mùa vụ."),
+          a("seasonality","Lịch mùa vụ và các mốc phải chuẩn bị trước","Valentine, Mother’s Day, Father’s Day, Halloween, Thanksgiving, Christmas, graduation, election... Nêu lead time research/design/listing/ads."),
+          a("successDefinition","Một sản phẩm, store và seller được coi là thành công khi nào?","Ghi metric, ngưỡng, khoảng thời gian và điều kiện loại trừ."),
+          a("stopLossRules","Khi nào phải dừng sản phẩm, dừng ads hoặc dừng store?","Nêu ngưỡng lỗ, số ngày không có đơn, vi phạm, refund, rating hoặc quyết định quản lý."),
+          a("businessVocabulary","Các thuật ngữ nội bộ TikTok team thường dùng","Ví dụ: scale, test, die shop, auth, creator order, shop code, contribution. Giải thích nghĩa chính xác.")
+        ]},
+        {shortTitle:"Team & KPI",title:"Cơ cấu team, trách nhiệm và KPI",description:"Thu thập cách phân công công việc, ownership dữ liệu và nguyên tắc đánh giá người làm.",fields:[
+          a("teamStructure","Mô tả cơ cấu team từ Manager đến từng vai trò","Tên vai trò, số lượng người, ai báo cáo cho ai, ai thay thế khi vắng mặt."),
+          c("teamRoles","Các vai trò đang tồn tại",["Manager/Leader","Seller","Researcher","Content creator","Video editor","Designer","Store operator","Ads buyer","Affiliate/creator manager","Customer support","Fulfillment coordinator","Finance/Data analyst"]),
+          a("roleResponsibilities","Nhiệm vụ bắt buộc và ranh giới trách nhiệm của từng vai trò","Nêu đầu vào, đầu ra, deadline, người duyệt và lỗi thường gặp."),
+          a("sellerKpis","KPI seller được tính như thế nào?","Số đơn, item, revenue, contribution, refund, store health, listing, content, ads. Ghi công thức và trọng số."),
+          a("managerKpis","KPI Manager/Leader được tính như thế nào?","KPI team, tăng trưởng, kiểm soát rủi ro, coaching, chất lượng báo cáo, chi phí."),
+          a("attributionRules","Đơn và doanh thu được ghi nhận cho seller, creator và team theo quy tắc nào?","Xử lý đơn creator, seller chuyển team, đơn replacement, đơn refund và đơn phát sinh sau khi nhân sự nghỉ."),
+          a("performanceReview","Chu kỳ đánh giá hiệu suất và cách xử lý không đạt KPI","Ngày chốt, người đánh giá, dữ liệu dùng, cơ chế giải trình, kế hoạch cải thiện."),
+          a("handoverRules","Quy trình bàn giao store, sản phẩm và dữ liệu khi đổi người phụ trách","Checklist, quyền truy cập, thời điểm chốt số, người xác nhận.")
+        ]},
+        {shortTitle:"Research & sản phẩm",title:"Research niche, trend và lựa chọn sản phẩm",description:"Ghi lại cách tìm cơ hội sản phẩm và tiêu chí biến một ý tưởng thành sản phẩm có thể bán.",fields:[
+          c("researchSources","Nguồn research được phép sử dụng",["TikTok Creative Center","TikTok Shop search","Amazon","Etsy","Pinterest","Google Trends","Meta Ads Library","Competitor store","Trend tool trả phí","Creator feedback","Dữ liệu sản phẩm nội bộ"]),
+          a("researchWorkflow","Quy trình research từ ý tưởng đến đề xuất sản phẩm","Ai tìm, lưu ở đâu, thông tin bắt buộc, ai duyệt, SLA từng bước."),
+          a("nicheCriteria","Tiêu chí chọn niche và đánh giá độ lớn thị trường","Demand, competition, audience, seasonality, IP risk, khả năng làm content, biên lợi nhuận."),
+          a("productScorecard","Bộ tiêu chí chấm điểm sản phẩm trước khi test","Ghi thang điểm, trọng số, ngưỡng được test và ví dụ sản phẩm đạt/không đạt."),
+          a("trendValidation","Cách xác nhận trend thật và tránh trend ảo/quá muộn","Tín hiệu cần có, khoảng thời gian, lượng video/đơn/search, người ra quyết định."),
+          a("competitorAnalysis","Khi phân tích đối thủ cần ghi nhận những gì?","Giá, offer, hook, video, review, sales velocity, shipping, variation, store health."),
+          a("copyrightRules","Quy tắc kiểm tra trademark, copyright và nội dung cấm","Nguồn kiểm tra, từ khóa cần tránh, ai duyệt, cách lưu bằng chứng."),
+          a("researchExamples","Nêu 3 ví dụ research thành công và 3 ví dụ thất bại","Lý do chọn, dữ liệu ban đầu, kết quả, bài học và điều AI cần rút ra.")
+        ]},
+        {shortTitle:"Design, content & listing",title:"Thiết kế POD, content và listing",description:"Chuẩn hóa đầu vào thiết kế, tiêu chuẩn file, cách tạo nội dung và điều kiện xuất bản listing.",fields:[
+          a("designBrief","Một design brief chuẩn phải có những trường nào?","Niche, concept, text, font, style, màu, sản phẩm, vị trí in/thêu, kích thước, reference, deadline."),
+          c("designTypes","Loại thiết kế thường dùng",["DTG/DTF print","Embroidery","Sublimation","Engraving","All-over print","Front only","Front & back","Sleeve","Personalized","Trend adaptation"]),
+          a("fileStandards","Tiêu chuẩn file sản xuất và mockup","Định dạng, DPI, màu, kích thước, nền trong, EMB/DST, tên file, lưu trữ và version."),
+          a("designApproval","Quy trình duyệt design và xử lý fix/rework","Ai duyệt thẩm mỹ, ai duyệt sản xuất, số vòng sửa, lỗi nghiêm trọng, SLA."),
+          a("contentFormula","Công thức video/content đang hiệu quả","Hook, duration, shot list, UGC, text overlay, CTA, audio, caption, posting frequency."),
+          a("listingStandards","Checklist listing trước khi publish","Title, image, video, description, category, variation, price, inventory, shipping, compliance."),
+          a("seoKeywords","Cách chọn keyword và viết title/description cho TikTok US","Nguồn keyword, từ khóa chính/phụ, từ cấm, quy tắc nhồi từ, template đang dùng."),
+          a("contentTesting","Cách test nhiều creative cho cùng sản phẩm","Số video, thời gian test, metric giữ/xóa, cách xác định winning creative."),
+          a("listingIncident","Các lỗi listing/content thường gặp và cách xử lý","Rejected, suppressed, incorrect category, misleading claim, IP warning, unavailable product.")
+        ]},
+        {shortTitle:"Store & account health",title:"Store, tài khoản và sức khỏe hệ thống",description:"Giúp AI phân biệt trạng thái store, cảnh báo đúng mức và không tự suy diễn từ mã trạng thái.",fields:[
+          a("storeLifecycle","Vòng đời một store từ chuẩn bị đến hoạt động ổn định","Tạo store, verify, auth, warm-up, listing, first sale, scale, appeal, close."),
+          a("storeOwnership","Quy tắc gán store cho seller/team và chuyển ownership","Store dùng chung hay riêng, ai giữ thông tin, điều kiện chuyển, lịch sử ownership."),
+          c("storeHealthSignals","Các tín hiệu phải theo dõi",["Auth/token","Shop health score","Violation points","Late dispatch","Cancellation rate","Refund rate","Negative review","Product suspension","Reserve/hold","Order limit","Account deactivation","Appeal status"]),
+          a("statusDictionary","Định nghĩa chính thức từng trạng thái store/seller status trong hệ thống","Ghi mã, nhãn hiển thị, ý nghĩa, mức độ, hành động và người chịu trách nhiệm."),
+          a("storeAlertThresholds","Ngưỡng cảnh báo store và mức độ ưu tiên","Warning/critical, thời gian phản hồi, kênh báo, ai nhận và cách đóng cảnh báo."),
+          a("appealProcess","Quy trình appeal violation hoặc shop deactivation","Bằng chứng, template, deadline, người duyệt, khi nào không appeal."),
+          a("accessSecurity","Quy tắc bảo mật và cấp quyền truy cập store","Thiết bị, 2FA, IP/proxy, chia sẻ tài khoản, thu hồi quyền; không ghi mật khẩu thật."),
+          a("storeExamples","Nêu các tình huống store điển hình và quyết định đúng","Ví dụ mất auth, order limit, spike refund, violation, store die, reserve tăng.")
+        ]},
+        {shortTitle:"Đơn hàng & thời gian",title:"Đơn hàng, trạng thái và quy tắc thời gian",description:"Chốt cách đếm đơn, xử lý timezone và diễn giải từng trạng thái trong vòng đời đơn.",fields:[
+          r("reportTimezone","Múi giờ chính thức cho báo cáo bán hàng TikTok US",["America/Los_Angeles","America/New_York","Theo timezone từng store","Asia/Ho_Chi_Minh","Khác"],"",true),
+          a("newOrderDefinition","Một đơn mới được tính theo thời điểm nào?","Order date, paid date, created/synced date; nêu quy tắc khi dữ liệu sync trễ."),
+          a("orderStatusDictionary","Định nghĩa từng order status và fulfill status","Pending, On Hold, Fulfilled, Cancelled, refund, replacement; điều kiện vào/ra trạng thái."),
+          a("orderCounting","Quy tắc đếm order, item, item line và SKU","Cách xử lý đơn nhiều item, trùng record, split fulfillment, cancelled và test order."),
+          a("replacementOrders","Replacement order được tính vào KPI nào?","Sales, revenue, volume vận hành, fulfillment cost, seller KPI và refund."),
+          a("creatorOrders","Creator order được ghi nhận và theo dõi như thế nào?","Owner seller, media user, commission/attribution, tránh đếm trùng."),
+          a("orderLookup","Người dùng thường tra đơn bằng mã nào và cần thấy trường gì?","Order ID, tracking, SO, vendor order code, shop code; thông tin nào cần ẩn theo role."),
+          a("slaByStatus","SLA cho từng trạng thái đơn","Bao lâu phải confirm, design, fulfill, có tracking, ship; cách tính weekend/holiday."),
+          a("orderExceptions","Danh sách tình huống đơn bất thường và playbook xử lý","Duplicate, missing SKU, wrong address, no tracking, stuck, cancel request, sync mismatch.")
+        ]},
+        {shortTitle:"Giá, tiền & ads",title:"Giá bán, doanh thu, payout, chi phí và quảng cáo",description:"Phần quan trọng để AI không gọi nhầm doanh số, tiền quyết toán và lợi nhuận bằng cùng một từ “doanh thu”.",fields:[
+          a("pricingFormula","Công thức đặt giá bán theo sản phẩm và variation","Base cost, shipping, TikTok fee, affiliate, ads, discount, target margin, rounding."),
+          a("discountRules","Quy tắc tạo discount, coupon và free shipping","Ai được tạo, mức tối đa, thời gian, stack promotion và ngưỡng cần duyệt."),
+          a("moneyDictionary","Định nghĩa chính thức các lớp tiền","Gross order value, estimated revenue, paid amount, statement settlement, fee, refund, ads, contribution, net profit."),
+          a("payoutReconciliation","Quy trình đối soát payout/statement","Nguồn file, chu kỳ, người làm, trường đối chiếu, tolerance, cách xử lý chênh lệch."),
+          a("profitFormula","Công thức lợi nhuận đang dùng và các chi phí chưa có","Nêu rõ ads, fulfillment, affiliate, refund, replacement, salary, tax, overhead có/không."),
+          a("adsMetrics","Bộ metric ads bắt buộc và định nghĩa","Spend, GMV, ROAS, CPA, CVR, CTR, contribution after ads; attribution window."),
+          a("adsDecisionRules","Quy tắc bật, tăng, giảm và tắt ads","Budget, thời gian test, stop-loss, scale step, người có quyền vượt ngưỡng."),
+          a("financeQuality","Khi dữ liệu tiền thiếu hoặc chưa đồng bộ, AI phải trả lời thế nào?","Cảnh báo bắt buộc, số nào vẫn được dùng, số nào phải từ chối kết luận."),
+          a("financeExamples","Nêu 5 câu hỏi tài chính sếp thường hỏi và đáp án mong muốn","Bao gồm kỳ thời gian, team/store/seller, metric chính xác và cách trình bày.")
+        ]},
+        {shortTitle:"Fulfillment & shipping",title:"Fulfillment, sản xuất và vận chuyển",description:"Thu thập quy tắc chọn xưởng, tính chi phí, theo dõi SLA và xử lý sự cố sản xuất.",fields:[
+          c("fulfillmentVendors","Các xưởng/vendor đang dùng",["Lemiex","FlashShip","Gearment","Pressify","Printify","PrintDoors","Print Arrows","Gum Prints","Mango","Monkey King Print","Vendor khác"]),
+          a("vendorSelection","Quy tắc chọn vendor cho từng loại sản phẩm","Giá, chất lượng, location, capacity, SLA, stock blank, embroidery/print capability."),
+          a("variantPricing","Cách xác định giá fulfillment theo variant","Product type, model, color, size, side, print/embroidery, shipping method, surcharge."),
+          a("productionWorkflow","Quy trình từ đơn hợp lệ đến gửi xưởng và nhận tracking","Điểm kiểm soát design, personalization, variant, address, vendor code và retry."),
+          a("fulfillmentSla","SLA sản xuất và ship theo vendor/sản phẩm/mùa vụ","Ngưỡng bình thường, warning, overdue, cách loại weekend và holiday Mỹ."),
+          a("qualityControl","Tiêu chuẩn QC và bằng chứng cần lưu","Preview, mockup, thread/color, print placement, size, sample, photo, approval."),
+          a("shippingRules","Quy tắc shipping method và tracking","Standard/express, carrier, vùng xa, PO box, tracking invalid, label created nhưng chưa scan."),
+          a("vendorIncidents","Playbook xử lý sự cố vendor","Out of stock, wrong item, bad print, lost package, delayed tracking, vendor API lỗi."),
+          a("fulfillmentCostQuality","Đơn thiếu cost hoặc cost bằng 0 xử lý báo cáo thế nào?","Có loại khỏi profit không, cảnh báo ai, deadline bổ sung và cách backfill.")
+        ]},
+        {shortTitle:"CS, refund & rủi ro",title:"Customer service, refund, replacement và rủi ro",description:"Chốt cách phản hồi khách, phân loại lỗi và ghi nhận chi phí để AI tư vấn nhất quán.",fields:[
+          a("customerServiceSla","SLA trả lời khách và kênh xử lý","Ngày thường/cuối tuần, ngôn ngữ, người trực, escalation."),
+          c("issueTypes","Nhóm vấn đề khách hàng thường gặp",["Đổi địa chỉ","Hủy đơn","Sai personalization","Sai size/color","Chậm sản xuất","Tracking không chạy","Lost package","Damaged item","Bad print/embroidery","Wrong item","Refund request","Negative review"]),
+          a("refundPolicy","Điều kiện refund toàn phần, một phần và từ chối refund","Bằng chứng, thời hạn, mức tiền, ai duyệt, trường hợp TikTok tự refund."),
+          a("replacementPolicy","Điều kiện remake/replacement và cách tính KPI/chi phí","Lỗi seller, design, xưởng, carrier, khách; ai chịu chi phí."),
+          a("cancellationPolicy","Điều kiện chấp nhận cancel theo từng giai đoạn đơn","Trước/đã gửi xưởng/đã sản xuất/đã ship; cách cập nhật hệ thống."),
+          a("reviewHandling","Quy trình xử lý review xấu và xin chỉnh review","Template, giới hạn liên hệ, compensation, escalation, điều cấm."),
+          a("riskClassification","Ma trận phân loại mức độ sự cố","P0-P3 hoặc critical/high/medium/low; ví dụ, người nhận, SLA và quyền quyết định."),
+          a("fraudSignals","Dấu hiệu đơn hoặc khách có rủi ro gian lận","Duplicate, suspicious address, high quantity, repeated refund, payment anomaly."),
+          a("incidentExamples","Nêu 5 tình huống khó và quyết định chuẩn","Mô tả dữ kiện, lựa chọn, người duyệt, câu trả lời khách và cách ghi nhận chi phí.")
+        ]},
+        {shortTitle:"Báo cáo & cảnh báo",title:"Báo cáo quản trị, cảnh báo và quyết định",description:"Xác định sếp/Manager cần thấy gì mỗi ngày và khi nào AI phải chủ động cảnh báo.",fields:[
+          a("dailyReport","Báo cáo ngày cần có những phần nào?","KPI chính, so sánh hôm qua/tuần trước, top/bottom team, ngoại lệ, hành động."),
+          a("weeklyReport","Báo cáo tuần cần trả lời câu hỏi quản trị nào?","Growth, sản phẩm, store, seller, ads, fulfillment, refund, kế hoạch tuần tới."),
+          a("executiveKpis","10 KPI quan trọng nhất với sếp và định nghĩa chính xác","Ghi thứ tự ưu tiên, công thức, timezone, nguồn và ngưỡng tốt/xấu."),
+          a("alertRules","Danh sách cảnh báo AI cần phát hiện","Sụt đơn, store mất auth, spike refund, margin âm, overdue, missing cost, seller bất thường."),
+          a("alertDelivery","Ai nhận từng cảnh báo, qua kênh nào và lặp lại ra sao?","Admin/Manager/User, email/app/chat, quiet hours, acknowledgement, escalation."),
+          a("comparisonRules","Quy tắc so sánh số liệu","So với hôm qua, cùng thứ tuần trước, rolling 7/30 ngày, target, seasonality; xử lý ngày thiếu data."),
+          a("rankingRules","Cách xếp hạng team/seller/store/product","Metric, tie-break, minimum sample, loại cancelled/refund, hiển thị bottom performers."),
+          a("recommendedActions","AI được phép đề xuất những hành động nào?","Chỉ nhận xét, tạo task, gợi ý tăng ads, kiểm tra store, liên hệ vendor; hành động nào cần người duyệt."),
+          a("questionBank","Liệt kê ít nhất 20 câu hỏi sếp và Manager thường hỏi","Ưu tiên câu hỏi thật, có cách nói ngắn, viết tắt hoặc thiếu thông tin như người dùng thực tế.")
+        ]},
+        {shortTitle:"Quyền, nguồn & nghiệm thu",title:"Phân quyền, nguồn tri thức và câu hỏi nghiệm thu",description:"Chốt tài liệu nào là nguồn chuẩn, ai được xem gì và cách kiểm tra AI trước khi đưa vào sử dụng.",fields:[
+          a("rolePermissions","Admin, Manager và User được hỏi/xem những gì?","Theo team, seller, store, tài chính, ads, customer data, audit và export."),
+          a("sensitiveData","Thông tin nào tuyệt đối không đưa vào câu trả lời AI?","Token, password, bank, proxy, customer PII, address, email, private message; ngoại lệ nếu có."),
+          a("sourceOfTruth","Nguồn chuẩn cho từng nhóm tri thức và dữ liệu","SOP, dashboard, database, spreadsheet, Slack, người phụ trách; thứ tự ưu tiên khi mâu thuẫn."),
+          a("documentGovernance","Quy trình cập nhật tài liệu tri thức","Owner, version, ngày hiệu lực, ngày hết hiệu lực, người duyệt, lịch review, cách thu hồi bản cũ."),
+          a("conflictResolution","Khi tài liệu và thực tế vận hành mâu thuẫn thì AI làm gì?","Nguồn nào thắng, cảnh báo thế nào, chuyển cho ai xác nhận."),
+          a("unansweredPolicy","Khi không đủ căn cứ, AI phải phản hồi và ghi nhận thế nào?","Nội dung từ chối, thông tin cần bổ sung, owner nhận câu hỏi unanswered."),
+          a("acceptanceQuestions","Soạn ít nhất 30 câu hỏi nghiệm thu kèm đáp án hoặc nguồn kiểm chứng","Phủ team, store, order, product, finance, ads, fulfillment, refund, policy và câu hỏi ngoài quyền."),
+          a("edgeCases","Các trường hợp dễ trả lời sai cần test riêng","Tên người trùng, team cũ, nhiều store, timezone, refund kỳ khác, dữ liệu chưa sync, câu hỏi mơ hồ."),
+          a("finalNotes","Thông tin quan trọng khác TikTok AI bắt buộc phải biết","Có thể ghi điều chưa chắc chắn và tên người cần hỏi tiếp."),
+          a("finalAttachments","Link tất cả file cần đưa vào Knowledge Hub","SOP, policy, template, glossary, bảng giá, mapping status, checklist, video hướng dẫn; mỗi dòng một link.")
+        ]}
+      ]
+    };
+  </script>
+  <script src="./pod-knowledge-survey.js"></script>
+</body>
+</html>

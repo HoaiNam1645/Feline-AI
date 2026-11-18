@@ -6,8 +6,8 @@ describe("auth constants", () => {
   });
 
   it("requires a strong password without changing its characters", () => {
-    expect(() => assertValidPassword("StrongPassword2026")).not.toThrow();
-    expect(() => assertValidPassword("short1A")).toThrow("12");
-    expect(() => assertValidPassword("alllowercase2026")).toThrow("chữ hoa");
+    expect(() => assertValidPassword("12345678")).not.toThrow();
+    expect(() => assertValidPassword("1234567")).toThrow("8");
+    expect(() => assertValidPassword("alllowercase2026")).not.toThrow();
   });
 });

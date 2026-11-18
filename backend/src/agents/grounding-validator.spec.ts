@@ -1,4 +1,4 @@
-import { assertNumericallyGrounded } from "./grounding-validator";
+import { assertNumericallyGrounded, unsupportedNumericClaims } from "./grounding-validator";
 
 describe("assertNumericallyGrounded", () => {
   it("accepts numbers present in the curated context", () => {
@@ -80,5 +80,12 @@ describe("assertNumericallyGrounded", () => {
       "Team có 16 thành viên và doanh thu 999 USD.",
       { activeMemberCount: 16, revenue: 120 }
     )).toThrow("unsupported numbers: 999");
+  });
+
+  it("returns every unsupported numeric claim without throwing", () => {
+    expect(unsupportedNumericClaims(
+      "Team G9B có 111 đơn và 123 sản phẩm.",
+      { question: "Team G9B có bao nhiêu đơn?", orders: 57, items: 80 }
+    )).toEqual(["111", "123"]);
   });
 });

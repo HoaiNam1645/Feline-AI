@@ -33,6 +33,9 @@ export interface AuthUser {
   email: string;
   displayName: string;
   departmentCode: string | null;
+  departmentId: string | null;
+  teamId: string | null;
+  passwordResetRequired: boolean;
   role: UserRole;
   status: "ACTIVE" | "LOCKED" | "DISABLED";
 }
@@ -51,13 +54,34 @@ export interface ManagedAccessGrant extends AccessGrant {
 }
 
 export interface ManagedUser extends AuthUser {
+  department: OrganizationDepartment | null;
+  team: OrganizationTeam | null;
+  employeeCode: string | null;
   lastLoginAt: string | null;
   createdAt: string;
   grants: ManagedAccessGrant[];
 }
 
+export interface OrganizationTeam {
+  id: string;
+  code: string;
+  name: string;
+  departmentId?: string;
+  externalSource?: string | null;
+  externalId?: string | null;
+}
+
+export interface OrganizationDepartment {
+  id: string;
+  code: string;
+  name: string;
+  agentId: string | null;
+  teams?: OrganizationTeam[];
+}
+
 export interface AccessCatalog {
   actions: AccessAction[];
+  organization: OrganizationDepartment[];
   agents: Array<{
     id: string;
     name: string;
@@ -83,6 +107,168 @@ export interface AuthSession {
     platformAdmin: boolean;
     grants: AccessGrant[];
   };
+}
+
+export type NotificationCategory = "TASK" | "REPORT";
+
+export interface AppInboxNotification {
+  id: string;
+  category: NotificationCategory;
+  eventType: string;
+  title: string;
+  message: string;
+  entityType: string;
+  entityId: string;
+  route: string;
+  metadata?: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+  actor: Pick<AuthUser, "id" | "displayName" | "role"> | null;
+}
+
+export interface NotificationList {
+  items: AppInboxNotification[];
+  unread: number;
+}
+
+export type WorkTaskStatus = "DRAFT" | "ASSIGNED" | "ACCEPTED" | "IN_PROGRESS" | "BLOCKED" | "IN_REVIEW" | "COMPLETED" | "REJECTED" | "CANCELED";
+export type WorkTaskPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+export type WorkTaskView = "ACTIVE" | "TODAY" | "OVERDUE" | "OVER_ESTIMATE" | "COMPLETED" | "ARCHIVED" | "ALL";
+export type WorkTaskDateField = "createdAt" | "dueAt" | "startedAt" | "completedAt" | "updatedAt";
+
+export interface WorkTaskPerson {
+  id: string;
+  displayName: string;
+  email?: string;
+  departmentCode?: string | null;
+  teamId?: string | null;
+  team?: OrganizationTeam | null;
+}
+
+export interface WorkTaskUpdate {
+  id: string;
+  type: string;
+  message: string | null;
+  fromStatus: WorkTaskStatus | null;
+  toStatus: WorkTaskStatus | null;
+  progressPercent: number | null;
+  createdAt: string;
+  actor: WorkTaskPerson;
+}
+
+export interface WorkTaskChecklistItem {
+  id: string;
+  title?: string;
+  position?: number;
+  isCompleted: boolean;
+  completedAt?: string | null;
+  completedBy?: Pick<WorkTaskPerson, "id" | "displayName"> | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WorkTaskTimeEntry {
+  id: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  actor: Pick<WorkTaskPerson, "id" | "displayName">;
+}
+
+export interface WorkTask {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  departmentCode: string;
+  departmentName: string;
+  teamId: string | null;
+  team: OrganizationTeam | null;
+  agentId: string | null;
+  priority: WorkTaskPriority;
+  status: WorkTaskStatus;
+  position: number;
+  progressPercent: number;
+  dueAt: string | null;
+  estimatedMinutes: number | null;
+  startedAt: string | null;
+  activeTimeSeconds: number;
+  activeTimerStartedAt: string | null;
+  submittedAt: string | null;
+  completedAt: string | null;
+  blockedReason: string | null;
+  completionNote: string | null;
+  archivedAt: string | null;
+  archivedById: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: WorkTaskPerson;
+  assignee: WorkTaskPerson | null;
+  checklistItems: WorkTaskChecklistItem[];
+  updates?: WorkTaskUpdate[];
+  timeEntries?: WorkTaskTimeEntry[];
+}
+
+export interface WorkTaskSummary {
+  total: number;
+  active: number;
+  today: number;
+  review: number;
+  completed: number;
+  completedToday: number;
+  overdue: number;
+  overEstimate: number;
+  archived: number;
+  byStatus: Partial<Record<WorkTaskStatus, number>>;
+}
+
+export type TeamDailyReportStatus = "DRAFT" | "SUBMITTED" | "ACKNOWLEDGED";
+
+export interface TeamReportPerson {
+  id: string;
+  displayName: string;
+  role: UserRole;
+  teamId?: string | null;
+}
+
+export interface TeamDailyReportComment {
+  id: string;
+  reportId: string;
+  actorUserId: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+  actor: TeamReportPerson;
+}
+
+export interface TeamDailyReport {
+  id: string;
+  departmentId: string;
+  departmentCode: string;
+  departmentName: string;
+  teamId: string;
+  team: OrganizationTeam;
+  reportDate: string;
+  status: TeamDailyReportStatus;
+  summary: string;
+  completedWork: string;
+  inProgressWork: string;
+  blockers: string;
+  nextPlan: string;
+  createdById: string;
+  createdBy: TeamReportPerson;
+  submittedBy: TeamReportPerson | null;
+  submittedAt: string | null;
+  acknowledgedBy: TeamReportPerson | null;
+  acknowledgedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  comments: TeamDailyReportComment[];
+}
+
+export interface TeamDailyReportTab extends OrganizationTeam {
+  department: { code: string; name: string };
+  report: Pick<TeamDailyReport, "id" | "status" | "submittedAt" | "acknowledgedAt"> | null;
 }
 
 export interface DailyMetrics {
@@ -174,6 +360,24 @@ export interface TiktokDashboardData {
   }>;
   trend: Array<{ reportDate: string; teamId: number; teamName: string; orders: number; estimatedRevenue: number }>;
   source: { access: "read-only"; generatedAtUtc: string; dataUpdatedAtUtc: string | null };
+}
+
+export interface EtsyDashboardData {
+  report: { startDate: string; endDate: string; timeZone: string; currency: string; generatedAt: string };
+  source: { dataUpdatedAt: string | null; shopSyncedAt: string | null };
+  filters: {
+    sellerTeams: Array<{ id: string; name: string }>;
+    shops: Array<{ id: string; name: string }>;
+    sellers: Array<{ id: string; name: string; email: string; teamId: string | null }>;
+  };
+  summary: { orders: number; items: number; grossBookedValue: number; recognizedRevenue: number; etsyNet: number; fulfillmentCost: number; designCost: number; refundAmount: number; manualCost: number; manualCostVnd: number; operationalProfit: number; funds: number; fundsVnd: number; shops: number; activeSellers: number };
+  statuses: Array<{ status: string; orders: number }>;
+  trend: Array<{ date: string; orders: number; items: number; net: number; profit: number }>;
+  sellerTeams: Array<{ id: string; name: string; members: number; orders: number; items: number; grossBookedValue: number; net: number; profit: number }>;
+  shops: Array<{ id: string; name: string; orders: number; items: number; net: number; profit: number; funds: number; fundsVnd: number }>;
+  sellers: Array<{ id: string; name: string; email: string; teamId: string | null; teamName: string; orders: number; items: number; grossBookedValue: number; net: number; fulfillmentCost: number; designCost: number; refundAmount: number; profit: number }>;
+  topProducts: Array<{ name: string; shopId: string; shopName: string; quantity: number; grossBookedValue: number; net: number }>;
+  quality: { totalOrders: number; noSkuOrders: number; unknownSellerOrders: number; fallbackNetOrders: number; orderNetOrders: number; actualNetOrders: number; missingShopOrders: number; unattributedOrders: number; attributionRate: number; unknownPrefixes: Array<{ prefix: string; orders: number }> };
 }
 
 export type OfficeDelegationStage =

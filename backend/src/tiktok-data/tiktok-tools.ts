@@ -176,7 +176,7 @@ export class TiktokFinanceTool extends TiktokReadTool {
     const [start, end] = this.window(input);
     const orderScope = this.scopes.orderPredicate(input.scope);
     const storeScope = this.scopes.storePredicate(input.scope);
-    const [orders, refunds, ads, snapshots] = await Promise.all([
+    const [orders, refunds, ads, snapshots, snapshotBreakdown] = await Promise.all([
       this.db.query<DataRow>(`
         SELECT SUM(o.total) AS grossOrderValue, SUM(o.profit_price) AS estimatedRevenue,
                SUM(o.net_profit_price) AS storedNetProfit,
@@ -207,6 +207,26 @@ export class TiktokFinanceTool extends TiktokReadTool {
         WHERE (f.year * 100 + f.month) BETWEEN (? * 100 + ?) AND (? * 100 + ?)
           AND ${storeScope.sql}
       `, [Number(input.startDate.slice(0,4)), Number(input.startDate.slice(5,7)), Number(input.endDate.slice(0,4)), Number(input.endDate.slice(5,7)), ...storeScope.params])
+      ,
+      this.db.query<DataRow>(`
+        SELECT t.id AS teamId, t.name AS teamName, t.code AS teamCode,
+               u.id AS sellerId, u.name AS sellerName,
+               s.id AS storeId, s.store_name AS storeName,
+               SUM(f.statement_settlement) AS statementSettlement,
+               SUM(f.statement_fee) AS statementFee, SUM(f.paid) AS paidAmount,
+               SUM(f.net_sales) AS snapshotNetSales, COUNT(*) AS snapshotRows,
+               MAX(f.synced_at) AS dataUpdatedAt
+        FROM finance_monthly_snapshots f
+        JOIN stores s ON s.id = f.store_id
+        JOIN users u ON u.id = s.user_id
+        LEFT JOIN user_details ud ON ud.user_id = u.id
+        LEFT JOIN teams t ON t.id = ud.team_id
+        WHERE (f.year * 100 + f.month) BETWEEN (? * 100 + ?) AND (? * 100 + ?)
+          AND ${storeScope.sql}
+        GROUP BY t.id, t.name, t.code, u.id, u.name, s.id, s.store_name
+        ORDER BY paidAmount DESC, statementSettlement DESC
+        LIMIT 200
+      `, [Number(input.startDate.slice(0,4)), Number(input.startDate.slice(5,7)), Number(input.endDate.slice(0,4)), Number(input.endDate.slice(5,7)), ...storeScope.params])
     ]);
     const o = orders[0] || {}; const r = refunds[0] || {}; const a = ads[0] || {}; const s = snapshots[0] || {};
     const estimated = Number(o.estimatedRevenue || 0); const fulfillment = Number(o.fulfillmentCost || 0);
@@ -222,7 +242,14 @@ export class TiktokFinanceTool extends TiktokReadTool {
         refundAmount: refund, refundShipping: Number(r.refundShipping || 0), refundCases: Number(r.refundCases || 0),
         adsSpend, operationalContribution: estimated - fulfillment - refund - adsSpend,
         statementSettlement: Number(s.statementSettlement || 0), statementFee: Number(s.statementFee || 0),
-        paidAmount: Number(s.paidAmount || 0), snapshotNetSales: Number(s.snapshotNetSales || 0), snapshotRows: Number(s.snapshotRows || 0)
+        paidAmount: Number(s.paidAmount || 0), snapshotNetSales: Number(s.snapshotNetSales || 0), snapshotRows: Number(s.snapshotRows || 0),
+        bySellerStore: snapshotBreakdown.map((row) => ({
+          ...row,
+          teamId: Number(row.teamId || 0), sellerId: Number(row.sellerId || 0), storeId: Number(row.storeId || 0),
+          statementSettlement: Number(row.statementSettlement || 0), statementFee: Number(row.statementFee || 0),
+          paidAmount: Number(row.paidAmount || 0), snapshotNetSales: Number(row.snapshotNetSales || 0),
+          snapshotRows: Number(row.snapshotRows || 0)
+        }))
       },
       source: this.source(["orders", "order_fulfillments", "refunds", "ads", "finance_monthly_snapshots"], s.dataUpdatedAt || o.dataUpdatedAt || r.dataUpdatedAt, warnings)
     };
@@ -243,6 +270,7 @@ export class TiktokTeamTool extends TiktokReadTool {
     const [start, end] = this.window(input); const predicate = this.scopes.orderPredicate(input.scope);
     const rows = await this.db.query<DataRow>(`
       SELECT COALESCE(t.id, 0) AS teamId, COALESCE(t.name, 'Chưa gán team') AS teamName,
+             t.code AS teamCode,
              u.id AS sellerId, u.name AS sellerName, COUNT(DISTINCT o.id) AS orders,
              COALESCE(SUM(od.quantity),0) AS items, SUM(o.profit_price) AS estimatedRevenue,
              SUM(COALESCE(ofs.fulfill_cost,0)) AS fulfillmentCost,
@@ -255,9 +283,55 @@ export class TiktokTeamTool extends TiktokReadTool {
       LEFT JOIN (SELECT order_id, SUM(COALESCE(fulfill_price,0)) fulfill_cost FROM order_fulfillments GROUP BY order_id) ofs ON ofs.order_id=o.order_id
       LEFT JOIN (SELECT order_id, SUM(COALESCE(amount,0)) refund_amount FROM refunds GROUP BY order_id) ref ON ref.order_id=o.order_id
       WHERE o.platform='tiktok' AND o.order_date>=? AND o.order_date<? AND ${predicate.sql}
-      GROUP BY t.id,t.name,u.id,u.name ORDER BY contributionBeforeAds DESC LIMIT 100
+      GROUP BY t.id,t.name,t.code,u.id,u.name ORDER BY contributionBeforeAds DESC LIMIT 100
     `, [start, end, ...predicate.params]);
-    return { domain: "team", range: this.range(input), data: { rows: rows.map((row) => this.numbers(row, ["teamId","sellerId","orders","items","estimatedRevenue","fulfillmentCost","refundAmount","contributionBeforeAds"])) }, source: this.source(["teams","users","user_details","orders","order_details","order_fulfillments","refunds"], rows[0]?.dataUpdatedAt, ["Contribution hiện chưa trừ ads do bảng ads chưa có dữ liệu đầy đủ."]) };
+    const normalizedRows = rows.map((row) => this.numbers(row, ["teamId","sellerId","orders","items","estimatedRevenue","fulfillmentCost","refundAmount","contributionBeforeAds"]));
+    const byTeam = new Map<string, {
+      teamId: number; teamName: string; teamCode: string | null; sellers: number;
+      orders: number; items: number; estimatedRevenue: number; fulfillmentCost: number;
+      refundAmount: number; contributionBeforeAds: number;
+    }>();
+    for (const row of normalizedRows) {
+      const teamId = Number(row.teamId || 0);
+      const key = String(teamId);
+      const current = byTeam.get(key) || {
+        teamId,
+        teamName: String(row.teamName || "Chưa gán team"),
+        teamCode: row.teamCode === null || row.teamCode === undefined ? null : String(row.teamCode),
+        sellers: 0,
+        orders: 0,
+        items: 0,
+        estimatedRevenue: 0,
+        fulfillmentCost: 0,
+        refundAmount: 0,
+        contributionBeforeAds: 0
+      };
+      current.sellers += 1;
+      current.orders += Number(row.orders || 0);
+      current.items += Number(row.items || 0);
+      current.estimatedRevenue += Number(row.estimatedRevenue || 0);
+      current.fulfillmentCost += Number(row.fulfillmentCost || 0);
+      current.refundAmount += Number(row.refundAmount || 0);
+      current.contributionBeforeAds += Number(row.contributionBeforeAds || 0);
+      byTeam.set(key, current);
+    }
+    const teams = [...byTeam.values()];
+    const summary = teams.reduce((total, team) => ({
+      teams: total.teams + 1,
+      sellers: total.sellers + team.sellers,
+      orders: total.orders + team.orders,
+      items: total.items + team.items,
+      estimatedRevenue: total.estimatedRevenue + team.estimatedRevenue,
+      fulfillmentCost: total.fulfillmentCost + team.fulfillmentCost,
+      refundAmount: total.refundAmount + team.refundAmount,
+      contributionBeforeAds: total.contributionBeforeAds + team.contributionBeforeAds
+    }), { teams: 0, sellers: 0, orders: 0, items: 0, estimatedRevenue: 0, fulfillmentCost: 0, refundAmount: 0, contributionBeforeAds: 0 });
+    return {
+      domain: "team",
+      range: this.range(input),
+      data: { summary, byTeam: teams, rows: normalizedRows },
+      source: this.source(["teams","users","user_details","orders","order_details","order_fulfillments","refunds"], rows[0]?.dataUpdatedAt, ["Contribution hiện chưa trừ ads do bảng ads chưa có dữ liệu đầy đủ."])
+    };
   }
 
   private async members(input: TiktokToolInput): Promise<TiktokToolOutput> {
@@ -325,7 +399,7 @@ export class TiktokTeamTool extends TiktokReadTool {
   }
 
   private isMembershipQuestion(question: string): boolean {
-    const normalized = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const normalized = question.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
     return /\b(nhung ai|gom ai|thanh vien|danh sach|ai trong team|co ai)\b/.test(normalized);
   }
 

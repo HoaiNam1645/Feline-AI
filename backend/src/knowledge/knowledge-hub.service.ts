@@ -508,7 +508,7 @@ export class KnowledgeHubService {
 
   private knownAgentId(value: unknown): string {
     const agentId = String(value || "").trim();
-    if (agentId !== "ceo-ai" && agentId !== "tiktok-ai") {
+    if (!new Set(["ceo-ai", "tiktok-ai", "etsy-ai"]).has(agentId)) {
       throw new BadRequestException("Agent không hỗ trợ kho tri thức");
     }
     return agentId;

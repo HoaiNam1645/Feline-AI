@@ -23,9 +23,19 @@ export class TiktokScopeService {
     );
     const values = new Set(grants.flatMap((grant) => grant.dataScopeIds));
     const all = values.has("*") || values.has("tiktok.data.all");
+    const hasRowScope = [...values].some((value) =>
+      value.startsWith("tiktok.team:")
+      || value.startsWith("tiktok.store:")
+      || value.startsWith("tiktok.user:")
+    );
+    const hasExplicitDomain = TIKTOK_DATA_DOMAINS.some((domain) => values.has(`tiktok.data.${domain}`));
     const domains = all
       ? [...TIKTOK_DATA_DOMAINS]
-      : TIKTOK_DATA_DOMAINS.filter((domain) => values.has(`tiktok.data.${domain}`));
+      : hasExplicitDomain
+        ? TIKTOK_DATA_DOMAINS.filter((domain) => values.has(`tiktok.data.${domain}`))
+        : hasRowScope
+          ? [...TIKTOK_DATA_DOMAINS]
+          : [];
     const ids = (prefix: string) => [...values]
       .filter((value) => value.startsWith(prefix))
       .map((value) => Number(value.slice(prefix.length)))

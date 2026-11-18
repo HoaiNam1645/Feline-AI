@@ -19,7 +19,12 @@ import { ReportEngineModule } from "./report-engine/report-engine.module";
 import { ReportProducerModule } from "./reports/report-producer.module";
 import { SourceModule } from "./source/source.module";
 import { TiktokChatModule } from "./tiktok-chat/tiktok-chat.module";
+import { EtsyChatModule } from "./etsy-chat/etsy-chat.module";
+import { EtsyDataModule } from "./etsy-data/etsy-data.module";
 import { TiktokDataModule } from "./tiktok-data/tiktok-data.module";
+import { TasksModule } from "./tasks/tasks.module";
+import { DailyReportsModule } from "./daily-reports/daily-reports.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
   imports: [
@@ -31,7 +36,12 @@ import { TiktokDataModule } from "./tiktok-data/tiktok-data.module";
     ChatModule,
     CeoChatModule,
     TiktokChatModule,
+    EtsyChatModule,
+    EtsyDataModule,
     TiktokDataModule,
+    TasksModule,
+    DailyReportsModule,
+    NotificationsModule,
     KnowledgeModule,
     DatabaseModule,
     ObservabilityModule,

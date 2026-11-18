@@ -24,6 +24,9 @@ export interface PublicUser {
   email: string;
   displayName: string;
   departmentCode: string | null;
+  departmentId: string | null;
+  teamId: string | null;
+  passwordResetRequired: boolean;
   role: User["role"];
   status: User["status"];
 }
@@ -224,7 +227,7 @@ export class AuthService {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
-        data: { passwordHash, passwordChangedAt: new Date(), failedLoginAttempts: 0, lockedUntil: null }
+        data: { passwordHash, passwordChangedAt: new Date(), passwordResetRequired: false, failedLoginAttempts: 0, lockedUntil: null }
       });
       await tx.session.updateMany({
         where: { userId: user.id, revokedAt: null },
@@ -309,6 +312,9 @@ export class AuthService {
       email: user.email,
       displayName: user.displayName,
       departmentCode: user.departmentCode,
+      departmentId: user.departmentId,
+      teamId: user.teamId,
+      passwordResetRequired: user.passwordResetRequired,
       role: user.role,
       status: user.status
     };

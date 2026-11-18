@@ -94,6 +94,36 @@ enum KnowledgeVersionStatus {
   FAILED
 }
 
+enum WorkTaskStatus {
+  DRAFT
+  ASSIGNED
+  ACCEPTED
+  IN_PROGRESS
+  BLOCKED
+  IN_REVIEW
+  COMPLETED
+  REJECTED
+  CANCELED
+}
+
+enum WorkTaskPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TeamDailyReportStatus {
+  DRAFT
+  SUBMITTED
+  ACKNOWLEDGED
+}
+
+enum NotificationCategory {
+  TASK
+  REPORT
+}
+
 model DailyReportRun {
   id            String          @id @default(cuid())
   reportDate    DateTime        @unique @db.Date
@@ -206,7 +236,15 @@ model User {
   email                   String                   @unique
   displayName             String
   departmentCode          String?
+  departmentId            String?
+  department              Department?              @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  teamId                  String?
+  team                    OrganizationTeam?        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  externalSource          String?
+  externalUserId          String?
+  employeeCode            String?
   passwordHash            String
+  passwordResetRequired   Boolean                  @default(false)
   role                    UserRole                 @default(USER)
   status                  UserStatus               @default(ACTIVE)
   failedLoginAttempts     Int                      @default(0)
@@ -224,9 +262,221 @@ model User {
   chatQuestionEvaluations ChatQuestionEvaluation[]
   chatAttachments         ChatAttachment[]
   conversationMemories    ConversationMemory[]
+  tasksCreated            WorkTask[]               @relation("TaskCreator")
+  tasksAssigned           WorkTask[]               @relation("TaskAssignee")
+  taskUpdates             WorkTaskUpdate[]
+  taskTimeEntries         WorkTaskTimeEntry[]      @relation("TaskTimeActor")
+  checklistItemsCompleted WorkTaskChecklistItem[]  @relation("ChecklistCompletedBy")
+  teamReportsCreated      TeamDailyReport[]         @relation("TeamReportCreator")
+  teamReportsSubmitted    TeamDailyReport[]         @relation("TeamReportSubmitter")
+  teamReportsAcknowledged TeamDailyReport[]         @relation("TeamReportAcknowledger")
+  teamReportComments      TeamDailyReportComment[]
+  notificationsReceived  Notification[]            @relation("NotificationRecipient")
+  notificationsTriggered Notification[]            @relation("NotificationActor")
 
+  @@unique([externalSource, externalUserId])
   @@index([role, status])
   @@index([departmentCode, status])
+  @@index([departmentId, teamId, status])
+}
+
+model Department {
+  id        String             @id @default(cuid())
+  code      String             @unique
+  name      String
+  agentId   String?
+  isActive  Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  teams     OrganizationTeam[]
+  users     User[]
+  dailyReports TeamDailyReport[]
+
+  @@index([isActive, name])
+}
+
+model OrganizationTeam {
+  id             String     @id @default(cuid())
+  departmentId   String
+  department     Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  externalSource String?
+  externalId     String?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  users          User[]
+  tasks          WorkTask[]
+  dailyReports   TeamDailyReport[]
+
+  @@unique([departmentId, code])
+  @@unique([externalSource, externalId])
+  @@index([departmentId, isActive, name])
+}
+
+model TeamDailyReport {
+  id                 String                @id @default(cuid())
+  departmentId       String
+  department         Department            @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  departmentCode     String
+  departmentName     String
+  teamId             String
+  team               OrganizationTeam      @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  reportDate         DateTime               @db.Date
+  status             TeamDailyReportStatus @default(DRAFT)
+  summary            String
+  completedWork      String
+  inProgressWork     String
+  blockers           String
+  nextPlan           String
+  createdById        String
+  createdBy          User                   @relation("TeamReportCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  submittedById      String?
+  submittedBy        User?                  @relation("TeamReportSubmitter", fields: [submittedById], references: [id], onDelete: SetNull)
+  submittedAt        DateTime?
+  acknowledgedById   String?
+  acknowledgedBy     User?                  @relation("TeamReportAcknowledger", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+  acknowledgedAt     DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+  comments           TeamDailyReportComment[]
+
+  @@unique([teamId, reportDate])
+  @@index([departmentId, reportDate])
+  @@index([teamId, reportDate])
+  @@index([status, reportDate])
+}
+
+model TeamDailyReportComment {
+  id          String          @id @default(cuid())
+  reportId    String
+  report      TeamDailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  actorUserId String
+  actor       User            @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  message     String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([reportId, createdAt])
+  @@index([actorUserId, createdAt])
+}
+
+model Notification {
+  id              String               @id @default(cuid())
+  recipientUserId String
+  recipient       User                 @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  actorUserId     String?
+  actor           User?                @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  category        NotificationCategory
+  eventType       String
+  title           String
+  message         String
+  entityType      String
+  entityId        String
+  route           String
+  metadata        Json?
+  readAt          DateTime?
+  createdAt       DateTime             @default(now())
+
+  @@index([recipientUserId, readAt, createdAt])
+  @@index([recipientUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model WorkTask {
+  id              String                  @id @default(cuid())
+  code            String                  @unique
+  title           String
+  description     String
+  departmentCode  String
+  departmentName  String
+  teamId          String?
+  team            OrganizationTeam?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  agentId         String?
+  priority        WorkTaskPriority        @default(NORMAL)
+  status          WorkTaskStatus          @default(DRAFT)
+  position        Int                     @default(0)
+  progressPercent Int                     @default(0)
+  dueAt           DateTime?
+  estimatedMinutes Int?
+  startedAt       DateTime?
+  activeTimeSeconds Int                   @default(0)
+  activeTimerStartedAt DateTime?
+  submittedAt     DateTime?
+  completedAt     DateTime?
+  blockedReason   String?
+  completionNote  String?
+  archivedAt      DateTime?
+  archivedById    String?
+  createdById     String
+  createdBy       User                    @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  assigneeId      String?
+  assignee        User?                   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  updates         WorkTaskUpdate[]
+  timeEntries     WorkTaskTimeEntry[]
+  checklistItems  WorkTaskChecklistItem[]
+
+  @@index([departmentCode, status, dueAt])
+  @@index([departmentCode, status, position])
+  @@index([teamId, status, dueAt])
+  @@index([assigneeId, status, dueAt])
+  @@index([createdById, createdAt])
+  @@index([archivedAt, status, completedAt])
+}
+
+model WorkTaskTimeEntry {
+  id              String    @id @default(cuid())
+  taskId          String
+  task            WorkTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorUserId     String
+  actor           User      @relation("TaskTimeActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationSeconds Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([taskId, startedAt])
+  @@index([actorUserId, startedAt])
+  @@index([taskId, endedAt])
+}
+
+model WorkTaskChecklistItem {
+  id            String    @id @default(cuid())
+  taskId        String
+  task          WorkTask  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title         String
+  position      Int       @default(0)
+  isCompleted   Boolean   @default(false)
+  completedAt   DateTime?
+  completedById String?
+  completedBy   User?     @relation("ChecklistCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([taskId, position])
+  @@index([completedById])
+}
+
+model WorkTaskUpdate {
+  id              String          @id @default(cuid())
+  taskId          String
+  task            WorkTask        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorUserId     String
+  actor           User            @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  type            String
+  message         String?
+  fromStatus      WorkTaskStatus?
+  toStatus        WorkTaskStatus?
+  progressPercent Int?
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+
+  @@index([taskId, createdAt])
+  @@index([actorUserId, createdAt])
 }
 
 model KnowledgeDocument {
@@ -404,13 +654,13 @@ model HttpRequestLog {
 }
 
 model ChatConversation {
-  id          String           @id @default(cuid())
+  id          String              @id @default(cuid())
   userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   agentId     String
   title       String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   messages    ChatMessage[]
   attachments ChatAttachment[]
   memory      ConversationMemory?
@@ -439,21 +689,21 @@ model ConversationMemory {
 }
 
 model CeoAnswerCache {
-  id                  String   @id @default(cuid())
-  exactHash           String   @unique
-  agentId             String
-  capabilityId        String
-  scopeKey            String
+  id                   String    @id @default(cuid())
+  exactHash            String    @unique
+  agentId              String
+  capabilityId         String
+  scopeKey             String
   knowledgeFingerprint String
-  promptVersion       String
-  normalizedQuestion  String
-  questionEmbedding   Json
-  answer              Json
-  hitCount            Int      @default(0)
-  lastHitAt           DateTime?
-  expiresAt           DateTime
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  promptVersion        String
+  normalizedQuestion   String
+  questionEmbedding    Json
+  answer               Json
+  hitCount             Int       @default(0)
+  lastHitAt            DateTime?
+  expiresAt            DateTime
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([agentId, capabilityId, scopeKey, knowledgeFingerprint, promptVersion, expiresAt])
   @@index([expiresAt])

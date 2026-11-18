@@ -8,6 +8,7 @@ import "@fontsource/manrope/700.css";
 import "@fontsource/newsreader/500.css";
 import "@fontsource/newsreader/600.css";
 import App from "./App";
+import { NotificationViewport } from "./NotificationViewport";
 import "./styles.css";
 import "./auth.css";
 import "./admin-users.css";
@@ -21,11 +22,16 @@ import "./feline-editorial.css";
 import "./ai-office.css";
 import "./ai-office-loader.css";
 import "./tiktok-dashboard.css";
+import "./etsy-dashboard.css";
+import "./task-manager.css";
+import "./daily-reports.css";
+import "./notification-center.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <HashRouter>
       <App />
+      <NotificationViewport />
     </HashRouter>
   </React.StrictMode>
 );

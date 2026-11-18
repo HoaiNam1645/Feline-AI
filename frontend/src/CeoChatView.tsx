@@ -23,7 +23,14 @@ const TIKTOK_SUGGESTIONS = [
   "Khi có vấn đề với đơn TikTok cần báo cho ai?"
 ];
 
-type KnowledgeChatVariant = "ceo" | "tiktok";
+const ETSY_SUGGESTIONS = [
+  "Quy trình tạo và duyệt một listing Etsy gồm những bước nào?",
+  "Ai phụ trách kiểm tra chất lượng nội dung listing?",
+  "Quy định bàn giao tài khoản và shop Etsy như thế nào?",
+  "Khi shop Etsy gặp cảnh báo cần báo cho ai?"
+];
+
+type KnowledgeChatVariant = "ceo" | "tiktok" | "etsy";
 
 const CHAT_CONFIG = {
   ceo: {
@@ -43,6 +50,15 @@ const CHAT_CONFIG = {
     welcome: "Bạn cần hỗ trợ việc gì ở phòng TikTok?",
     welcomeText: "Câu trả lời dựa trên tài liệu Sell TikTok trong phạm vi bạn được phép xem.",
     suggestions: TIKTOK_SUGGESTIONS
+  },
+  etsy: {
+    name: "Etsy AI",
+    subtitle: "Phòng Sell Etsy",
+    queryKey: "etsyConversation",
+    placeholder: "Hỏi về quy trình và tri thức Sell Etsy...",
+    welcome: "Bạn cần hỗ trợ việc gì ở phòng Etsy?",
+    welcomeText: "Câu trả lời dựa trên tài liệu Sell Etsy trong phạm vi bạn được phép xem.",
+    suggestions: ETSY_SUGGESTIONS
   }
 } as const;
 
@@ -81,6 +97,28 @@ function streamingMarkdown(content: string) {
 
 export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; variant?: KnowledgeChatVariant }) {
   const config = CHAT_CONFIG[variant];
+  const chatApi = variant === "ceo" ? {
+    list: api.ceoChatConversations,
+    create: api.createCeoChatConversation,
+    get: api.ceoChatConversation,
+    rename: api.renameCeoChatConversation,
+    remove: api.deleteCeoChatConversation,
+    stream: api.streamCeoChatMessage
+  } : variant === "tiktok" ? {
+    list: api.tiktokChatConversations,
+    create: api.createTiktokChatConversation,
+    get: api.tiktokChatConversation,
+    rename: api.renameTiktokChatConversation,
+    remove: api.deleteTiktokChatConversation,
+    stream: api.streamTiktokChatMessage
+  } : {
+    list: api.etsyChatConversations,
+    create: api.createEtsyChatConversation,
+    get: api.etsyChatConversation,
+    rename: api.renameEtsyChatConversation,
+    remove: api.deleteEtsyChatConversation,
+    stream: api.streamEtsyChatMessage
+  };
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -112,7 +150,7 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
   async function loadConversations(preferredId?: string) {
     setLoading(true);
     try {
-      const list = await (variant === "ceo" ? api.ceoChatConversations() : api.tiktokChatConversations());
+      const list = await chatApi.list();
       setConversations(list);
       const requested = preferredId || selectedId;
       const next = requested && list.some((item) => item.id === requested) ? requested : list[0]?.id;
@@ -129,7 +167,7 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
       return;
     }
     let active = true;
-    const request = variant === "ceo" ? api.ceoChatConversation(selectedId) : api.tiktokChatConversation(selectedId);
+    const request = chatApi.get(selectedId);
     void request.then((conversation) => { if (active) setMessages(conversation.messages || []); }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải hội thoại"); });
     return () => { active = false; };
   }, [selectedId]);
@@ -144,21 +182,21 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
   }, [question]);
 
   async function createConversation() {
-    const created = await (variant === "ceo" ? api.createCeoChatConversation() : api.createTiktokChatConversation());
+    const created = await chatApi.create();
     setConversations((current) => [created, ...current]);
     setMessages([]); setQuestion(""); setHistoryOpen(false); updateQuery(created.id);
   }
 
   async function renameConversation(id: string) {
     if (!editingTitle.trim()) return;
-    const updated = await (variant === "ceo" ? api.renameCeoChatConversation(id, editingTitle.trim()) : api.renameTiktokChatConversation(id, editingTitle.trim()));
+    const updated = await chatApi.rename(id, editingTitle.trim());
     setConversations((current) => current.map((item) => item.id === id ? { ...item, title: updated.title } : item));
     setEditingId(null); setMenuId(null);
   }
 
   async function deleteConversation(id: string) {
     if (!window.confirm("Xóa cuộc trò chuyện này?")) return;
-    await (variant === "ceo" ? api.deleteCeoChatConversation(id) : api.deleteTiktokChatConversation(id));
+    await chatApi.remove(id);
     const remaining = conversations.filter((item) => item.id !== id);
     setConversations(remaining); setMenuId(null);
     if (selectedId === id) { setMessages([]); updateQuery(remaining[0]?.id || null, true); }
@@ -168,7 +206,7 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
     if (!content.trim() || sending) return;
     let conversationId = selectedId;
     if (!conversationId) {
-      const created = await (variant === "ceo" ? api.createCeoChatConversation() : api.createTiktokChatConversation());
+      const created = await chatApi.create();
       conversationId = created.id;
       skipInitialConversationLoadRef.current = created.id;
       setConversations((current) => [created, ...current]);
@@ -215,8 +253,7 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
       if (streamTimer === null) pumpStream();
     };
     try {
-      const stream = variant === "ceo" ? api.streamCeoChatMessage : api.streamTiktokChatMessage;
-      await stream(conversationId, content.trim(), {
+      await chatApi.stream(conversationId, content.trim(), {
         onStatus: setStatus,
         onMeta: (meta) => { sources = meta.sources; },
         onDelta: queueDelta,
@@ -243,7 +280,7 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
   async function copy(message: ChatMessage) { await navigator.clipboard.writeText(message.content); setCopiedId(message.id); setTimeout(() => setCopiedId(null), 1500); }
   function handleScroll() { const panel = messagesRef.current; if (panel) setShowJump(panel.scrollHeight - panel.scrollTop - panel.clientHeight > 80); }
 
-  return <section className={`lemiex-chat-shell ceo-chat-shell ${variant === "tiktok" ? "tiktok-chat-shell" : ""}`}>
+  return <section className={`lemiex-chat-shell ceo-chat-shell ${variant}-chat-shell`}>
     {historyOpen && <button className="chat-drawer-backdrop" onClick={() => setHistoryOpen(false)} aria-label="Đóng lịch sử" />}
     <aside className={`chat-history ${historyOpen ? "open" : ""}`}>
       <div className="chat-history-head"><h2>Cuộc trò chuyện</h2><div className="history-head-actions"><button onClick={() => void createConversation()} aria-label="Tạo hội thoại mới"><Plus weight="bold" /></button><button className="history-mobile-close" onClick={() => setHistoryOpen(false)}><X /></button></div></div>

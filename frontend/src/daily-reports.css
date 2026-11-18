@@ -1,0 +1,145 @@
+.daily-reports-page { min-width: 0; color: var(--ink); }
+.daily-reports-toolbar { min-width: 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 13px; }
+.daily-header-actions { display: flex; align-items: center; flex: none; gap: 8px; }
+.daily-date-control { min-height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px; background: #fffdf9; }
+.daily-date-control svg { width: 17px; color: var(--wine); }
+.daily-date-control span { color: var(--muted); font-size: 10px; }
+.daily-date-control input { min-width: 120px; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 11px; font-weight: 700; }
+.daily-icon-button { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; color: var(--wine); background: #fffdf9; cursor: pointer; }
+.daily-icon-button:hover { background: var(--wine-soft); }
+.daily-icon-button svg { width: 18px; }
+
+.daily-team-tabs { min-width: 0; display: flex; flex: 1; gap: 7px; margin: 0; padding-bottom: 2px; overflow-x: auto; scrollbar-width: thin; }
+.daily-team-tabs > button { min-width: 160px; min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 9px 13px; border: 1px solid var(--line); border-radius: 12px 12px 5px 5px; color: #665a51; background: rgba(255,253,249,.66); cursor: pointer; text-align: left; transition: .16s ease; }
+.daily-team-tabs > button:hover { border-color: #cdbbac; color: var(--wine); background: #fffdf9; }
+.daily-team-tabs > button.active { border-color: var(--wine); color: #fff9ef; background: var(--wine); box-shadow: 0 10px 24px rgba(94,17,26,.14); }
+.daily-team-tabs button > span { display: grid; gap: 3px; }
+.daily-team-tabs strong { font-size: 12px; }
+.daily-team-tabs small { opacity: .68; font-size: 8px; }
+.daily-team-tabs i { width: 8px; height: 8px; flex: none; border-radius: 50%; background: #b9aa9d; box-shadow: 0 0 0 4px rgba(114,95,79,.08); }
+.daily-team-tabs i.submitted { background: #c79535; }
+.daily-team-tabs i.acknowledged { background: #4b765d; }
+.daily-team-tabs button.active i { box-shadow: 0 0 0 4px rgba(255,255,255,.14); }
+.daily-no-team { min-height: 70px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 11px; }
+.daily-no-team svg { width: 17px; }
+
+.daily-report-workspace { min-height: 650px; display: grid; grid-template-columns: 230px minmax(0, 1fr); border: 1px solid var(--line); border-radius: 7px 15px 15px 15px; overflow: hidden; background: #fffdf9; box-shadow: var(--editorial-shadow); }
+.daily-date-rail { min-width: 0; border-right: 1px solid var(--line); background: #f8f3ea; }
+.daily-rail-heading { min-height: 67px; display: flex; align-items: center; justify-content: space-between; padding: 0 17px; border-bottom: 1px solid var(--line); }
+.daily-rail-heading span { color: #53463e; font-size: 11px; font-weight: 800; }
+.daily-rail-heading strong { color: #99897b; font-size: 8px; font-weight: 700; }
+.daily-date-list { max-height: 740px; overflow-y: auto; padding: 8px; scrollbar-width: thin; }
+.daily-date-list > button { width: 100%; min-height: 66px; display: grid; grid-template-columns: 38px minmax(0, 1fr) 14px; align-items: center; gap: 9px; margin-bottom: 4px; padding: 7px 9px; border: 0; border-radius: 10px; color: #66594f; background: transparent; cursor: pointer; text-align: left; }
+.daily-date-list > button:hover { background: #f0e7db; }
+.daily-date-list > button.active { color: var(--wine-deep); background: #fffdf9; box-shadow: inset 3px 0 var(--wine), 0 5px 15px rgba(80,49,31,.06); }
+.daily-calendar-tile { width: 38px; height: 43px; display: grid; place-content: center; text-align: center; border: 1px solid #ddcfc0; border-radius: 8px; background: #fffaf2; }
+.daily-calendar-tile b { color: var(--wine); font-family: "Newsreader", serif; font-size: 19px; line-height: 1; }
+.daily-calendar-tile small { margin-top: 3px; color: #9b8979; font-size: 7px; font-weight: 800; }
+.daily-date-copy { min-width: 0; display: grid; gap: 4px; }
+.daily-date-copy strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.daily-date-copy small { color: #968679; font-size: 8px; }
+.daily-date-list svg { width: 13px; color: #aa9b8e; }
+.daily-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #a99b8f; }
+.daily-status-dot.submitted { background: #c79535; }
+.daily-status-dot.acknowledged { background: #4b765d; }
+
+.daily-report-main { min-width: 0; padding: 28px clamp(22px, 3.4vw, 48px) 40px; }
+.daily-loading { min-height: 400px; display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--muted); font-size: 11px; }
+.daily-loading svg { width: 18px; }
+.daily-report-titlebar { display: flex; align-items: flex-start; justify-content: space-between; gap: 22px; margin-bottom: 26px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.daily-report-titlebar h2 { margin: 9px 0 3px; color: #3c312b; font-family: "Newsreader", serif; font-size: 30px; font-weight: 600; letter-spacing: -.02em; }
+.daily-report-titlebar p { margin: 0; color: #8b7c70; font-size: 9px; }
+.daily-report-meta { display: flex; align-items: center; gap: 9px; color: #817267; font-size: 9px; text-transform: capitalize; }
+.daily-status-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0 9px; border-radius: 999px; color: #6d5f55; background: #eee7dd; font-size: 8px; font-weight: 800; }
+.daily-status-pill.submitted { color: #7b5413; background: #f5e8c9; }
+.daily-status-pill.acknowledged { color: #315f46; background: #dfeadf; }
+.daily-report-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.daily-primary-button, .daily-secondary-button { min-height: 39px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 13px; border-radius: 9px; cursor: pointer; font-size: 10px; font-weight: 800; }
+.daily-primary-button { border: 1px solid var(--wine); color: #fff9ef; background: var(--wine); }
+.daily-primary-button:hover:not(:disabled) { background: var(--wine-deep); }
+.daily-secondary-button { border: 1px solid var(--line); color: #675950; background: #fffdf9; }
+.daily-secondary-button:hover { color: var(--wine); background: var(--wine-soft); }
+.daily-primary-button:disabled { cursor: not-allowed; opacity: .55; }
+.daily-primary-button svg, .daily-secondary-button svg { width: 14px; }
+
+.daily-report-content { display: grid; gap: 12px; }
+.daily-section-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.daily-report-section { min-height: 150px; padding: 20px; border: 1px solid #e5dacb; border-radius: 11px; background: #fffaf3; }
+.daily-report-section.summary { min-height: auto; padding: 22px 24px; border-color: #dcc7c4; background: linear-gradient(105deg, #f8e9e5, #fff8ef); }
+.daily-report-section.blockers { background: #fbf4e7; }
+.daily-report-section h3 { margin: 0 0 11px; color: var(--wine-deep); font-size: 10px; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; }
+.daily-report-section p { margin: 0; color: #4e433c; font-size: 11px; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.daily-acknowledged { display: flex; align-items: center; gap: 10px; padding: 13px 15px; border: 1px solid #cbdccb; border-radius: 10px; color: #356148; background: #edf5eb; }
+.daily-acknowledged svg { width: 20px; }
+.daily-acknowledged span { display: grid; gap: 2px; }
+.daily-acknowledged strong { font-size: 10px; }
+.daily-acknowledged small { opacity: .7; font-size: 8px; }
+
+.daily-empty-report { min-height: 420px; display: flex; align-items: center; justify-content: center; gap: 25px; }
+.daily-calendar-large { width: 88px; height: 100px; display: grid; place-content: center; border: 1px solid #d9c8b8; border-radius: 14px; text-align: center; background: #faf2e6; box-shadow: 0 13px 30px rgba(82,50,29,.08); }
+.daily-calendar-large b { color: var(--wine); font-family: "Newsreader", serif; font-size: 44px; line-height: .9; }
+.daily-calendar-large small { margin-top: 9px; color: #8c7868; font-size: 9px; font-weight: 800; }
+.daily-empty-report h2 { margin: 0 0 7px; color: #453931; font-family: "Newsreader", serif; font-size: 26px; font-weight: 600; }
+.daily-empty-report p { margin: 0 0 18px; color: var(--muted); font-size: 10px; }
+
+.daily-report-editor { display: grid; gap: 14px; }
+.daily-editor-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; margin-bottom: 3px; }
+.daily-editor-heading > div:last-child { display: flex; gap: 8px; }
+.daily-editor-heading span { color: var(--wine); font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.daily-editor-heading h2 { margin: 3px 0 0; font-family: "Newsreader", serif; font-size: 25px; font-weight: 600; }
+.daily-editor-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.daily-editor-field { display: grid; gap: 5px; }
+.daily-editor-field > span { color: #4c4038; font-size: 10px; font-weight: 800; }
+.daily-editor-field > span b { color: var(--wine); }
+.daily-editor-field > small { min-height: 17px; color: #948579; font-size: 8px; line-height: 1.4; }
+.daily-editor-field textarea { width: 100%; resize: vertical; padding: 12px 13px; border: 1px solid var(--line); border-radius: 10px; outline: 0; color: var(--ink); background: #fffaf4; font-size: 11px; line-height: 1.65; }
+.daily-editor-field textarea:focus { border-color: #af7378; box-shadow: 0 0 0 3px rgba(127,32,40,.08); background: #fffdf9; }
+
+.daily-comments { margin-top: 28px; padding-top: 23px; border-top: 1px solid var(--line); }
+.daily-comments-heading > div { display: flex; align-items: center; gap: 10px; }
+.daily-comments-heading svg { width: 18px; color: var(--wine); }
+.daily-comments-heading span { display: flex; align-items: baseline; gap: 8px; }
+.daily-comments-heading h3 { margin: 0; font-family: "Newsreader", serif; font-size: 20px; font-weight: 600; }
+.daily-comments-heading small { color: #938477; font-size: 8px; }
+.daily-comment-list { display: grid; gap: 14px; margin: 18px 0; }
+.daily-comments-empty { padding: 18px; border-radius: 9px; color: #95867a; background: #faf5ed; font-size: 9px; text-align: center; }
+.daily-comment { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; }
+.daily-avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #fff8eb; background: var(--wine); font-size: 9px; font-weight: 800; }
+.daily-comment header { display: flex; align-items: center; gap: 7px; min-height: 20px; }
+.daily-comment header strong { color: #493d35; font-size: 10px; }
+.daily-comment header span { padding: 2px 6px; border-radius: 999px; color: #7c695b; background: #eee6dc; font-size: 7px; font-weight: 800; }
+.daily-comment header time { margin-left: auto; color: #a09388; font-size: 7px; }
+.daily-comment p { margin: 5px 0 0; padding: 11px 13px; border-radius: 4px 11px 11px 11px; color: #52463e; background: #f7f1e8; font-size: 10px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.daily-comment-composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 9px; }
+.daily-comment-composer textarea { min-height: 65px; resize: vertical; padding: 12px 13px; border: 1px solid var(--line); border-radius: 10px; outline: 0; color: var(--ink); background: #fffaf4; font-size: 10px; line-height: 1.5; }
+.daily-comment-composer textarea:focus { border-color: #af7378; box-shadow: 0 0 0 3px rgba(127,32,40,.08); }
+
+@media (max-width: 1000px) {
+  .daily-report-workspace { grid-template-columns: 190px minmax(0, 1fr); }
+  .daily-report-main { padding-inline: 22px; }
+  .daily-section-grid, .daily-editor-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .daily-reports-toolbar { align-items: stretch; flex-direction: column; gap: 9px; }
+  .daily-header-actions { width: 100%; }
+  .daily-date-control { min-width: 0; flex: 1; }
+  .daily-date-control span { display: none; }
+  .daily-team-tabs > button { min-width: 145px; }
+  .daily-report-workspace { display: block; min-height: 0; overflow: visible; border-radius: 9px; }
+  .daily-date-rail { border-right: 0; border-bottom: 1px solid var(--line); }
+  .daily-rail-heading { min-height: 49px; }
+  .daily-date-list { display: flex; max-height: none; overflow-x: auto; }
+  .daily-date-list > button { min-width: 154px; grid-template-columns: 38px minmax(0, 1fr) 9px; }
+  .daily-report-main { padding: 20px 15px 30px; }
+  .daily-report-titlebar { flex-direction: column; }
+  .daily-report-actions { width: 100%; justify-content: flex-start; }
+  .daily-report-actions button { flex: 1; }
+  .daily-empty-report { min-height: 330px; flex-direction: column; text-align: center; }
+  .daily-editor-heading { align-items: stretch; flex-direction: column; }
+  .daily-editor-heading > div:last-child { display: grid; grid-template-columns: 1fr 1fr; }
+  .daily-comment-composer { grid-template-columns: 1fr; }
+  .daily-comment-composer button { justify-self: end; }
+  .daily-comment header { flex-wrap: wrap; }
+  .daily-comment header time { width: 100%; margin-left: 0; }
+}

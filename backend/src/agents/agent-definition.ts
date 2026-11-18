@@ -141,10 +141,47 @@ export const TIKTOK_AGENT_DEFINITION: AgentDefinition = {
   ]
 };
 
+export const ETSY_AGENT_DEFINITION: AgentDefinition = {
+  id: "etsy-ai",
+  name: "Etsy AI",
+  domain: "Phòng Sell Etsy",
+  mission: "Hỗ trợ đội ngũ Sell Etsy tra cứu tri thức nghiệp vụ từ tài liệu đã được phê duyệt và đúng phạm vi truy cập.",
+  riskLevel: "R0",
+  boundaries: [
+    "Chỉ trả lời từ tài liệu người dùng được phép đọc",
+    "Mọi kết luận nghiệp vụ phải có trích dẫn nguồn",
+    "Không tìm thấy căn cứ thì ghi nhận câu hỏi chưa trả lời được",
+    "Không tự đăng sản phẩm, sửa listing, thay đổi quảng cáo hoặc thực hiện hành động trên Etsy",
+    "Không dùng lịch sử hội thoại hoặc tri thức vector để vượt quyền truy cập"
+  ],
+  capabilities: [
+    {
+      id: "etsy.knowledge.ask",
+      name: "Hỏi đáp tri thức Etsy",
+      description: "Trả lời từ kho tài liệu Sell Etsy với trích dẫn và phân quyền theo phòng ban.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: ["etsy.knowledge.search"]
+    },
+    {
+      id: "etsy.data.ask",
+      name: "Tra cứu dữ liệu Etsy",
+      description: "Tra cứu dữ liệu đơn hàng, tài chính, team, shop, fulfillment, hỗ trợ và sản phẩm qua các tool chỉ đọc.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: [
+        "etsy.overview.get", "etsy.orders.search", "etsy.money.summary", "etsy.team.performance",
+        "etsy.shops.performance", "etsy.fulfillment.metrics", "etsy.support.metrics", "etsy.products.metrics"
+      ]
+    }
+  ]
+};
+
 export const AGENT_DEFINITIONS: AgentDefinition[] = [
   LEMIEX_AGENT_DEFINITION,
   CEO_AGENT_DEFINITION,
-  TIKTOK_AGENT_DEFINITION
+  TIKTOK_AGENT_DEFINITION,
+  ETSY_AGENT_DEFINITION
 ];
 
 export function findAgentDefinition(agentId: string): AgentDefinition | undefined {

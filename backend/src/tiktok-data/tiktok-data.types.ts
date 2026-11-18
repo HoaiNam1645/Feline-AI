@@ -39,6 +39,7 @@ export interface TiktokToolSource {
 export interface TiktokToolOutput {
   domain: TiktokDataDomain;
   range: { startDate: string; endDate: string; timeZone: string };
+  accessScope?: { unrestricted: boolean; labels: string[] };
   data: unknown;
   source: TiktokToolSource;
 }

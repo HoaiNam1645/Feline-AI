@@ -6,7 +6,7 @@ import {
   LockKeyhole, LogOut, Menu, PackageCheck, Play, RefreshCw, Search,
   Settings2, ShieldCheck, Sparkles, UserRound, Users, X, MessageCircle,
   DollarSign, Trophy, BookOpen
-  , CircleHelp, Building2
+  , CircleHelp, Building2, ClipboardCheck
 } from "lucide-react";
 import {
   Bar, BarChart, CartesianGrid, Cell, ComposedChart, Legend, Line, Pie, PieChart,
@@ -20,6 +20,10 @@ import { AdminQuestionsView } from "./AdminQuestionsView";
 import { KnowledgeHubView } from "./KnowledgeHubView";
 import { CeoChatView } from "./CeoChatView";
 import { TiktokDashboardView } from "./TiktokDashboardView";
+import { EtsyDashboardView } from "./EtsyDashboardView";
+import { TaskManagerView } from "./TaskManagerView";
+import { DailyReportsView } from "./DailyReportsView";
+import { NotificationBell } from "./NotificationBell";
 import type {
   AccessAction,
   AgentDefinition,
@@ -28,9 +32,11 @@ import type {
   DailyMetrics
 } from "./types";
 
-type View = "common" | "office" | "activity" | "lemiex" | "chat" | "ceoChat" | "tiktokDashboard" | "tiktokChat" | "reports" | "backlog" | "users" | "questions" | "knowledge" | "tiktokKnowledge" | "audit" | "sources";
+type View = "common" | "tasks" | "dailyReports" | "office" | "activity" | "lemiex" | "chat" | "ceoChat" | "tiktokDashboard" | "tiktokChat" | "etsyDashboard" | "etsyChat" | "reports" | "backlog" | "users" | "questions" | "knowledge" | "tiktokKnowledge" | "etsyKnowledge" | "audit" | "sources";
 const VIEW_PATHS: Record<View, string> = {
   common: "/overview",
+  tasks: "/tasks",
+  dailyReports: "/daily-reports",
   office: "/office",
   activity: "/activity",
   lemiex: "/agents/lemiex",
@@ -38,17 +44,21 @@ const VIEW_PATHS: Record<View, string> = {
   ceoChat: "/agents/ceo/chat",
   tiktokDashboard: "/agents/tiktok/overview",
   tiktokChat: "/agents/tiktok/chat",
+  etsyDashboard: "/agents/etsy/overview",
+  etsyChat: "/agents/etsy/chat",
   reports: "/agents/lemiex/reports",
   backlog: "/agents/lemiex/backlog",
   users: "/admin/users",
   questions: "/admin/questions",
   knowledge: "/admin/knowledge",
   tiktokKnowledge: "/admin/knowledge/tiktok",
+  etsyKnowledge: "/admin/knowledge/etsy",
   audit: "/admin/audit",
   sources: "/admin/sources"
 };
 const PATH_VIEWS = Object.fromEntries(Object.entries(VIEW_PATHS).map(([view, path]) => [path, view])) as Record<string, View>;
 const DATE_VIEWS = new Set<View>(["lemiex", "reports", "backlog"]);
+const METRIC_VIEWS = new Set<View>([...DATE_VIEWS, "sources"]);
 const PRODUCT_COLORS = ["#7f2028", "#3f624b", "#9a6518", "#a95436", "#685b73", "#55717a", "#77634d", "#8c4d57"];
 const CHART_TOOLTIP_STYLE = { border: "1px solid #ded2c1", borderRadius: 10, background: "#fffdfa", boxShadow: "0 12px 30px rgba(72,42,27,.1)", color: "#443830", fontSize: 11 };
 const AiOfficeView = lazy(() => import("./AiOfficeView").then((module) => ({ default: module.AiOfficeView })));
@@ -183,6 +193,10 @@ function PlatformApp({
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
 
+  useEffect(() => {
+    if (session.user.passwordResetRequired) setPasswordOpen(true);
+  }, [session.user.passwordResetRequired]);
+
   const isAdmin = session.user.role === "ADMIN";
   const hasLemiex = session.access.platformAdmin
     || session.access.grants.some((grant) => grant.agentId === "lemiex-ai");
@@ -190,7 +204,9 @@ function PlatformApp({
     || session.access.grants.some((grant) => grant.agentId === "ceo-ai");
   const hasTiktok = session.access.platformAdmin
     || session.access.grants.some((grant) => grant.agentId === "tiktok-ai");
-  const lemiexOnly = !session.access.platformAdmin && hasLemiex && !hasCeo && !hasTiktok;
+  const hasEtsy = session.access.platformAdmin
+    || session.access.grants.some((grant) => grant.agentId === "etsy-ai");
+  const lemiexOnly = !session.access.platformAdmin && hasLemiex && !hasCeo && !hasTiktok && !hasEtsy;
   const canViewBasic = canAccess(session, "view", {
     agentId: "lemiex-ai",
     dataScopeId: "lemiex.operations.basic"
@@ -215,9 +231,18 @@ function PlatformApp({
     capabilityId: "tiktok.knowledge.ask",
     dataScopeId: "tiktok.knowledge"
   });
+  const canRunEtsyChat = canAccess(session, "run", {
+    agentId: "etsy-ai",
+    capabilityId: "etsy.knowledge.ask",
+    dataScopeId: "etsy.knowledge"
+  });
   const canViewTiktokDashboard = canAccess(session, "view", {
     agentId: "tiktok-ai",
     capabilityId: "tiktok.data.ask"
+  });
+  const canViewEtsyDashboard = canAccess(session, "view", {
+    agentId: "etsy-ai",
+    capabilityId: "etsy.data.ask"
   });
   const canViewAudit = canAccess(session, "view_audit", {
     agentId: "lemiex-ai",
@@ -227,6 +252,8 @@ function PlatformApp({
   const selectedDate = validDate(searchParams.get("date")) ? searchParams.get("date")! : defaultDate;
   const canOpenView = view && ({
     common: true,
+    tasks: true,
+    dailyReports: true,
     office: canViewBasic || (canRunCeoChat && canViewBasic) || canRunTiktokChat,
     activity: canViewAudit,
     lemiex: hasLemiex,
@@ -234,12 +261,15 @@ function PlatformApp({
     ceoChat: canRunCeoChat,
     tiktokDashboard: canViewTiktokDashboard,
     tiktokChat: canRunTiktokChat,
+    etsyDashboard: canViewEtsyDashboard,
+    etsyChat: canRunEtsyChat,
     reports: canViewBasic,
     backlog: canViewBasic,
     users: isAdmin,
     questions: isAdmin,
     knowledge: isAdmin,
     tiktokKnowledge: isAdmin,
+    etsyKnowledge: isAdmin,
     audit: canViewAudit,
     sources: isAdmin
   } satisfies Record<View, boolean>)[view];
@@ -273,7 +303,7 @@ function PlatformApp({
   useEffect(() => { void load(); }, []);
 
   useEffect(() => {
-    if (!selectedDate || !canViewBasic) {
+    if (!selectedDate || !canViewBasic || !METRIC_VIEWS.has(view)) {
       setDirectMetrics(undefined);
       setDirectReport(undefined);
       return;
@@ -285,7 +315,7 @@ function PlatformApp({
       setDirectMetrics(metricsResult.status === "fulfilled" ? metricsResult.value : undefined);
       setDirectReport(reportResult.status === "fulfilled" ? reportResult.value?.content : undefined);
     });
-  }, [selectedDate, canViewBasic]);
+  }, [selectedDate, canViewBasic, view]);
 
   const selectedRun = useMemo(
     () => runs.find((run) => run.input?.reportDate === selectedDate && run.status === "COMPLETED")
@@ -330,9 +360,9 @@ function PlatformApp({
   if (!view || !canOpenView) return <Navigate to={VIEW_PATHS.common} replace />;
 
   const title = {
-    common: isAdmin ? ["Tổng quan", "Toàn bộ hệ thống AI"] : ["Tổng quan", lemiexOnly ? "Không gian Lemiex" : "Không gian làm việc"], office: [lemiexOnly ? "Lemiex" : "Không gian AI", lemiexOnly ? "Xưởng vận hành 3D" : "Văn phòng liên công ty"], activity: ["Hoạt động", "Luồng xử lý gần đây"],
-    lemiex: ["Lemiex AI", "Tổng quan vận hành xưởng"], chat: ["Lemiex AI", "Hỏi đáp vận hành"], ceoChat: ["CEO AI", "Tri thức nội bộ"], tiktokDashboard: ["TikTok AI", "Tổng quan G9B & CashStorm"], tiktokChat: ["TikTok AI", "Hỏi đáp Sell TikTok"], reports: ["Lemiex AI", "Báo cáo vận hành"],
-    backlog: ["Lemiex AI", "Theo dõi backlog"], users: ["Quản trị", "Người dùng & phân quyền"], questions: ["Quản trị", "Câu hỏi cần bổ sung"], knowledge: ["CEO AI", "Kho tri thức nội bộ"], tiktokKnowledge: ["TikTok AI", "Kho tri thức Sell TikTok"], audit: [isAdmin ? "Quản trị" : "Theo dõi", isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"],
+    common: isAdmin ? ["Tổng quan", "Toàn bộ hệ thống AI"] : ["Tổng quan", lemiexOnly ? "Không gian Lemiex" : "Không gian làm việc"], tasks: ["Điều hành", "Quản lý công việc"], dailyReports: ["Điều hành", "Báo cáo hằng ngày"], office: [lemiexOnly ? "Lemiex" : "Không gian AI", lemiexOnly ? "Xưởng vận hành 3D" : "Văn phòng liên công ty"], activity: ["Hoạt động", "Luồng xử lý gần đây"],
+    lemiex: ["Lemiex AI", "Tổng quan vận hành xưởng"], chat: ["Lemiex AI", "Hỏi đáp vận hành"], ceoChat: ["CEO AI", "Tri thức nội bộ"], tiktokDashboard: ["TikTok AI", "Tổng quan G9B & CashStorm"], tiktokChat: ["TikTok AI", "Hỏi đáp Sell TikTok"], etsyDashboard: ["Etsy AI", "Tổng quan kinh doanh Etsy"], etsyChat: ["Etsy AI", "Hỏi đáp Sell Etsy"], reports: ["Lemiex AI", "Báo cáo vận hành"],
+    backlog: ["Lemiex AI", "Theo dõi backlog"], users: ["Quản trị", "Người dùng & phân quyền"], questions: ["Quản trị", "Câu hỏi cần bổ sung"], knowledge: ["CEO AI", "Kho tri thức nội bộ"], tiktokKnowledge: ["TikTok AI", "Kho tri thức Sell TikTok"], etsyKnowledge: ["Etsy AI", "Kho tri thức Sell Etsy"], audit: [isAdmin ? "Quản trị" : "Theo dõi", isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"],
     sources: ["Hệ thống", "Nguồn dữ liệu"]
   }[view];
 
@@ -343,10 +373,12 @@ function PlatformApp({
         <nav className="tree-nav">
           <NavGroup label={isAdmin ? "Nền tảng" : "Chung"}>
             <NavButton active={view === "common"} icon={<Gauge />} label="Tổng quan chung" onClick={() => navigate("common")} />
+            <NavButton active={view === "tasks"} icon={<ClipboardCheck />} label="Công việc phòng ban" onClick={() => navigate("tasks")} />
+            <NavButton active={view === "dailyReports"} icon={<CalendarDays />} label="Báo cáo hằng ngày" onClick={() => navigate("dailyReports")} />
             {(canViewBasic || (canRunCeoChat && canViewBasic) || canRunTiktokChat) && <NavButton active={view === "office"} icon={<Building2 />} label={lemiexOnly ? "Xưởng Lemiex 3D" : "Văn phòng AI"} onClick={() => navigate("office")} />}
             {canViewAudit && <NavButton active={view === "activity"} icon={<Activity />} label="Hoạt động AI" badge={String(runs.length)} onClick={() => navigate("activity")} />}
           </NavGroup>
-          {(hasLemiex || hasCeo || hasTiktok) && <NavGroup label={isAdmin ? "Không gian AI" : "Trợ lý AI"}>
+          {(hasLemiex || hasCeo || hasTiktok || hasEtsy) && <NavGroup label={isAdmin ? "Không gian AI" : "Trợ lý AI"}>
             {hasLemiex && <div className={`agent-nav-cluster ${["lemiex", "chat", "reports", "backlog"].includes(view) ? "current" : ""}`}>
               <button className={`nav-parent ${["lemiex", "chat", "reports", "backlog"].includes(view) ? "active" : ""}`} onClick={() => setAgentsOpen((value) => !value)}><span className="agent-dot lemiex"><Bot /></span><span><strong>Lemiex AI</strong><small>Vận hành xưởng</small></span>{agentsOpen ? <ChevronDown /> : <ChevronRight />}</button>
               {agentsOpen && <div className="subnav">
@@ -366,8 +398,14 @@ function PlatformApp({
                 {canRunTiktokChat && <NavButton compact active={view === "tiktokChat"} icon={<MessageCircle />} label="Hỏi đáp" onClick={() => navigate("tiktokChat")} />}
               </div>
             </div>}
+            {hasEtsy && <div className={`agent-nav-cluster ${view === "etsyChat" || view === "etsyDashboard" ? "current" : ""}`}>
+              <button className={`nav-parent ${view === "etsyChat" || view === "etsyDashboard" ? "active" : ""}`} onClick={() => navigate(canViewEtsyDashboard ? "etsyDashboard" : "etsyChat")}><span className="agent-dot etsy"><Bot /></span><span><strong>Etsy AI</strong><small>Phòng Sell Etsy</small></span><ChevronRight /></button>
+              <div className="subnav">
+                {canViewEtsyDashboard && <NavButton compact active={view === "etsyDashboard"} icon={<Gauge />} label="Tổng quan" onClick={() => navigate("etsyDashboard")} />}
+                {canRunEtsyChat && <NavButton compact active={view === "etsyChat"} icon={<MessageCircle />} label="Hỏi đáp" onClick={() => navigate("etsyChat")} />}
+              </div>
+            </div>}
             {isAdmin && <div className="agent-upcoming">
-              <button className="nav-parent muted" disabled><span className="agent-dot sales"><Users /></span><span><strong>Sales AI</strong><small>Sắp triển khai</small></span><span className="soon">Soon</span></button>
               <button className="nav-parent muted" disabled><span className="agent-dot finance"><BarChart3 /></span><span><strong>Finance AI</strong><small>Sắp triển khai</small></span><span className="soon">Soon</span></button>
             </div>}
           </NavGroup>}
@@ -375,6 +413,7 @@ function PlatformApp({
             {isAdmin && <NavButton active={view === "users"} icon={<Users />} label="Người dùng & quyền" onClick={() => navigate("users")} />}
             {isAdmin && <NavButton active={view === "knowledge"} icon={<BookOpen />} label="Kho tri thức CEO AI" onClick={() => navigate("knowledge")} />}
             {isAdmin && <NavButton active={view === "tiktokKnowledge"} icon={<BookOpen />} label="Kho tri thức TikTok AI" onClick={() => navigate("tiktokKnowledge")} />}
+            {isAdmin && <NavButton active={view === "etsyKnowledge"} icon={<BookOpen />} label="Kho tri thức Etsy AI" onClick={() => navigate("etsyKnowledge")} />}
             {isAdmin && <NavButton active={view === "questions"} icon={<CircleHelp />} label="Câu hỏi cần bổ sung" onClick={() => navigate("questions")} />}
             {isAdmin && <NavButton active={view === "sources"} icon={<Database />} label="Nguồn dữ liệu" onClick={() => navigate("sources")} />}
             {canViewAudit && <NavButton active={view === "audit"} icon={<ShieldCheck />} label={isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"} onClick={() => navigate("audit")} />}
@@ -390,12 +429,14 @@ function PlatformApp({
       <header className="global-header">
         <button className="header-menu" onClick={() => setSidebarOpen(true)}><Menu /></button>
         <div className="search-box"><Search /><span>Tìm trong không gian làm việc</span></div>
-        <div className="header-tools"><div className="profile-wrap"><button className="profile-button" onClick={() => setProfileOpen((value) => !value)}><span className="profile">{initials(session.user.displayName)}</span><span className="profile-copy"><strong>{session.user.displayName}</strong><small>{roleLabel(session.user.role)}</small></span><ChevronDown /></button>{profileOpen && <div className="profile-menu"><div><strong>{session.user.displayName}</strong><span>{session.user.email}</span></div><button onClick={() => { setPasswordOpen(true); setProfileOpen(false); }}><KeyRound /> Đổi mật khẩu</button><button className="logout-action" onClick={() => void onLogout()}><LogOut /> Đăng xuất</button></div>}</div></div>
+        <div className="header-tools"><NotificationBell onNavigate={(route) => routerNavigate(route)} /><div className="profile-wrap"><button className="profile-button" onClick={() => setProfileOpen((value) => !value)}><span className="profile">{initials(session.user.displayName)}</span><span className="profile-copy"><strong>{session.user.displayName}</strong><small>{roleLabel(session.user.role)}</small></span><ChevronDown /></button>{profileOpen && <div className="profile-menu"><div><strong>{session.user.displayName}</strong><span>{session.user.email}</span></div><button onClick={() => { setPasswordOpen(true); setProfileOpen(false); }}><KeyRound /> Đổi mật khẩu</button><button className="logout-action" onClick={() => void onLogout()}><LogOut /> Đăng xuất</button></div>}</div></div>
       </header>
-      <div className={`workspace-body ${view === "chat" || view === "ceoChat" || view === "tiktokChat" ? "chat-page-body" : ""} ${view === "office" ? "office-page-body" : ""}`}>
-        {view !== "chat" && view !== "ceoChat" && view !== "tiktokChat" && view !== "office" && <div className="page-heading"><div><span>{title[0]}</span><h1>{title[1]}</h1></div><div className="heading-actions">{isAdmin && <div className="api-state"><i className={systemOnline ? "ok" : "down"} /> API {systemOnline ? "ổn định" : "mất kết nối"}</div>}<button className="refresh-button" onClick={() => void load()}><RefreshCw /></button></div></div>}
+      <div className={`workspace-body ${view === "chat" || view === "ceoChat" || view === "tiktokChat" || view === "etsyChat" ? "chat-page-body" : ""} ${view === "office" ? "office-page-body" : ""}`}>
+        {view !== "chat" && view !== "ceoChat" && view !== "tiktokChat" && view !== "etsyChat" && view !== "office" && view !== "tasks" && view !== "dailyReports" && <div className="page-heading"><div><span>{title[0]}</span><h1>{title[1]}</h1></div><div className="heading-actions">{isAdmin && <div className="api-state"><i className={systemOnline ? "ok" : "down"} /> API {systemOnline ? "ổn định" : "mất kết nối"}</div>}<button className="refresh-button" onClick={() => void load()}><RefreshCw /></button></div></div>}
         {error && <div className="error-banner"><AlertTriangle /><span>{error}</span><button onClick={() => setError(null)}><X /></button></div>}
         {view === "common" && <CommonDashboard definition={definition} runs={runs} systemOnline={systemOnline} sourceOnline={sourceOnline} isAdmin={isAdmin} hasLemiex={hasLemiex} displayName={session.user.displayName} onOpenLemiex={() => navigate("lemiex")} />}
+        {view === "tasks" && <TaskManagerView session={session} />}
+        {view === "dailyReports" && <DailyReportsView session={session} />}
         {view === "office" && <Suspense fallback={<div className="office-module-loader"><Building2 /><span>Đang mở không gian 3D...</span></div>}><AiOfficeView displayName={session.user.displayName} scope={lemiexOnly ? "lemiex" : "all"} canRunLemiexChat={canRunChat} onOpenLemiexChat={() => navigate("chat")} /></Suspense>}
         {view === "activity" && <ActivityView runs={runs} isAdmin={isAdmin} />}
         {view === "lemiex" && <LemiexOverview selectedDate={selectedDate} setSelectedDate={setSelectedDate} selectedRun={selectedRun} metrics={metrics} review={review} loading={loading} running={running} canRun={canRunDaily} isAdmin={isAdmin} onRun={runAnalysis} />}
@@ -403,17 +444,20 @@ function PlatformApp({
         {view === "ceoChat" && canRunCeoChat && <CeoChatView isAdmin={isAdmin} />}
         {view === "tiktokDashboard" && canViewTiktokDashboard && <TiktokDashboardView />}
         {view === "tiktokChat" && canRunTiktokChat && <CeoChatView isAdmin={isAdmin} variant="tiktok" />}
+        {view === "etsyDashboard" && canViewEtsyDashboard && <EtsyDashboardView />}
+        {view === "etsyChat" && canRunEtsyChat && <CeoChatView isAdmin={isAdmin} variant="etsy" />}
         {view === "reports" && <ReportsView selectedDate={selectedDate} setSelectedDate={setSelectedDate} report={report} runs={runs} isAdmin={isAdmin} onOpen={(date) => { setSelectedDate(date); navigate("lemiex"); }} />}
         {view === "backlog" && <BacklogView metrics={metrics} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />}
         {view === "users" && isAdmin && <AdminUsersView />}
         {view === "knowledge" && isAdmin && <KnowledgeHubView />}
         {view === "tiktokKnowledge" && isAdmin && <KnowledgeHubView agentId="tiktok-ai" />}
+        {view === "etsyKnowledge" && isAdmin && <KnowledgeHubView agentId="etsy-ai" />}
         {view === "questions" && isAdmin && <AdminQuestionsView />}
         {view === "audit" && <AuditView runs={runs} isAdmin={isAdmin} />}
         {view === "sources" && <SourcesView sourceOnline={sourceOnline} metrics={metrics} definition={definition} />}
       </div>
     </main>
-    {passwordOpen && <ChangePasswordDialog onClose={() => setPasswordOpen(false)} onChanged={onSessionEnded} />}
+    {passwordOpen && <ChangePasswordDialog required={session.user.passwordResetRequired} onClose={() => setPasswordOpen(false)} onChanged={onSessionEnded} />}
   </div>;
 }
 
@@ -462,7 +506,7 @@ function LoginScreen({ onLogin }: { onLogin: (email: string, password: string) =
   </main>;
 }
 
-function ChangePasswordDialog({ onClose, onChanged }: { onClose: () => void; onChanged: () => void }) {
+function ChangePasswordDialog({ required, onClose, onChanged }: { required?: boolean; onClose: () => void; onChanged: () => void }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -487,7 +531,7 @@ function ChangePasswordDialog({ onClose, onChanged }: { onClose: () => void; onC
     }
   }
 
-  return <div className="dialog-backdrop" role="presentation"><form className="password-dialog" onSubmit={submit}><div className="dialog-heading"><div><span>BẢO MẬT TÀI KHOẢN</span><h2>Đổi mật khẩu</h2></div><button type="button" onClick={onClose}><X /></button></div>{error && <div className="login-error"><AlertTriangle />{error}</div>}<label className="field-label">Mật khẩu hiện tại</label><div className="login-field"><LockKeyhole /><input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></div><label className="field-label">Mật khẩu mới</label><div className="login-field"><KeyRound /><input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></div><p className="password-hint">Tối thiểu 12 ký tự, gồm chữ hoa, chữ thường và số.</p><label className="field-label">Xác nhận mật khẩu mới</label><div className="login-field"><ShieldCheck /><input type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></div><div className="dialog-actions"><button type="button" onClick={onClose}>Hủy</button><button className="login-submit" disabled={submitting}>{submitting ? <RefreshCw className="spin" /> : <KeyRound />}{submitting ? "Đang cập nhật..." : "Đổi mật khẩu"}</button></div></form></div>;
+  return <div className="dialog-backdrop" role="presentation"><form className="password-dialog" onSubmit={submit}><div className="dialog-heading"><div><span>BẢO MẬT TÀI KHOẢN</span><h2>{required ? "Tạo mật khẩu mới" : "Đổi mật khẩu"}</h2></div>{!required && <button type="button" onClick={onClose}><X /></button>}</div>{required && <p className="password-hint">Tài khoản cần đổi mật khẩu tạm trước khi sử dụng hệ thống.</p>}{error && <div className="login-error"><AlertTriangle />{error}</div>}<label className="field-label">Mật khẩu hiện tại</label><div className="login-field"><LockKeyhole /><input type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></div><label className="field-label">Mật khẩu mới</label><div className="login-field"><KeyRound /><input type="password" minLength={8} maxLength={128} autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></div><p className="password-hint">Tối thiểu 8 ký tự.</p><label className="field-label">Xác nhận mật khẩu mới</label><div className="login-field"><ShieldCheck /><input type="password" minLength={8} maxLength={128} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></div><div className="dialog-actions">{!required && <button type="button" onClick={onClose}>Hủy</button>}<button className="login-submit" disabled={submitting}>{submitting ? <RefreshCw className="spin" /> : <KeyRound />}{submitting ? "Đang cập nhật..." : "Đổi mật khẩu"}</button></div></form></div>;
 }
 
 function initials(name: string) {
@@ -555,7 +599,7 @@ function LemiexOverview({ selectedDate, setSelectedDate, selectedRun, metrics, r
       </div>
     </section>
     <section className="dashboard-columns ai-layout workshop-decision-row"><article className="white-card analysis-card"><CardTitle eyebrow="Grounded analysis" title="Nhận định Lemiex AI" action={<StatusPill status={selectedRun?.status} />} />
-      {loading ? <Skeleton /> : review ? <div className="review-content"><p className="review-summary">{review.summary || "Chưa có nội dung nhận định cho lần chạy này."}</p><div className="review-columns"><Insight title="Dữ liệu cho thấy" icon={<CheckCircle2 />} items={review.dataShows} /><Insight title="Cần điều tra" icon={<AlertTriangle />} items={review.needsInvestigation} warning /></div>{isAdmin && <div className="review-meta"><span>{selectedRun?.model}</span><span>{selectedRun?.inputTokens?.toLocaleString("vi-VN")} input tokens</span><span>{formatTime(selectedRun?.completedAt)}</span></div>}</div> : canRun ? <EmptyAnalysis onRun={onRun} /> : <NoData />}
+      {loading ? <Skeleton /> : review ? <div className="review-content"><p className="review-summary">{review.summary || "Chưa có nội dung nhận định cho lần chạy này."}</p><div className="review-columns"><Insight title="Dữ liệu cho thấy" icon={<CheckCircle2 />} items={review.dataShows} /><Insight title="Cần điều tra" icon={<AlertTriangle />} items={review.needsInvestigation} warning /></div>{isAdmin && <div className="review-meta"><span>{selectedRun?.model}</span><span>{selectedRun?.inputTokens?.toLocaleString("vi-VN")} input tokens</span><span>{formatTime(selectedRun?.completedAt)}</span></div>}</div> : canRun ? <EmptyAnalysis onRun={onRun} running={running} failure={selectedRun?.status === "FAILED" ? selectedRun.error : undefined} /> : <NoData />}
     </article><BacklogDonut metrics={metrics} /></section>
     {financials && <>
       <section className="workshop-chart-grid">
@@ -639,5 +683,13 @@ function Insight({ title, icon, items = [], warning }: { title: string; icon: Re
 function BacklogDonut({ metrics }: { metrics?: DailyMetrics }) { const data = metrics?.backlog.byAgeBand.map((item) => ({ name: item.ageBand.replace(">=", "≥"), value: item.orders })) || []; const old = metrics?.backlog.byAgeBand.find((item) => item.ageBand === ">=72h")?.orders || 0; return <article className="white-card donut-card"><CardTitle eyebrow="Backlog ageing" title="Phân bổ tuổi đơn" action={metrics?.backlog.totalOrders?.toString() || "—"} />{data.length ? <><div className="donut-wrap"><ResponsiveContainer width="100%" height={240}><PieChart><Pie data={data} dataKey="value" innerRadius={70} outerRadius={96} paddingAngle={2} stroke="#fffdfa" strokeWidth={2}>{data.map((item) => <Cell key={item.name} fill={ageBandColor(item.name)} />)}</Pie><Tooltip contentStyle={CHART_TOOLTIP_STYLE} /></PieChart></ResponsiveContainer><div><strong>{old}</strong><span>≥72 giờ</span></div></div><div className="legend">{data.map((item) => <span key={item.name}><i style={{ background: ageBandColor(item.name) }} />{item.name}<b>{item.value}</b></span>)}</div></> : <NoData />}</article>; }
 function SourceCard({ icon, name, type, ok, detail }: { icon: ReactNode; name: string; type: string; ok: boolean; detail: string }) { return <article className="white-card source-card"><div className="source-icon">{icon}</div><span className={`source-state ${ok ? "ok" : "down"}`}>{ok ? "Connected" : "Offline"}</span><h3>{name}</h3><strong>{type}</strong><p>{detail}</p><button>Chi tiết kết nối <ChevronRight /></button></article>; }
 function Skeleton() { return <div className="skeleton">{[92,84,76,89,68].map((width) => <span key={width} style={{ width: `${width}%` }} />)}</div>; }
-function EmptyAnalysis({ onRun }: { onRun: () => void }) { return <div className="empty-state"><BrainCircuit /><h3>Chưa có nhận định</h3><p>Chọn ngày có báo cáo và chạy Lemiex AI.</p><button onClick={onRun}><Play /> Phân tích ngay</button></div>; }
+function EmptyAnalysis({ onRun, running, failure }: { onRun: () => void; running: boolean; failure?: string | null }) {
+  return <div className={`empty-state analysis-state ${running ? "is-running" : ""}`} aria-live="polite">
+    {running ? <RefreshCw className="spin" /> : failure ? <AlertTriangle /> : <BrainCircuit />}
+    <h3>{running ? "Lemiex AI đang phân tích" : failure ? "Lần phân tích trước chưa hoàn tất" : "Chưa có nhận định"}</h3>
+    <p>{running ? "Đang đối chiếu số liệu và tạo nhận định. Quá trình này thường mất khoảng 1–2 phút." : failure ? "Bạn có thể chạy lại để tạo nhận định mới từ số liệu hiện tại." : "Chọn ngày có báo cáo và chạy Lemiex AI."}</p>
+    {failure && !running && <small className="analysis-failure">{failure}</small>}
+    <button onClick={onRun} disabled={running}>{running ? <RefreshCw className="spin" /> : <Play />} {running ? "Đang phân tích..." : failure ? "Thử lại" : "Phân tích ngay"}</button>
+  </div>;
+}
 function NoData() { return <div className="no-data"><Boxes /><span>Chưa có dữ liệu</span></div>; }

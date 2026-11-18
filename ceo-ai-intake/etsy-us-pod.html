@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Khảo sát tri thức vận hành Etsy US cho mô hình Print on Demand.">
+  <title>Tri thức Etsy US POD · Feline AI</title>
+  <link rel="stylesheet" href="./pod-knowledge-survey.css">
+</head>
+<body>
+  <div id="survey-root"></div>
+  <script>
+    const t=(id,label,placeholder="",hint="",required=false)=>({id,label,type:"text",placeholder,hint,required});
+    const a=(id,label,placeholder="",hint="",required=false)=>({id,label,type:"textarea",placeholder,hint,required});
+    const c=(id,label,options,hint="")=>({id,label,type:"checkbox",options,hint});
+    const r=(id,label,options,hint="",required=false)=>({id,label,type:"radio",options,hint,required});
+    const s=(id,label,options,hint="",required=false)=>({id,label,type:"select",options,hint,required});
+    window.SURVEY_CONFIG={
+      slug:"etsy-us-pod", filePrefix:"Tri_thuc_Etsy_US_POD", exportTitle:"Kho tri thức vận hành Etsy US POD",
+      title:"Etsy US POD — khảo sát tri thức vận hành",
+      intro:"Biểu mẫu thu thập toàn bộ cách team Etsy US nghiên cứu niche, xây listing, vận hành shop, quản lý đơn, tiền, fulfillment và customer service trong mô hình Print on Demand. Câu trả lời sẽ trở thành nguồn tri thức có kiểm duyệt cho Etsy AI, vì vậy hãy ghi rõ quy tắc đang dùng, ngoại lệ và người có quyền quyết định.",
+      meta:[
+        {title:"Người nên điền",copy:"Leader Etsy, seller senior, listing/SEO, design, fulfillment, CS và người phụ trách đối soát tiền."},
+        {title:"Không cần viết tài liệu mới",copy:"Chọn phương án, điền quy tắc thực tế và gắn link sheet/SOP/video đã có. Có thể chia nhiều người hoàn thành."},
+        {title:"Dùng cho AI",copy:"Kết quả được xuất Markdown/JSON, sau đó Admin kiểm duyệt, đặt ngày hiệu lực và quyền đọc theo team."}
+      ],
+      sections:[
+        {shortTitle:"Phạm vi & người trả lời",title:"Phạm vi khảo sát và người chịu trách nhiệm",description:"Xác định người cung cấp tri thức, team/shop áp dụng và người phê duyệt trước khi Etsy AI sử dụng.",fields:[
+          t("respondentName","Họ tên người trả lời","Ví dụ: Leader team Tuyen","",true),
+          t("respondentRole","Vai trò và phạm vi công việc","Ví dụ: quản lý seller, shop, listing và báo cáo tài chính","",true),
+          t("teamName","Seller team áp dụng tài liệu này","Ví dụ: Tuyen","Nếu áp dụng cho nhiều team, ghi rõ quy tắc nào dùng chung.",true),
+          c("responsibilityDomains","Anh/chị có thể xác nhận chính thức phần nào?",["Chiến lược kinh doanh","Team/KPI","Research niche","Design/product","Listing/SEO","Shop health","Đơn hàng","Tài chính","Fulfillment","CS/refund/case","Policy/IP"]),
+          s("authorityLevel","Mức độ chính thức của câu trả lời",["Quy trình đã được duyệt","Thực tế đang áp dụng nhưng chưa thành văn","Đề xuất cần cấp trên duyệt","Thông tin tham khảo"],"",true),
+          a("scopeExceptions","Shop, seller, sản phẩm hoặc trường hợp nào không áp dụng quy trình chung?","Nêu ngoại lệ, lý do, thời hạn và người quyết định."),
+          a("approvers","Ai duyệt từng nhóm tri thức?","Họ tên, vai trò, phần chịu trách nhiệm và cách xác nhận."),
+          a("sourceLinks","Link tài liệu, sheet, dashboard, SOP hoặc video hiện có","Mỗi dòng một link, ghi tên và owner.")
+        ]},
+        {shortTitle:"Mô hình kinh doanh",title:"Mô hình Etsy US POD và định hướng kinh doanh",description:"Giúp AI hiểu danh mục, khách hàng, mùa vụ và ưu tiên thật của phòng Etsy.",fields:[
+          c("podCategories","Nhóm sản phẩm đang bán",["T-shirt","Sweatshirt/Hoodie","Embroidery apparel","Hat/Cap","Mug/Tumbler","Blanket","Poster/Canvas","Ornament","Stocking","Pet product","Wedding product","Jewelry/Accessory","Home decor","Digital item","Sản phẩm khác"]),
+          c("salesModels","Mô hình bán hàng đang dùng",["Evergreen","Seasonal","Trend-based","Personalized","Gift-focused","Niche community","Wedding/event","Pet niche","High-ticket personalized","Digital + physical"]),
+          a("businessGoals","Mục tiêu theo thứ tự ưu tiên của phòng Etsy","Orders, gross booked value, Etsy net, profit, shop growth, bestseller, review, repeat customer, giảm case/refund."),
+          t("targetCustomer","Khách hàng mục tiêu tại Mỹ","Độ tuổi, dịp mua, nhu cầu quà tặng, mức giá, vùng địa lý, kỳ vọng shipping."),
+          a("brandPositioning","Định vị khác biệt của shop hoặc nhóm shop","Style, personalization, quality, speed, niche expertise, packaging, customer service."),
+          a("seasonCalendar","Lịch mùa vụ và lead time chuẩn bị","Valentine, Mother’s Day, Father’s Day, graduation, wedding, Halloween, Thanksgiving, Christmas..."),
+          a("successDefinition","Một product/listing/shop/seller được coi là thành công khi nào?","Metric, ngưỡng, thời gian quan sát, minimum sample và điều kiện loại trừ."),
+          a("stopRules","Khi nào archive/deactivate listing hoặc dừng đầu tư sản phẩm?","Traffic, conversion, sales, margin, IP risk, reviews, production issue."),
+          a("etsyVocabulary","Thuật ngữ nội bộ cần Etsy AI hiểu đúng","GBV, Etsy net, funds, reserve, listing quality, seller code, attribution, FF cost, case.")
+        ]},
+        {shortTitle:"Team, seller & KPI",title:"Cơ cấu team, seller code và KPI",description:"Chuẩn hóa ownership của shop, SKU, đơn và cách đánh giá hiệu suất seller/leader.",fields:[
+          a("teamStructure","Cơ cấu team Etsy và tuyến báo cáo","Leader, seller, research, design, listing, fulfillment, CS, finance/data."),
+          c("teamRoles","Các vai trò đang có",["Leader/Manager","Seller","Researcher","SEO/listing specialist","Designer","Mockup creator","Shop operator","Customer support","Fulfillment coordinator","Finance/Data analyst","Product manager"]),
+          a("roleResponsibilities","Nhiệm vụ, đầu ra và SLA của từng vai trò","Ai tạo, ai duyệt, ai chịu trách nhiệm cuối cùng và ai thay thế khi vắng."),
+          a("sellerCodeRules","Quy tắc tạo và quản lý seller code/prefix SKU","Độ dài, viết hoa, tính duy nhất, thay đổi code, code cũ, seller nghỉ việc."),
+          a("orderAttribution","Đơn nhiều SKU hoặc nhiều seller được phân bổ thế nào?","Distinct order cho team, chia tiền/chi phí theo item, quantity, revenue hay rule khác."),
+          a("sellerKpis","KPI seller và công thức","Orders, items, GBV, net, profit, listings, conversion, refund, review, shop health."),
+          a("leaderKpis","KPI leader/manager","Kết quả team, coaching, dữ liệu, rủi ro shop, chất lượng báo cáo, backlog, lợi nhuận."),
+          a("performanceReview","Chu kỳ đánh giá và xử lý seller không đạt","Ngày chốt, nguồn số liệu, quyền giải trình, PIP/coaching, người duyệt."),
+          a("handoverRules","Bàn giao shop/listing/SKU khi đổi seller hoặc chuyển team","Checklist, chốt kỳ, quyền truy cập, ownership đơn cũ và lịch sử KPI.")
+        ]},
+        {shortTitle:"Research & chiến lược niche",title:"Research niche, keyword và cơ hội sản phẩm",description:"Thu thập cách đánh giá nhu cầu Etsy, cạnh tranh và rủi ro trước khi đầu tư design/listing.",fields:[
+          c("researchSources","Nguồn research được phép dùng",["Etsy Search","Etsy Marketplace Insights","eRank","EverBee","Marmalead","Google Trends","Pinterest","Amazon","TikTok/Instagram","Competitor shop","Dữ liệu bán nội bộ","Review khách hàng"]),
+          a("researchWorkflow","Quy trình research từ niche đến product brief","Ai làm, sheet/tool lưu trữ, trường bắt buộc, SLA và người duyệt."),
+          a("keywordResearch","Cách tìm và đánh giá keyword","Search volume, competition, intent, seasonality, long-tail, trademark, keyword cluster."),
+          a("nicheScorecard","Bộ tiêu chí chấm niche","Demand, competition, AOV, margin, personalization, repeatability, content/image potential, IP risk."),
+          a("competitorResearch","Thông tin phải ghi khi phân tích listing/shop đối thủ","Sales estimate, price, photos, title/tags, reviews, variation, shipping, bestseller badge."),
+          a("trendVsEvergreen","Cách phân biệt trend ngắn hạn và evergreen","Tín hiệu, thời gian test, mức đầu tư, lịch archive và kế hoạch tái sử dụng design."),
+          a("copyrightTrademark","Quy trình kiểm tra trademark/copyright/IP","USPTO, Etsy policy, từ khóa cấm, fan art, celebrity, character, sports, quote; ai duyệt."),
+          a("researchExamples","3 case research thành công và 3 case thất bại","Dữ liệu lúc quyết định, kết quả, lý do và bài học.")
+        ]},
+        {shortTitle:"Product & design",title:"Product, design, personalization và mockup",description:"Chuẩn hóa sản phẩm nội bộ, file thiết kế và dữ liệu cần có để sản xuất đúng.",fields:[
+          a("productDefinition","Phân biệt product folder, Etsy listing, variation và order item","Khóa liên kết, owner, trạng thái và trường hợp một product dùng nhiều listing/shop."),
+          a("designBrief","Một design brief chuẩn gồm những gì?","Concept, niche, text, font, style, màu, product, print/embroidery, placement, reference, deadline."),
+          c("designTypes","Loại sản xuất/design",["DTG/DTF print","Embroidery","Sublimation","Engraving","All-over print","Front only","Front & back","Sleeve","Personalized text","Personalized photo","Monogram"]),
+          a("fileStandards","Tiêu chuẩn file sản xuất","PNG/PDF/SVG/AI/PSD/EMB/DST, DPI, color profile, transparent background, size, naming, version."),
+          a("personalizationRules","Quy tắc nhận và kiểm tra personalization","Required fields, character limit, font/color, preview, khách không trả lời, nội dung cấm, typo responsibility."),
+          a("mockupStandards","Tiêu chuẩn ảnh và mockup","Số ảnh, ratio, hero image, lifestyle, size chart, variation chart, personalization guide, video."),
+          a("designApproval","Quy trình duyệt design và production-ready","Ai duyệt thẩm mỹ, IP, kỹ thuật, personalization; số vòng fix và SLA."),
+          a("designCostRules","Cách tính và phân bổ design cost","Theo design, order, item, seller, reuse, personalized/custom và design bị hủy."),
+          a("productIncidents","Lỗi product/design thường gặp và cách xử lý","Missing link, wrong file, wrong variation, outdated file, mockup mismatch, personalization ambiguity.")
+        ]},
+        {shortTitle:"Listing & SEO",title:"Listing, SEO và tối ưu chuyển đổi",description:"Ghi lại checklist xuất bản listing và cách quyết định tối ưu dựa trên dữ liệu.",fields:[
+          a("listingWorkflow","Quy trình từ product brief đến listing được publish","Research, design, mockup, copy, price, variation, shipping, QA, approve, publish, index check."),
+          a("titleFormula","Công thức viết title Etsy","Primary keyword, product, recipient, occasion, style, personalization; độ dài và từ cần tránh."),
+          a("tagRules","Quy tắc 13 tags và keyword coverage","Long-tail, duplicate words, singular/plural, season, recipient, occasion, material."),
+          a("descriptionTemplate","Cấu trúc description chuẩn","Opening, product details, personalization, sizing, processing, shipping, care, return, disclaimer."),
+          a("categoryAttributes","Cách chọn category và attributes","Occasion, recipient, material, color, style, room, holiday; ưu tiên khi không có lựa chọn chính xác."),
+          a("variationRules","Quy tắc tạo variation và SKU","Size/color/style/personalization, price delta, stock, seller code, mapping xưởng."),
+          a("listingQa","Checklist QA trước và sau publish","Spelling, IP, images, price, SKU, shipping profile, personalization, mobile preview, search visibility."),
+          a("listingOptimization","Khi nào và cách sửa listing đang chạy","Traffic thấp, CTR thấp, CVR thấp, favorite nhiều không mua, review, seasonality; tránh reset ranking."),
+          a("abTesting","Cách test ảnh, title, price và offer","Một lần đổi gì, thời gian, minimum views/orders, metric quyết định và cách lưu lịch sử."),
+          a("listingStatus","Định nghĩa Active, Draft, Expired, Sold out, Deactivated, Removed và hành động tương ứng","Nêu nguyên nhân, owner, SLA và quyền khôi phục.")
+        ]},
+        {shortTitle:"Shop health & policy",title:"Shop ownership, sức khỏe shop và Etsy Policy",description:"Giúp AI cảnh báo đúng về reserve, case, violation, review và trạng thái shop.",fields:[
+          a("shopOwnership","Quy tắc gán shop cho team/seller","Shop dùng chung hay riêng, mailbox owner, người vận hành, chuyển ownership và lịch sử."),
+          c("shopHealthSignals","Chỉ số shop cần theo dõi",["Case rate","On-time dispatch","Tracking validity","Review rating","Message response","Refund/cancel rate","Payment reserve","Policy warning","Listing removal","IP infringement","Shop suspension","Historical sync completeness"]),
+          a("shopStatusDictionary","Định nghĩa trạng thái shop và mailbox trong hệ thống","Active, auth error, sync delayed, reserve, warning, suspended, closed; mã và nhãn chuẩn."),
+          a("alertThresholds","Ngưỡng cảnh báo shop","Warning/critical, thời gian phản hồi, người nhận, action và điều kiện đóng cảnh báo."),
+          a("reserveHandling","Quy trình theo dõi payment reserve/hold","Nguồn dữ liệu, tác động cashflow, điều kiện giải phóng, kế hoạch vận hành khi reserve tăng."),
+          a("policyWarnings","Playbook xử lý warning, listing removal và shop suspension","Bằng chứng, appeal, deadline, owner, khi nào cần dừng listing tương tự."),
+          a("reviewPolicy","Quy tắc xử lý review thấp","Phản hồi công khai/riêng, replacement/refund, xin sửa review, escalation, điều Etsy cấm."),
+          a("accountSecurity","Quy tắc bảo mật mailbox/shop","2FA, thiết bị, chia sẻ quyền, token, nghỉ việc, recovery; không ghi credential thật."),
+          a("shopCases","Nêu 5 tình huống shop nghiêm trọng và quyết định chuẩn","Reserve, case spike, late dispatch, IP warning, sync lỗi, suspension.")
+        ]},
+        {shortTitle:"Đơn hàng & trạng thái",title:"Đơn hàng, item, trạng thái và timezone",description:"Chốt cách tính đơn bán hàng, đơn vận hành, item và cách xử lý event cancel/refund.",fields:[
+          r("reportTimezone","Múi giờ báo cáo chính thức của Etsy",["Asia/Ho_Chi_Minh","America/Los_Angeles","America/New_York","Theo timezone shop","Khác"],"",true),
+          a("orderDefinition","Record nào được coi là một sales order?","Source/kind, orderId, soft-delete, event records, duplicate và dữ liệu import."),
+          a("orderStatusDictionary","Định nghĩa NEW, DESIGNING, READY, PRODUCING, SHIPPED, ON_HOLD, CANCELLED, REFUND","Điều kiện vào/ra, owner, SLA và trường dữ liệu chứng minh."),
+          a("orderCounting","Quy tắc đếm sales orders, operational orders, refunded orders, items và item lines","Distinct orderId, exclude cancelled, multi-item, multi-seller, replacement."),
+          a("cancelEvents","Cách event Etsy_Cancelled cập nhật đơn gốc","Khóa nối, timestamp, trạng thái, doanh thu, KPI seller và báo cáo lịch sử."),
+          a("refundEvents","Cách event Etsy_Refund cập nhật đơn gốc","Tránh cộng hai lần, full/partial refund, kỳ refund khác kỳ order."),
+          a("orderLookup","Tra cứu đơn bằng mã nào và hiển thị trường gì?","OrderId, tracking, shop, seller, item, personalization, status, FF code; quyền xem PII."),
+          a("slaByStatus","SLA từng giai đoạn đơn","Review personalization, design, production, tracking, shipped; weekend/holiday và peak season."),
+          a("orderExceptions","Các tình huống bất thường và playbook","No SKU, unknown seller prefix, missing shop, duplicate, wrong personalization, sync delayed, tracking missing.")
+        ]},
+        {shortTitle:"Giá, phí & lợi nhuận",title:"Giá bán, Etsy fees, net, funds và lợi nhuận",description:"Chốt từng lớp tiền và công thức để AI không nhầm gross, net, funds và profit.",fields:[
+          a("pricingFormula","Công thức đặt giá cho product/variation","Blank + print/embroidery + shipping + Etsy fees + ads + design + refund buffer + target margin."),
+          a("priceTiers","Quy tắc giá theo size, color, product type và personalization","Surcharge, premium blank, extra side, rush order, quantity discount."),
+          a("discountRules","Quy tắc sale, coupon, free shipping và abandoned cart offer","Mức tối đa, thời gian, margin floor, quyền duyệt, campaign calendar."),
+          a("moneyDictionary","Định nghĩa order total, gross booked value, recognized revenue, Etsy net, funds và operational profit","Nguồn field, ý nghĩa, thời điểm ghi nhận và điều không được suy ra."),
+          a("netQuality","Thứ tự ưu tiên nguồn Etsy net và cách ghi nhãn chất lượng","estActualNet, orderNet, fallback fee 14.5%; khi nào không được kết luận profit."),
+          a("profitFormula","Công thức lợi nhuận vận hành","Net - fulfillment - design - refund - manual cost; ads, salary, tax, overhead có/không."),
+          a("fundsRules","Funds được dùng để trả lời câu hỏi nào?","Available, deposit, reserve, payout; không gộp funds vào sales/revenue."),
+          a("reconciliation","Quy trình đối soát CSV/statement với hệ thống","Chu kỳ, người làm, field nối, tolerance, missing order, currency, adjustment."),
+          a("financialAccess","Role nào được xem metric tài chính nào?","Seller, Leader, Manager, Admin; shop/team scope, export và dữ liệu nhạy cảm."),
+          a("financeQuestions","Liệt kê ít nhất 10 câu hỏi tiền sếp thường hỏi","Ghi metric chính xác, kỳ, phạm vi và cách trả lời mong muốn.")
+        ]},
+        {shortTitle:"Fulfillment & shipping",title:"Fulfillment, sản xuất và shipping",description:"Chuẩn hóa FF code, cost, trạng thái sản xuất và cách xử lý đơn trễ/sai.",fields:[
+          a("ffVendors","Danh sách xưởng/vendor và loại sản phẩm phụ trách","Tên chuẩn, code, location, capability, owner liên hệ; không ghi credential."),
+          a("vendorSelection","Quy tắc chọn vendor","Product, technique, cost, quality, location, SLA, stock, capacity, holiday cutoff."),
+          a("ffCodeRules","Quy tắc FF code và mapping trong hệ thống","Tính duy nhất, thay đổi code, fallback, unknown code và source of truth."),
+          a("variantPricing","Bảng giá fulfillment theo variant được quản lý thế nào?","Size, color, model, side, print/embroidery, shipping method, surcharge, ngày hiệu lực."),
+          a("productionWorkflow","Quy trình từ order NEW đến SHIPPED","Personalization check, design link, vendor submit, QC, tracking, status sync."),
+          a("fulfillmentSla","SLA production và tracking","Theo vendor/product/season, warning, overdue, business day, escalation."),
+          a("trackingRules","Tracking hợp lệ được xác định thế nào?","Carrier, format, first scan, label-created, invalid/reused tracking, delivered exception."),
+          a("missingCost","Đơn thiếu FF cost hoặc cost bằng 0 xử lý ra sao?","Cảnh báo, owner, deadline, backfill, ảnh hưởng profit và dashboard."),
+          a("vendorIncidents","Playbook sự cố xưởng/vận chuyển","Out of stock, wrong item, bad quality, delayed, lost, returned, vendor API/sheet lỗi."),
+          a("holidayCutoffs","Lịch cutoff sản xuất và shipping cho các mùa lớn","Ngày nhận order cuối, processing time hiển thị, banner/message khách và kế hoạch dự phòng.")
+        ]},
+        {shortTitle:"CS, message & case",title:"Customer service, message, case, refund và cancellation",description:"Chốt SLA, template và quyền quyết định để Etsy AI hỗ trợ nhất quán mà không lộ nội dung riêng tư.",fields:[
+          a("messageSla","SLA trả lời Etsy Message","Ngày thường/cuối tuần, timezone, auto-reply, người trực và escalation."),
+          c("messageTopics","Nhóm message phổ biến",["Personalization clarification","Address change","Cancel request","Shipping status","Tracking issue","Wrong item","Damaged item","Size/color issue","Design proof","Refund request","Replacement","Wholesale/custom order"]),
+          a("messageTemplates","Các template được phép dùng và khi nào cần cá nhân hóa","Gắn link tài liệu; không cần chép dữ liệu khách thật."),
+          a("caseHandling","Quy trình xử lý Etsy Case","Open/closed, owner, deadline, evidence, communication, refund, escalation và ghi nhận lỗi."),
+          a("refundPolicy","Điều kiện full refund, partial refund và từ chối","Thời hạn, bằng chứng, lỗi seller/design/xưởng/carrier/khách, quyền duyệt."),
+          a("replacementPolicy","Điều kiện remake/replacement","Ai chịu cost, tạo order mới, KPI, tracking, thông báo khách và đóng ticket."),
+          a("cancelPolicy","Cancel theo từng giai đoạn order","Trước design, trước vendor, đang sản xuất, đã ship; fee/cost và quyền quyết định."),
+          a("privacyRules","Nội dung message/PII nào AI được phép đọc và hiển thị?","Email, address, personalization, photo, private message, order detail; masking và audit."),
+          a("csEscalation","Ma trận escalation CS","Mức độ, ví dụ, người nhận, SLA, quyền refund và trường hợp báo sếp."),
+          a("csScenarios","Nêu ít nhất 10 tình huống CS khó và câu trả lời chuẩn","Bao gồm personalization, late delivery, lost package, bad review, case, full refund.")
+        ]},
+        {shortTitle:"Báo cáo & cảnh báo",title:"Báo cáo quản trị, xếp hạng và cảnh báo",description:"Xác định những gì sếp và Leader cần biết mỗi ngày/tuần, cùng quy tắc so sánh đúng.",fields:[
+          a("dailyReport","Báo cáo ngày Etsy cần có gì?","Orders, items, GBV, net, profit, shop/seller ranking, backlog, refund, case, data quality."),
+          a("weeklyReport","Báo cáo tuần cần trả lời gì?","Growth, top/bottom, listing/product, shop health, fulfillment, CS, kế hoạch tuần tới."),
+          a("executiveKpis","10 KPI quan trọng nhất với sếp","Thứ tự ưu tiên, công thức, timezone, ngưỡng và nguồn."),
+          a("shopRanking","Quy tắc xếp hạng shop","Metric, minimum orders, tie-break, exclude cancelled/refund, shop mới, reserve."),
+          a("sellerRanking","Quy tắc xếp hạng seller","Distinct orders, attributed items/money, profit, listings, quality, unknown SKU."),
+          a("productRanking","Quy tắc xếp hạng product","Quantity là item hay order, GBV, net, profit, refund, minimum sample, seasonal window."),
+          a("comparisonRules","Quy tắc so sánh kỳ","Hôm qua, cùng thứ tuần trước, rolling 7/30, month-over-month, target, peak season."),
+          a("alertRules","Cảnh báo AI cần phát hiện","Sụt đơn, CVR giảm, case/refund spike, reserve, shop sync trễ, missing SKU/cost, overdue, negative profit."),
+          a("alertDelivery","Ai nhận cảnh báo và escalation ra sao?","Role/team, app/email/chat, quiet hours, acknowledgement, lặp lại và đóng cảnh báo."),
+          a("recommendedActions","AI được phép đề xuất hoặc tạo task gì?","Optimize listing, kiểm tra shop, liên hệ khách/vendor, bổ sung cost, review SKU; phần cần người duyệt.")
+        ]},
+        {shortTitle:"Quyền, nguồn & nghiệm thu",title:"Phân quyền, quản trị tri thức và nghiệm thu Etsy AI",description:"Chốt source of truth, dữ liệu nhạy cảm, version tài liệu và bộ câu hỏi kiểm thử trước production.",fields:[
+          a("rolePermissions","Admin, Manager và User được xem/hỏi gì?","Theo team, seller, shop, finance, order detail, PII, message, audit và export."),
+          a("sensitiveData","Thông tin tuyệt đối không gửi vào model hoặc câu trả lời","Mailbox token, password, FCM token, customer email/address, private message, bank/tax; ngoại lệ có kiểm soát."),
+          a("sourceOfTruth","Nguồn chuẩn cho từng miền","Database, dashboard, CSV, Etsy UI, SOP, sheet, người phụ trách; thứ tự ưu tiên khi mâu thuẫn."),
+          a("dataQualityRules","Ngưỡng chất lượng dữ liệu để AI được kết luận","Attribution rate, no-SKU, missing shop/cost, fallback net, sync freshness, unknown prefix."),
+          a("documentGovernance","Owner, version, ngày hiệu lực và lịch review tài liệu","Ai duyệt, cách sửa, thu hồi bản cũ, thông báo thay đổi và quyền đọc."),
+          a("conflictResolution","Khi SOP, dashboard và thực tế mâu thuẫn, AI phải làm gì?","Nguồn nào thắng, cách cảnh báo, người xác nhận và thời gian chờ."),
+          a("unansweredPolicy","Khi không đủ căn cứ, AI phản hồi và ghi nhận thế nào?","Không bịa, nêu thiếu gì, tạo unanswered, gán owner, SLA bổ sung tri thức."),
+          a("acceptanceQuestions","Soạn ít nhất 30 câu hỏi nghiệm thu kèm đáp án/nguồn","Phủ order, seller, shop, product, finance, funds, fulfillment, refund, case, policy và ngoài quyền."),
+          a("edgeCases","Các trường hợp phải test riêng","Multi-seller order, seller đổi team, refund khác kỳ, no SKU, full refund, shop thiếu label, timezone, sync trễ."),
+          a("questionBank","Liệt kê ít nhất 30 câu hỏi người dùng thực tế sẽ hỏi","Bao gồm câu ngắn, sai chính tả, dùng tên shop/seller, khoảng ngày tự nhiên và câu hỏi nối tiếp."),
+          a("finalNotes","Điều quan trọng khác Etsy AI bắt buộc phải biết","Ghi cả vấn đề chưa chốt và tên người cần hỏi tiếp."),
+          a("finalAttachments","Link toàn bộ file cần đưa vào Knowledge Hub","SOP, glossary, pricing, SKU mapping, FF mapping, policy, templates, checklists, training video; mỗi dòng một link.")
+        ]}
+      ]
+    };
+  </script>
+  <script src="./pod-knowledge-survey.js"></script>
+</body>
+</html>

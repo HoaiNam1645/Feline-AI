@@ -33,7 +33,8 @@ const DEPARTMENTS = [
   { code: "HR", name: "Nhân sự" },
   { code: "FINANCE", name: "Tài chính" },
   { code: "OPERATIONS", name: "Vận hành" },
-  { code: "SELL_TIKTOK", name: "Sell TikTok" }
+  { code: "SELL_TIKTOK", name: "Sell TikTok" },
+  { code: "ETSY", name: "Sell Etsy" }
 ];
 
 const STATUS_LABEL: Record<KnowledgeDocumentStatus, string> = {
@@ -58,8 +59,8 @@ function toDateInput(value?: string | null) {
   return value ? value.slice(0, 10) : "";
 }
 
-export function KnowledgeHubView({ agentId = "ceo-ai" }: { agentId?: "ceo-ai" | "tiktok-ai" }) {
-  const agentName = agentId === "tiktok-ai" ? "TikTok AI" : "CEO AI";
+export function KnowledgeHubView({ agentId = "ceo-ai" }: { agentId?: "ceo-ai" | "tiktok-ai" | "etsy-ai" }) {
+  const agentName = agentId === "tiktok-ai" ? "TikTok AI" : agentId === "etsy-ai" ? "Etsy AI" : "CEO AI";
   const [data, setData] = useState<KnowledgeList | null>(null);
   const [selected, setSelected] = useState<KnowledgeDocument | null>(null);
   const [search, setSearch] = useState("");
@@ -290,7 +291,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   return <div><small>{label}</small><strong>{value}</strong></div>;
 }
 
-function UploadDocumentDialog({ agentId, onClose, onUploaded }: { agentId: "ceo-ai" | "tiktok-ai"; onClose: () => void; onUploaded: (document: KnowledgeDocument) => Promise<void> }) {
+function UploadDocumentDialog({ agentId, onClose, onUploaded }: { agentId: "ceo-ai" | "tiktok-ai" | "etsy-ai"; onClose: () => void; onUploaded: (document: KnowledgeDocument) => Promise<void> }) {
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -358,7 +359,7 @@ function UploadVersionDialog({ document, onClose, onUploaded }: { document: Know
   return <div className="knowledge-dialog-backdrop nested"><form className="knowledge-dialog compact" onSubmit={submit}><header><div><span>PHIÊN BẢN v{document.currentVersionNumber + 1}</span><h2>Cập nhật tài liệu</h2><p>{document.title}</p></div><button type="button" onClick={onClose}><X /></button></header>{error && <div className="knowledge-inline-error"><AlertTriangle />{error}</div>}<label className={`knowledge-dropzone ${file ? "has-file" : ""}`}><input type="file" accept=".pdf,.docx,.txt,.md,.csv,.json" onChange={(event) => setFile(event.target.files?.[0] || null)} /><FilePlus2 /><strong>{file?.name || "Chọn file phiên bản mới"}</strong><span>File cũ vẫn được giữ trong lịch sử</span></label><div className="knowledge-form-grid"><label><span>Ngày hiệu lực</span><input type="date" required value={effectiveFrom} onChange={(event) => setEffectiveFrom(event.target.value)} /></label><label><span>Ngày hết hiệu lực</span><input type="date" min={effectiveFrom} value={effectiveTo} onChange={(event) => setEffectiveTo(event.target.value)} /></label></div><footer><button type="button" onClick={onClose}>Hủy</button><button disabled={saving}>{saving ? <RefreshCw className="spin" /> : <Upload />}{saving ? "Đang xử lý" : "Tạo phiên bản"}</button></footer></form></div>;
 }
 
-function KnowledgeSearchDialog({ agentId, onClose, onOpenDocument }: { agentId: "ceo-ai" | "tiktok-ai"; onClose: () => void; onOpenDocument: (id: string) => void }) {
+function KnowledgeSearchDialog({ agentId, onClose, onOpenDocument }: { agentId: "ceo-ai" | "tiktok-ai" | "etsy-ai"; onClose: () => void; onOpenDocument: (id: string) => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<KnowledgeSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
