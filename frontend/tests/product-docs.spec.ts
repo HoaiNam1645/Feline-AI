@@ -7,6 +7,7 @@ test("sơ đồ chức năng hiện tại và kế hoạch phát triển hoạt 
   await expect(page.locator(".docs-sidebar")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Feline AI.*Toàn cảnh hệ thống/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /CEO AI.*3 màn hình/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Kế toán AI/ })).toHaveCount(0);
 
   await page.getByRole("button", { name: /CEO AI.*3 màn hình/ }).click();
   await expect(page.getByRole("heading", { name: "CEO AI" })).toBeVisible();
@@ -22,6 +23,7 @@ test("sơ đồ chức năng hiện tại và kế hoạch phát triển hoạt 
 
   await page.getByRole("button", { name: "Chức năng sẽ phát triển" }).click();
   await expect(page.getByRole("heading", { name: "Chức năng sẽ phát triển" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Kế toán AI.*3 chức năng dự kiến/ })).toBeVisible();
   await page.getByRole("button", { name: /TikTok AI/ }).click();
   await expect(page.getByRole("button", { name: "Chỉnh sửa nhánh" })).toBeVisible();
   await page.getByRole("button", { name: "Chỉnh sửa nhánh" }).click();

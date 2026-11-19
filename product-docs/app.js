@@ -14,9 +14,6 @@ const groups = [
   { title: "Etsy AI", items: [
     ["etsy-overview", "Tổng quan"], ["etsy-chat", "Chatbox"], ["etsy-knowledge", "Kho tri thức"]
   ]},
-  { title: "Kế toán AI", items: [
-    ["accounting-overview", "Tổng quan tài chính"], ["accounting-chat", "Hỏi đáp"], ["accounting-knowledge", "Kho tri thức"]
-  ]},
   { title: "Lemiex AI", items: [
     ["lemiex-overview", "Tổng quan xưởng"], ["lemiex-chat", "Chatbox"], ["lemiex-reports", "Báo cáo"], ["lemiex-backlog", "Backlog"]
   ]},
@@ -246,7 +243,7 @@ function openDoc(id, updateHash = true) {
       <p>${doc.summary}</p>
       <div class="document-meta"><span class="meta-chip live">Đang sử dụng</span><span class="meta-chip">Cập nhật 19/11/2026</span></div>
     </header>
-    ${id === "start" ? `<section class="doc-section"><h2>Hệ thống được chia như thế nào?</h2><div class="system-map"><div class="map-root">Feline AI</div><div class="map-groups"><div class="map-branch"><strong>Chức năng chung</strong><span>Công việc, báo cáo hằng ngày và văn phòng 3D.</span></div><div class="map-branch"><strong>Các trợ lý AI</strong><span>CEO, TikTok, Etsy, Kế toán và Lemiex phục vụ từng lĩnh vực riêng.</span></div><div class="map-branch"><strong>Quản trị</strong><span>Tài khoản, quyền truy cập, nguồn dữ liệu và lịch sử hoạt động.</span></div></div></div></section>` : ""}
+    ${id === "start" ? `<section class="doc-section"><h2>Hệ thống được chia như thế nào?</h2><div class="system-map"><div class="map-root">Feline AI</div><div class="map-groups"><div class="map-branch"><strong>Chức năng chung</strong><span>Công việc, báo cáo hằng ngày và văn phòng 3D.</span></div><div class="map-branch"><strong>Các trợ lý AI</strong><span>CEO, TikTok, Etsy và Lemiex phục vụ từng lĩnh vực riêng.</span></div><div class="map-branch"><strong>Quản trị</strong><span>Tài khoản, quyền truy cập, nguồn dữ liệu và lịch sử hoạt động.</span></div></div></div></section>` : ""}
     ${doc.roles ? `<section class="doc-section"><h2>Ai sử dụng màn này?</h2><div class="role-strip">${doc.roles.map(([name, copy]) => `<div class="role"><strong>${name}</strong><span>${copy}</span></div>`).join("")}</div></section>` : ""}
     <section class="doc-section"><h2>Chức năng chính</h2><ul class="feature-list">${doc.features.map(([name, copy]) => `<li><strong>${name}</strong><span>${copy}</span></li>`).join("")}</ul></section>
     ${doc.flow ? `<section class="doc-section"><h2>Cách sử dụng nhanh</h2><div class="quick-flow">${doc.flow.map(([name, copy]) => `<div class="flow-step"><strong>${name}</strong>${copy}</div>`).join("")}</div></section>` : ""}

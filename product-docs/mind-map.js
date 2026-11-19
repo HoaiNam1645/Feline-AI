@@ -10,7 +10,6 @@ const currentLayout = [
   { x: 420, y: 900, items: [{ x: 185, y: 1030 }, { x: 420, y: 1060 }, { x: 650, y: 1030 }] },
   { x: 720, y: 190, items: [{ x: 650, y: 48 }, { x: 840, y: 42 }, { x: 1015, y: 105 }] },
   { x: 1120, y: 180, items: [{ x: 1090, y: 45 }, { x: 1290, y: 62 }, { x: 1470, y: 140 }] },
-  { x: 1510, y: 405, items: [{ x: 1710, y: 285 }, { x: 1740, y: 405 }, { x: 1710, y: 525 }] },
   { x: 1510, y: 760, items: [{ x: 1730, y: 635 }, { x: 1750, y: 735 }, { x: 1740, y: 835 }, { x: 1695, y: 935 }] },
   { x: 1080, y: 960, items: [{ x: 835, y: 1045 }, { x: 1050, y: 1070 }, { x: 1270, y: 1050 }, { x: 1490, y: 1010 }] }
 ];
@@ -20,7 +19,11 @@ const defaultPlan = [
   { id: "ceo", name: "CEO AI", items: [] },
   { id: "tiktok", name: "TikTok AI", items: [] },
   { id: "etsy", name: "Etsy AI", items: [] },
-  { id: "accounting", name: "Kế toán AI", items: [] },
+  { id: "accounting", name: "Kế toán AI", items: [
+    { id: "accounting-overview", name: "Tổng quan tài chính", description: "Theo dõi dòng tiền, thu chi, công nợ và đề nghị mua hàng theo kỳ." },
+    { id: "accounting-chat", name: "Hỏi đáp Kế toán", description: "Hỏi số liệu tài chính và quy trình nghiệp vụ trong phạm vi được cấp." },
+    { id: "accounting-knowledge", name: "Kho tri thức Kế toán", description: "Quản lý quy trình, biểu mẫu, phiên bản và quyền đọc tài liệu Kế toán." }
+  ] },
   { id: "lemiex", name: "Lemiex AI", items: [] },
   { id: "admin", name: "Quản trị", items: [] }
 ];
@@ -59,7 +62,11 @@ function makeId(prefix) {
 function loadPlan() {
   try {
     const saved = JSON.parse(localStorage.getItem(planStorageKey));
-    return Array.isArray(saved) ? saved : structuredClone(defaultPlan);
+    if (!Array.isArray(saved)) return structuredClone(defaultPlan);
+    const accounting = saved.find((branch) => branch.id === "accounting");
+    const defaults = defaultPlan.find((branch) => branch.id === "accounting");
+    if (accounting && defaults && !accounting.items.length) accounting.items = structuredClone(defaults.items);
+    return saved;
   } catch {
     return structuredClone(defaultPlan);
   }
