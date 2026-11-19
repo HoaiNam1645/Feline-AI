@@ -380,6 +380,45 @@ export interface EtsyDashboardData {
   quality: { totalOrders: number; noSkuOrders: number; unknownSellerOrders: number; fallbackNetOrders: number; orderNetOrders: number; actualNetOrders: number; missingShopOrders: number; unattributedOrders: number; attributionRate: number; unknownPrefixes: Array<{ prefix: string; orders: number }> };
 }
 
+export interface AccountingDashboardData {
+  report: { startDate: string; endDate: string; timeZone: string; currency: string; generatedAt: string };
+  source: { id: string; access: "read-only"; dataUpdatedAt: string };
+  summary: {
+    income: number;
+    expense: number;
+    netCashFlow: number;
+    transactions: number;
+    activeAccounts: number;
+    openReceivables: number;
+    outstandingReceivables: number;
+  };
+  trend: Array<{ date: string; income: number; expense: number }>;
+  categories: Array<{ id: string; name: string; income: number; expense: number }>;
+  purchaseStatuses: Array<{ status: string; count: number; amount: number }>;
+  conversionStatuses: Array<{ status: string; count: number; amountUsd: number; amountVnd: number }>;
+  recentPurchases: Array<{
+    id: string;
+    title: string;
+    kind: string;
+    expectedAmount: number;
+    currencyCode: string;
+    status: string;
+    createdAt: string;
+    requester: { fullName: string };
+    category: { name: string };
+  }>;
+  receivables: Array<{
+    id: string;
+    title: string;
+    partyName: string;
+    status: string;
+    dueDate: string | null;
+    amountVnd: number;
+    paidVnd: number;
+    outstandingVnd: number;
+  }>;
+}
+
 export type OfficeDelegationStage =
   | "AUTHORIZED"
   | "DISPATCHED"
@@ -504,6 +543,25 @@ export interface ChatConversation {
   updatedAt: string;
   messages?: ChatMessage[];
   _count?: { messages: number };
+}
+
+export type MultiAgentId = "ceo-ai" | "tiktok-ai" | "etsy-ai" | "lemiex-ai";
+
+export interface MultiAgentParticipantResult {
+  agentId: MultiAgentId;
+  agentName: string;
+  capabilityId: string;
+  status: "COMPLETED" | "FAILED" | "SKIPPED";
+  markdown: string;
+  sources: ChatSource[];
+  runId: string | null;
+  error: string | null;
+  usage: {
+    model: string | null;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCostUsd: number | null;
+  } | null;
 }
 
 export type KnowledgeDocumentStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";

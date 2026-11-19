@@ -25,6 +25,9 @@ import { TiktokDataModule } from "./tiktok-data/tiktok-data.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { DailyReportsModule } from "./daily-reports/daily-reports.module";
 import { NotificationsModule } from "./notifications/notifications.module";
+import { MultiAgentModule } from "./multi-agent/multi-agent.module";
+import { AccountingChatModule } from "./accounting-chat/accounting-chat.module";
+import { AccountingDataModule } from "./accounting-data/accounting-data.module";
 
 @Module({
   imports: [
@@ -42,6 +45,9 @@ import { NotificationsModule } from "./notifications/notifications.module";
     TasksModule,
     DailyReportsModule,
     NotificationsModule,
+    MultiAgentModule,
+    AccountingChatModule,
+    AccountingDataModule,
     KnowledgeModule,
     DatabaseModule,
     ObservabilityModule,

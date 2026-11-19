@@ -1,6 +1,6 @@
 import { ContactShadows, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { ArrowCounterClockwise, ArrowsOutCardinal, Buildings, CheckCircle, ChatCircle, Compass, Copy, MagnifyingGlassMinus, MagnifyingGlassPlus, PaperPlaneTilt, Stop, WarningCircle, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, ArrowsOutCardinal, Buildings, CheckCircle, ChatCircle, Compass, Copy, MagnifyingGlassMinus, MagnifyingGlassPlus, Monitor, PaperPlaneTilt, Stop, UsersThree, WarningCircle, X } from "@phosphor-icons/react";
 import { useEffect, useMemo, useRef, useState, type ElementRef, type ReactNode, type RefObject } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -74,12 +74,22 @@ export function AiOfficeView({
   displayName,
   scope = "all",
   canRunLemiexChat = false,
-  onOpenLemiexChat
+  canRunCeoChat = false,
+  canRunTiktokChat = false,
+  canRunEtsyChat = false,
+  canCoordinateAgents = false,
+  onOpenLemiexChat,
+  onOpenMultiAgent
 }: {
   displayName: string;
   scope?: "all" | "lemiex";
   canRunLemiexChat?: boolean;
+  canRunCeoChat?: boolean;
+  canRunTiktokChat?: boolean;
+  canRunEtsyChat?: boolean;
+  canCoordinateAgents?: boolean;
   onOpenLemiexChat?: () => void;
+  onOpenMultiAgent?: () => void;
 }) {
   const [question, setQuestion] = useState("");
   const [phase, setPhase] = useState<VisualPhase>("IDLE");
@@ -89,6 +99,8 @@ export function AiOfficeView({
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [cameraMode, setCameraMode] = useState<"rotate" | "pan">("rotate");
+  const [officeArea, setOfficeArea] = useState<"overview" | "operations" | "meeting">("overview");
+  const [activeSpace, setActiveSpace] = useState<"overview" | "director" | "etsy" | "tiktok" | "fela" | "operations" | "meeting" | "lemiex">("overview");
   const [ceoIdleState, setCeoIdleState] = useState<CeoIdleState>(() => {
     const saved = window.localStorage.getItem("feline-ceo-idle-state");
     return saved === "DESK" || saved === "SMOKING" ? saved : "RESTING";
@@ -154,9 +166,21 @@ export function AiOfficeView({
   }
 
   function resetCamera() {
+    setOfficeArea("overview");
+    setActiveSpace("overview");
+    setSelectedAgent(null);
     controlsRef.current?.reset();
     controlsRef.current?.update();
     window.requestAnimationFrame(syncCameraState);
+  }
+
+  function focusOfficeArea(area: "operations" | "meeting") {
+    setOfficeArea(area);
+    if (area === "operations") {
+      animateCamera(new THREE.Vector3(-8.55, 9.6, -3.6), new THREE.Vector3(-8.55, 0.7, -7.85));
+      return;
+    }
+    animateCamera(new THREE.Vector3(-1.9, 9.6, -3.6), new THREE.Vector3(-1.9, 0.7, -7.85));
   }
 
   function animateCamera(position: THREE.Vector3, target: THREE.Vector3, onComplete?: () => void) {
@@ -184,27 +208,29 @@ export function AiOfficeView({
     cameraAnimationRef.current = window.requestAnimationFrame(frame);
   }
 
-  async function openTiktokInteraction() {
+  const activeChatAgent = activeSpace === "director" ? "ceo" : activeSpace === "etsy" ? "etsy" : "tiktok";
+
+  async function openAgentInteraction(agent: "ceo" | "tiktok" | "etsy") {
     const controls = controlsRef.current;
-    if (!controls || selectedAgent === "tiktok") return;
-    savedCameraRef.current = { position: controls.object.position.clone(), target: controls.target.clone() };
-    setSelectedAgent("tiktok");
+    if (!controls) return;
+    if (!savedCameraRef.current) savedCameraRef.current = { position: controls.object.position.clone(), target: controls.target.clone() };
+    setActiveSpace(agent === "ceo" ? "director" : agent);
+    setSelectedAgent(agent === "tiktok" ? "tiktok" : null);
     setTiktokError(null);
-    setTiktokSceneSpeech("Xin chào, tôi là TikTok AI. Tôi có thể hỗ trợ bạn về công việc Sell TikTok.");
+    const agentName = agent === "ceo" ? "CEO AI" : agent === "etsy" ? "Etsy AI" : "TikTok AI";
+    setTiktokSceneSpeech(agent === "tiktok" ? `Xin chào, tôi là ${agentName}. Tôi có thể hỗ trợ bạn về công việc Sell TikTok.` : null);
     hideTiktokSpeechAfter(reduceMotion ? 1800 : 4200);
-    animateCamera(
-      new THREE.Vector3(-10.25, 2.35, 4.75),
-      new THREE.Vector3(-10.05, 1.1, 1.72)
-    );
     setTiktokLoading(true);
+    setTiktokMessages([]);
+    setTiktokConversation(null);
     try {
-      const conversations = await api.tiktokChatConversations();
-      const conversation = conversations[0] || await api.createTiktokChatConversation();
-      const detail = await api.tiktokChatConversation(conversation.id);
+      const conversations = agent === "ceo" ? await api.ceoChatConversations() : agent === "etsy" ? await api.etsyChatConversations() : await api.tiktokChatConversations();
+      const conversation = conversations[0] || (agent === "ceo" ? await api.createCeoChatConversation() : agent === "etsy" ? await api.createEtsyChatConversation() : await api.createTiktokChatConversation());
+      const detail = agent === "ceo" ? await api.ceoChatConversation(conversation.id) : agent === "etsy" ? await api.etsyChatConversation(conversation.id) : await api.tiktokChatConversation(conversation.id);
       setTiktokConversation(detail);
       setTiktokMessages(detail.messages || []);
     } catch (cause) {
-      setTiktokError(cause instanceof Error ? cause.message : "Không thể mở cuộc trò chuyện với TikTok AI");
+      setTiktokError(cause instanceof Error ? cause.message : `Không thể mở cuộc trò chuyện với ${agentName}`);
     } finally {
       setTiktokLoading(false);
     }
@@ -214,6 +240,7 @@ export function AiOfficeView({
     tiktokAbortRef.current?.abort();
     clearTiktokSpeechTimer();
     setSelectedAgent(null);
+    setActiveSpace("overview");
     setTiktokSceneSpeech(null);
     setTiktokStatus("");
     setTiktokError(null);
@@ -256,7 +283,8 @@ export function AiOfficeView({
     tiktokAbortRef.current = controller;
     let sources: ChatSource[] = [];
     try {
-      await api.streamTiktokChatMessage(tiktokConversation.id, content, {
+      const stream = activeChatAgent === "ceo" ? api.streamCeoChatMessage : activeChatAgent === "etsy" ? api.streamEtsyChatMessage : api.streamTiktokChatMessage;
+      await stream(tiktokConversation.id, content, {
         onStatus: setTiktokStatus,
         onMeta: (meta) => { sources = meta.sources; },
         onDelta: (text) => {
@@ -372,19 +400,48 @@ export function AiOfficeView({
     setServerStage(null);
   }
 
+  function selectSpace(space: "director" | "etsy" | "tiktok" | "fela" | "operations" | "meeting" | "lemiex") {
+    if (running || tiktokSending) return;
+    setActiveSpace(space);
+    setSelectedAgent(space === "tiktok" ? "tiktok" : null);
+    setOfficeArea(space === "operations" || space === "meeting" ? space : "overview");
+    setTiktokError(null);
+    setTiktokStatus("");
+    if (space === "operations") {
+      focusOfficeArea("operations");
+      return;
+    }
+    if (space === "meeting") {
+      focusOfficeArea("meeting");
+      return;
+    }
+    const views = {
+      director: [new THREE.Vector3(-10.4, 5.6, -1.2), new THREE.Vector3(-9, 0.8, -3.2)],
+      etsy: [new THREE.Vector3(-2.1, 5.5, -1.2), new THREE.Vector3(-2, 0.8, -3.2)],
+      tiktok: [new THREE.Vector3(-10.25, 4.8, 6.1), new THREE.Vector3(-9.6, 0.8, 2.5)],
+      fela: [new THREE.Vector3(-2.1, 5.2, 6.1), new THREE.Vector3(-2, 0.8, 2.5)],
+      lemiex: [new THREE.Vector3(9.1, 7.2, 10.5), new THREE.Vector3(3.2, 0.8, 0)]
+    } as const;
+    const view = views[space as keyof typeof views];
+    if (view) animateCamera(view[0], view[1]);
+    if (space === "director" && canRunCeoChat) void openAgentInteraction("ceo");
+    if (space === "etsy" && canRunEtsyChat) void openAgentInteraction("etsy");
+    if (space === "tiktok" && canRunTiktokChat) void openAgentInteraction("tiktok");
+  }
+
   return <section className="ai-office-shell">
-    <div className={`office-scene-panel ${selectedAgent ? "agent-focus" : ""}`} ref={sceneRef} data-camera-mode={cameraMode}>
+    <div className={`office-scene-panel ${selectedAgent ? "agent-focus" : ""} area-${officeArea}`} ref={sceneRef} data-camera-mode={cameraMode}>
       <div className="office-scene-topbar">
         <div className="office-world-title">
           <Buildings weight="duotone" />
-          <span><strong>{lemiexWorkspace ? "Xưởng Lemiex" : "Văn phòng AI"}</strong><small>{lemiexWorkspace ? "Không gian vận hành" : "Feline ↔ Xưởng Lemiex"}</small></span>
+          <span><strong>{lemiexWorkspace ? "Xưởng Lemiex" : "Văn phòng AI"}</strong><small>{lemiexWorkspace ? "Không gian vận hành" : "Điều hành · Họp · Phối hợp liên công ty"}</small></span>
         </div>
         <div className={`office-live-state phase-${phase.toLowerCase()}`}><i />{lemiexWorkspace ? "Xưởng đang hoạt động" : selectedAgent === "tiktok" ? "Đang trò chuyện với TikTok AI" : PHASE_LABELS[phase]}</div>
       </div>
       <Canvas
         shadows
         dpr={[1, 1.5]}
-        camera={{ position: lemiexWorkspace ? [10.5, 8.5, 12.5] : [17.5, 15.5, 20.5], fov: 38, near: 0.1, far: 110 }}
+        camera={{ position: lemiexWorkspace ? [10.5, 8.5, 12.5] : [19.5, 18, 23.5], fov: 40, near: 0.1, far: 110 }}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       >
         <color attach="background" args={["#e9e3d9"]} />
@@ -392,8 +449,8 @@ export function AiOfficeView({
         <hemisphereLight args={["#fff8ea", "#817d72", 1.55]} />
         <directionalLight position={[5, 18, 10]} intensity={2.25} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0002} />
         <directionalLight position={[-12, 10, 5]} intensity={0.7} color="#f1d7c0" />
-        <OfficeWorld phase={phase} ceoIdleState={ceoIdleState} scope={scope} selectedAgent={selectedAgent} selectedAgentSpeech={tiktokSceneSpeech} onAgentInteract={(agent) => { if (agent === "tiktok") void openTiktokInteraction(); else if (agent === "lemiex" && canRunLemiexChat) onOpenLemiexChat?.(); }} />
-        <ContactShadows position={[0, -0.01, 0]} opacity={0.28} scale={34} blur={2.6} far={15} />
+        <OfficeWorld phase={phase} ceoIdleState={ceoIdleState} scope={scope} officeArea={officeArea} selectedAgent={selectedAgent} selectedAgentSpeech={tiktokSceneSpeech} onAgentInteract={(agent) => { if (agent === "tiktok" && canRunTiktokChat) void openAgentInteraction("tiktok"); else if (agent === "lemiex") selectSpace("lemiex"); }} onSpaceInteract={selectSpace} />
+        <ContactShadows position={[0, -0.01, -1.5]} opacity={0.28} scale={38} blur={2.6} far={15} />
         <OrbitControls
           ref={controlsRef}
           makeDefault
@@ -410,11 +467,15 @@ export function AiOfficeView({
           zoomSpeed={1.1}
           mouseButtons={{ LEFT: cameraMode === "rotate" ? MOUSE.ROTATE : MOUSE.PAN, MIDDLE: MOUSE.DOLLY, RIGHT: cameraMode === "rotate" ? MOUSE.PAN : MOUSE.ROTATE }}
           touches={{ ONE: cameraMode === "rotate" ? TOUCH.ROTATE : TOUCH.PAN, TWO: TOUCH.DOLLY_PAN }}
-          target={lemiexWorkspace ? [0, 0.9, 0] : [0, 0.8, 0]}
+          target={lemiexWorkspace ? [0, 0.9, 0] : [-0.8, 0.8, -1.8]}
           onChange={syncCameraState}
         />
       </Canvas>
       <div className="office-camera-controls" aria-label="Điều khiển góc nhìn">
+        {!lemiexWorkspace && <div className="office-camera-places">
+          <button className={officeArea === "operations" ? "active" : ""} onClick={() => selectSpace("operations")} aria-pressed={officeArea === "operations"} title="Xem Phòng Điều hành AI"><Monitor weight="bold" /><span>Điều hành</span></button>
+          <button className={officeArea === "meeting" ? "active" : ""} onClick={() => selectSpace("meeting")} aria-pressed={officeArea === "meeting"} title="Xem Phòng họp AI"><UsersThree weight="bold" /><span>Phòng họp</span></button>
+        </div>}
         <div className="office-camera-modes">
           <button className={cameraMode === "rotate" ? "active" : ""} onClick={() => setCameraMode("rotate")} aria-pressed={cameraMode === "rotate"} title="Kéo để xoay góc nhìn"><Compass weight="bold" /><span>Xoay</span></button>
           <button className={cameraMode === "pan" ? "active" : ""} onClick={() => setCameraMode("pan")} aria-pressed={cameraMode === "pan"} title="Kéo để di chuyển góc nhìn"><ArrowsOutCardinal weight="bold" /><span>Di chuyển</span></button>
@@ -424,14 +485,15 @@ export function AiOfficeView({
         <button onClick={resetCamera} aria-label="Đặt lại góc nhìn" title="Đặt lại góc nhìn"><ArrowCounterClockwise weight="bold" /></button>
       </div>
       <div className="office-company-legend" aria-hidden="true">
-        {!lemiexWorkspace && <><span className="feline"><i />Feline AI · 4 phòng ban</span><span className="director"><i />CEO AI · Phòng Giám đốc</span></>}
+        {!lemiexWorkspace && <><span className="feline"><i />Feline AI · 6 khu chức năng</span><span className="director"><i />CEO AI · Phòng Giám đốc</span><span className="operations"><i />Điều hành & họp AI</span></>}
         <span className="lemiex"><i />Lemiex · Xưởng fulfillment thêu</span>
       </div>
       {!selectedAgent && <div className="office-interaction-hint"><ChatCircle weight="duotone" /><span>{lemiexWorkspace ? (canRunLemiexChat ? "Bấm vào Lemiex AI để trò chuyện" : "Theo dõi hoạt động trong xưởng") : "Bấm vào TikTok AI để trò chuyện"}</span></div>}
     </div>
 
     <aside className="office-command-panel">
-      {lemiexWorkspace ? <LemiexWorkspacePanel displayName={displayName} canRunChat={canRunLemiexChat} onOpenChat={onOpenLemiexChat} /> : selectedAgent === "tiktok" ? <TiktokInteractionPanel
+      {lemiexWorkspace ? <LemiexWorkspacePanel displayName={displayName} canRunChat={canRunLemiexChat} onOpenChat={onOpenLemiexChat} /> : activeSpace === "director" && canRunCeoChat || activeSpace === "tiktok" && canRunTiktokChat || activeSpace === "etsy" && canRunEtsyChat ? <TiktokInteractionPanel
+        agent={activeChatAgent}
         displayName={displayName}
         conversation={tiktokConversation}
         messages={tiktokMessages}
@@ -446,7 +508,7 @@ export function AiOfficeView({
         onRetry={retryTiktokAnswer}
         onStop={() => tiktokAbortRef.current?.abort()}
         onClose={closeTiktokInteraction}
-      /> : <>
+      /> : activeSpace === "operations" || activeSpace === "meeting" ? <OfficeCoordinationPanel space={activeSpace} canCoordinate={canCoordinateAgents} onOpen={onOpenMultiAgent} /> : activeSpace === "lemiex" ? <OfficeDepartmentPanel title="Lemiex AI" eyebrow="XƯỞNG FULFILLMENT" description="Theo dõi vận hành xưởng, đơn hàng, shipout, backlog và năng lực xử lý." actionLabel="Trò chuyện với Lemiex AI" enabled={canRunLemiexChat} onAction={onOpenLemiexChat} /> : activeSpace === "fela" ? <OfficeDepartmentPanel title="Phòng Sell Fela" eyebrow="PHÒNG BAN FELINE" description="Không gian làm việc của đội Sell Fela. Agent chuyên môn sẽ được kết nối tại đây khi hoàn tất cấu hình tri thức và dữ liệu." actionLabel="Chưa có Agent được kết nối" enabled={false} /> : <>
       <div className="office-command-heading">
         <span>VĂN PHÒNG ĐIỀU HÀNH FELINE</span>
         <h2>Chào {displayName.split(" ").slice(-2).join(" ")}</h2>
@@ -535,6 +597,7 @@ function LemiexWorkspacePanel({ displayName, canRunChat, onOpenChat }: { display
 }
 
 function TiktokInteractionPanel({
+  agent,
   displayName,
   conversation,
   messages,
@@ -550,6 +613,7 @@ function TiktokInteractionPanel({
   onStop,
   onClose
 }: {
+  agent: "ceo" | "tiktok" | "etsy";
   displayName: string;
   conversation: ChatConversation | null;
   messages: ChatMessage[];
@@ -566,30 +630,45 @@ function TiktokInteractionPanel({
   onClose: () => void;
 }) {
   const firstName = displayName.trim().split(/\s+/).slice(-2).join(" ");
-  const suggestions = [
-    "Quy trình duyệt nội dung TikTok như thế nào?",
-    "Ai phụ trách xử lý vấn đề của đơn TikTok?"
-  ];
+  const config = agent === "ceo" ? {
+    name: "CEO AI",
+    label: "Trò chuyện với CEO AI",
+    intro: "Tôi hỗ trợ tra cứu tri thức nội bộ và điều phối câu hỏi trong phạm vi bạn được phép xem.",
+    placeholder: "Nhập câu hỏi cho CEO AI...",
+    suggestions: ["Chính sách nghỉ phép hiện tại như thế nào?", "Ai phụ trách xử lý đề xuất nội bộ?"]
+  } : agent === "etsy" ? {
+    name: "Etsy AI",
+    label: "Trò chuyện với Etsy AI",
+    intro: "Tôi hỗ trợ tra cứu dữ liệu và tri thức của phòng Sell Etsy trong phạm vi bạn được phép xem.",
+    placeholder: "Nhập câu hỏi cho Etsy AI...",
+    suggestions: ["Tổng quan đơn Etsy hôm nay thế nào?", "Quy trình xử lý vấn đề của shop Etsy ra sao?"]
+  } : {
+    name: "TikTok AI",
+    label: "Trò chuyện với TikTok AI",
+    intro: "Tôi hỗ trợ tra cứu dữ liệu và tri thức của phòng Sell TikTok trong phạm vi bạn được phép xem.",
+    placeholder: "Nhập câu hỏi cho TikTok AI...",
+    suggestions: ["Tổng quan đơn TikTok hôm nay thế nào?", "Ai phụ trách xử lý vấn đề của đơn TikTok?"]
+  };
 
-  return <section className="office-character-chat" aria-label="Trò chuyện với TikTok AI">
+  return <section className={`office-character-chat agent-${agent}`} aria-label={config.label}>
     <header className="office-character-chat-head">
       <div className="office-character-portrait"><span /><ChatCircle weight="duotone" /></div>
-      <div><strong>TikTok AI</strong><small><i /> Sẵn sàng hỗ trợ</small></div>
+      <div><strong>{config.name}</strong><small><i /> Sẵn sàng hỗ trợ</small></div>
       <button onClick={onClose} aria-label="Đóng cuộc trò chuyện"><X /></button>
     </header>
 
     <div className="office-character-intro">
-      <h2>Xin chào {firstName}, tôi là TikTok AI.</h2>
-      <p>Tôi hỗ trợ tra cứu quy trình và tri thức của phòng Sell TikTok trong phạm vi bạn được phép xem.</p>
+      <h2>Xin chào {firstName}, tôi là {config.name}.</h2>
+      <p>{config.intro}</p>
     </div>
 
     <div className="office-character-messages" ref={messagesRef} aria-live="polite">
       {loading && <div className="office-character-loading"><span /><span /><span /></div>}
       {!loading && !messages.length && <div className="office-character-starters">
-        {suggestions.map((item) => <button key={item} disabled={!conversation || sending} onClick={() => onSend(item)}>{item}</button>)}
+        {config.suggestions.map((item) => <button key={item} disabled={!conversation || sending} onClick={() => onSend(item)}>{item}</button>)}
       </div>}
       {messages.map((message) => <article key={message.id} className={`office-character-message ${message.role.toLowerCase()} ${message.status.toLowerCase()}`}>
-        {message.role === "ASSISTANT" && <span className="office-character-message-name">TikTok AI</span>}
+        {message.role === "ASSISTANT" && <span className="office-character-message-name">{config.name}</span>}
         {message.status === "FAILED"
           ? <p>{message.error || "Chưa thể hoàn tất câu trả lời."}</p>
           : <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.status === "PENDING" ? stableStreamingMarkdown(message.content) : message.content}</ReactMarkdown>}
@@ -614,7 +693,7 @@ function TiktokInteractionPanel({
             onSend();
           }
         }}
-        placeholder="Nhập câu hỏi cho TikTok AI..."
+        placeholder={config.placeholder}
         rows={2}
         disabled={!conversation || loading || sending}
       />
@@ -622,6 +701,31 @@ function TiktokInteractionPanel({
         ? <button type="button" className="stop" onClick={onStop} aria-label="Dừng câu trả lời"><Stop weight="fill" /></button>
         : <button disabled={!conversation || loading || !question.trim()} aria-label="Gửi câu hỏi"><PaperPlaneTilt weight="fill" /></button>}
     </form>
+  </section>;
+}
+
+function OfficeCoordinationPanel({ space, canCoordinate, onOpen }: { space: "operations" | "meeting"; canCoordinate: boolean; onOpen?: () => void }) {
+  const meeting = space === "meeting";
+  return <section className="office-context-panel">
+    <div className="office-command-heading">
+      <span>{meeting ? "PHÒNG HỌP LIÊN AGENT" : "TRUNG TÂM ĐIỀU HÀNH AI"}</span>
+      <h2>{meeting ? "Họp và chốt kế hoạch" : "Điều phối nhiều AI"}</h2>
+      <p>{meeting ? "CEO AI tập hợp báo cáo từ các phòng ban và hoàn thiện biên bản chung." : "Giao một mục tiêu để CEO AI lựa chọn, phân công và theo dõi các Agent phù hợp."}</p>
+    </div>
+    <div className="office-agent-roster">
+      <AgentRow name="CEO AI" status={meeting ? "Chủ trì cuộc họp" : "Sẵn sàng điều phối"} tone="feline" active />
+      <AgentRow name="TikTok · Etsy · Lemiex" status="Tham gia theo quyền được cấp" tone="courier" active={canCoordinate} />
+    </div>
+    <div className="office-context-note"><UsersThree weight="duotone" /><div><strong>{meeting ? "Biên bản chung" : "Một đầu mối điều phối"}</strong><span>{meeting ? "Kết quả từng Agent được giữ riêng trước khi CEO AI tổng hợp." : "Mỗi Agent chỉ đọc dữ liệu trong đúng phạm vi của tài khoản hiện tại."}</span></div></div>
+    <button className="office-submit" disabled={!canCoordinate} onClick={onOpen}><PaperPlaneTilt weight="fill" /> {canCoordinate ? (meeting ? "Mở cuộc họp AI" : "Giao mục tiêu cho các AI") : "Chưa được cấp quyền điều phối"}</button>
+  </section>;
+}
+
+function OfficeDepartmentPanel({ title, eyebrow, description, actionLabel, enabled, onAction }: { title: string; eyebrow: string; description: string; actionLabel: string; enabled: boolean; onAction?: () => void }) {
+  return <section className="office-context-panel">
+    <div className="office-command-heading"><span>{eyebrow}</span><h2>{title}</h2><p>{description}</p></div>
+    <div className="office-agent-roster"><AgentRow name={title} status={enabled ? "Sẵn sàng hỗ trợ" : "Chưa kết nối"} tone={title.includes("Lemiex") ? "lemiex" : "courier"} active={enabled} /></div>
+    <button className="office-submit" disabled={!enabled} onClick={onAction}><ChatCircle weight="fill" /> {actionLabel}</button>
   </section>;
 }
 

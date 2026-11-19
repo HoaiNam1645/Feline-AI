@@ -508,7 +508,7 @@ export class KnowledgeHubService {
 
   private knownAgentId(value: unknown): string {
     const agentId = String(value || "").trim();
-    if (!new Set(["ceo-ai", "tiktok-ai", "etsy-ai"]).has(agentId)) {
+    if (!new Set(["ceo-ai", "tiktok-ai", "etsy-ai", "accounting-ai"]).has(agentId)) {
       throw new BadRequestException("Agent không hỗ trợ kho tri thức");
     }
     return agentId;
@@ -557,7 +557,7 @@ export class KnowledgeHubService {
   }
 
   private departmentName(code: string): string {
-    return ({ ALL: "Toàn công ty", HR: "Nhân sự", FINANCE: "Tài chính", OPERATIONS: "Vận hành", MANAGEMENT: "Ban quản lý", SELL_TIKTOK: "Sell TikTok" } as Record<string, string>)[code] || code;
+    return ({ ALL: "Toàn công ty", HR: "Nhân sự", FINANCE: "Tài chính", ACCOUNTING: "Kế toán", OPERATIONS: "Vận hành", MANAGEMENT: "Ban quản lý", SELL_TIKTOK: "Sell TikTok", ETSY: "Sell Etsy" } as Record<string, string>)[code] || code;
   }
 
   private safeFileName(value: string): string {

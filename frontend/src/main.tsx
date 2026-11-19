@@ -23,9 +23,11 @@ import "./ai-office.css";
 import "./ai-office-loader.css";
 import "./tiktok-dashboard.css";
 import "./etsy-dashboard.css";
+import "./accounting-dashboard.css";
 import "./task-manager.css";
 import "./daily-reports.css";
 import "./notification-center.css";
+import "./multi-agent.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -90,14 +90,24 @@ export const CEO_AGENT_DEFINITION: AgentDefinition = {
     "Không tự phê duyệt, cam kết hoặc thực hiện hành động thay lãnh đạo",
     "Không dùng lịch sử hoặc vector để suy ra quyền hạn"
   ],
-  capabilities: [{
-    id: "ceo.hr.ask",
-    name: "Hỏi đáp nhân sự",
-    description: "Trả lời câu hỏi nhân sự từ Knowledge Hub với trích dẫn tài liệu và phiên bản hiệu lực.",
-    status: "available",
-    riskLevel: "R0",
-    allowedTools: ["ceo.knowledge.search"]
-  }]
+  capabilities: [
+    {
+      id: "ceo.hr.ask",
+      name: "Hỏi đáp nhân sự",
+      description: "Trả lời câu hỏi nhân sự từ Knowledge Hub với trích dẫn tài liệu và phiên bản hiệu lực.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: ["ceo.knowledge.search"]
+    },
+    {
+      id: "ceo.multi-agent.coordinate",
+      name: "Điều phối nhiều AI",
+      description: "Giao một nhiệm vụ cho nhiều Agent đúng quyền và tổng hợp thành biên bản điều hành.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: ["ceo.agent.route", "ceo.meeting.synthesize"]
+    }
+  ]
 };
 
 export const TIKTOK_AGENT_DEFINITION: AgentDefinition = {
@@ -177,11 +187,52 @@ export const ETSY_AGENT_DEFINITION: AgentDefinition = {
   ]
 };
 
+export const ACCOUNTING_AGENT_DEFINITION: AgentDefinition = {
+  id: "accounting-ai",
+  name: "Kế toán AI",
+  domain: "Phòng Kế toán",
+  mission: "Hỗ trợ tra cứu tri thức kế toán và phân tích dữ liệu tài chính nội bộ trong phạm vi được cấp.",
+  riskLevel: "R0",
+  boundaries: [
+    "Chỉ đọc dữ liệu từ các nguồn và công cụ đã được phê duyệt",
+    "Không tạo, sửa hoặc xóa giao dịch, số dư và tài khoản thanh toán",
+    "Không phê duyệt yêu cầu mua hàng, tạm ứng, hoàn ứng hoặc quy đổi tiền",
+    "Không tiết lộ số tài khoản đầy đủ, thông tin đăng nhập hoặc cấu hình kết nối",
+    "Tài liệu và lịch sử hội thoại không tạo ra quyền thực thi"
+  ],
+  capabilities: [
+    {
+      id: "accounting.knowledge.ask",
+      name: "Hỏi đáp tri thức kế toán",
+      description: "Trả lời từ tài liệu kế toán nội bộ với trích dẫn và phân quyền theo phòng ban.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: ["accounting.knowledge.search"]
+    },
+    {
+      id: "accounting.data.ask",
+      name: "Tra cứu dữ liệu kế toán",
+      description: "Phân tích thu chi, giao dịch, đề nghị mua hàng, tài khoản, công nợ và quy đổi tiền qua nguồn chỉ đọc.",
+      status: "available",
+      riskLevel: "R0",
+      allowedTools: [
+        "accounting.overview.get",
+        "accounting.transactions.get",
+        "accounting.purchases.get",
+        "accounting.accounts.get",
+        "accounting.receivables.get",
+        "accounting.conversions.get"
+      ]
+    }
+  ]
+};
+
 export const AGENT_DEFINITIONS: AgentDefinition[] = [
   LEMIEX_AGENT_DEFINITION,
   CEO_AGENT_DEFINITION,
   TIKTOK_AGENT_DEFINITION,
-  ETSY_AGENT_DEFINITION
+  ETSY_AGENT_DEFINITION,
+  ACCOUNTING_AGENT_DEFINITION
 ];
 
 export function findAgentDefinition(agentId: string): AgentDefinition | undefined {

@@ -151,10 +151,11 @@ export function OfficeResident({
     }
   });
 
+  if (hidden) return null;
+
   return <group
     ref={group}
     position={initialPosition}
-    visible={!hidden}
     onClick={interactive ? (event) => { event.stopPropagation(); onInteract?.(); } : undefined}
     onPointerOver={interactive ? (event) => { event.stopPropagation(); globalThis.document.body.style.cursor = "pointer"; } : undefined}
     onPointerOut={interactive ? () => { globalThis.document.body.style.cursor = ""; } : undefined}

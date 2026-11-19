@@ -21,10 +21,11 @@ import type {
   KnowledgeSearchResult
   ,OfficeDelegationResult
   ,OfficeDelegationStage
-  ,TiktokDashboardData, EtsyDashboardData
+  ,TiktokDashboardData, EtsyDashboardData, AccountingDashboardData
   ,WorkTask, WorkTaskPriority, WorkTaskStatus, WorkTaskSummary, WorkTaskUpdate, WorkTaskPerson, OrganizationDepartment, WorkTaskView, WorkTaskDateField
   ,TeamDailyReport, TeamDailyReportComment, TeamDailyReportTab
   ,NotificationList
+  ,MultiAgentId, MultiAgentParticipantResult
 } from "./types";
 import { notifyError, notifySuccess } from "./notifications";
 
@@ -54,6 +55,16 @@ export interface OfficeDelegationHandlers {
   onStage?: (stage: OfficeDelegationStage, message: string) => void;
   onResult?: (result: OfficeDelegationResult) => void;
   onDone?: (runId: string) => void;
+}
+
+export interface MultiAgentStreamHandlers {
+  onMeetingStarted?: (data: { meetingId: string; participants: MultiAgentId[] }) => void;
+  onAgentStarted?: (data: { agentId: MultiAgentId; agentName: string }) => void;
+  onAgentCompleted?: (result: MultiAgentParticipantResult) => void;
+  onAgentFailed?: (result: MultiAgentParticipantResult) => void;
+  onSynthesisStarted?: (message: string) => void;
+  onDelta: (text: string) => void;
+  onComplete?: (data: { assistantMessage: ChatMessage; participants: MultiAgentParticipantResult[]; runId: string }) => void;
 }
 
 type RequestOptions = RequestInit & {
@@ -288,6 +299,10 @@ export const api = {
     if (input.sellerId) query.set("sellerId", input.sellerId);
     return request<EtsyDashboardData>(`/etsy/dashboard?${query}`);
   },
+  accountingDashboard: (input: { startDate: string; endDate: string }) => {
+    const query = new URLSearchParams({ startDate: input.startDate, endDate: input.endDate });
+    return request<AccountingDashboardData>(`/accounting/dashboard?${query}`);
+  },
   sourceHealth: () => request<Record<string, unknown>>("/metrics/source/health"),
   dailyMetrics: (date: string) => request<DailyMetrics>(`/metrics/workshop/daily/${date}`),
   dailyReport: async (date: string): Promise<DailyReport | null> => {
@@ -514,6 +529,95 @@ export const api = {
         if (event === "delta") handlers.onDelta(parsed.text);
         if (event === "done") handlers.onDone?.(parsed.assistantMessage);
         if (event === "error") throw notifiedError(parsed.message || "Không thể hoàn tất câu trả lời");
+      }
+      if (done) break;
+    }
+  },
+  accountingChatConversations: () => request<ChatConversation[]>("/chat/accounting/conversations"),
+  createAccountingChatConversation: () => request<ChatConversation>("/chat/accounting/conversations", { method: "POST", body: JSON.stringify({}) }),
+  accountingChatConversation: (id: string) => request<ChatConversation>(`/chat/accounting/conversations/${id}`),
+  renameAccountingChatConversation: (id: string, title: string) => request<ChatConversation>(`/chat/accounting/conversations/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),
+  deleteAccountingChatConversation: (id: string) => request<{ success: boolean }>(`/chat/accounting/conversations/${id}`, { method: "DELETE" }),
+  streamAccountingChatMessage: async (conversationId: string, content: string, handlers: CeoChatStreamHandlers, signal?: AbortSignal, retryAssistantMessageId?: string) => {
+    const response = await fetch(`${API_BASE}/chat/accounting/conversations/${conversationId}/messages/stream`, {
+      method: "POST",
+      credentials: "include",
+      signal,
+      headers: { "Content-Type": "application/json", "Accept": "text/event-stream", "Cache-Control": "no-cache" },
+      body: JSON.stringify({ content, retryAssistantMessageId })
+    });
+    if (!response.ok || !response.body) {
+      if (response.status === 401) window.dispatchEvent(new CustomEvent("feline:session-expired"));
+      const data = await response.json().catch(() => null);
+      throw notifiedError(data?.message || `Yêu cầu thất bại (${response.status})`);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+      const blocks = buffer.split("\n\n");
+      buffer = blocks.pop() || "";
+      for (const block of blocks) {
+        let event = "message";
+        let data = "";
+        for (const line of block.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          if (line.startsWith("data:")) data += line.slice(5).trim();
+        }
+        if (!data) continue;
+        const parsed = JSON.parse(data);
+        if (event === "status") handlers.onStatus?.(parsed.message);
+        if (event === "meta") handlers.onMeta?.(parsed);
+        if (event === "delta") handlers.onDelta(parsed.text);
+        if (event === "done") handlers.onDone?.(parsed.assistantMessage);
+        if (event === "error") throw notifiedError(parsed.message || "Không thể hoàn tất câu trả lời");
+      }
+      if (done) break;
+    }
+  },
+  multiAgentConversations: () => request<ChatConversation[]>("/multi-agent/conversations"),
+  createMultiAgentConversation: () => request<ChatConversation>("/multi-agent/conversations", { method: "POST", body: JSON.stringify({}) }),
+  multiAgentConversation: (id: string) => request<ChatConversation>(`/multi-agent/conversations/${id}`),
+  streamMultiAgentMessage: async (conversationId: string, content: string, participantAgentIds: MultiAgentId[], handlers: MultiAgentStreamHandlers, signal?: AbortSignal) => {
+    const response = await fetch(`${API_BASE}/multi-agent/conversations/${conversationId}/messages/stream`, {
+      method: "POST",
+      credentials: "include",
+      signal,
+      headers: { "Content-Type": "application/json", "Accept": "text/event-stream", "Cache-Control": "no-cache" },
+      body: JSON.stringify({ content, participantAgentIds })
+    });
+    if (!response.ok || !response.body) {
+      if (response.status === 401) window.dispatchEvent(new CustomEvent("feline:session-expired"));
+      const data = await response.json().catch(() => null);
+      throw notifiedError(data?.message || `Yêu cầu thất bại (${response.status})`);
+    }
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+      const blocks = buffer.split("\n\n");
+      buffer = blocks.pop() || "";
+      for (const block of blocks) {
+        let event = "message";
+        let data = "";
+        for (const line of block.split("\n")) {
+          if (line.startsWith("event:")) event = line.slice(6).trim();
+          if (line.startsWith("data:")) data += line.slice(5).trim();
+        }
+        if (!data) continue;
+        const parsed = JSON.parse(data);
+        if (event === "meeting_started") handlers.onMeetingStarted?.(parsed);
+        if (event === "agent_started") handlers.onAgentStarted?.(parsed);
+        if (event === "agent_completed") handlers.onAgentCompleted?.(parsed.result);
+        if (event === "agent_failed") handlers.onAgentFailed?.(parsed.result);
+        if (event === "synthesis_started") handlers.onSynthesisStarted?.(parsed.message);
+        if (event === "delta") handlers.onDelta(parsed.text);
+        if (event === "complete") handlers.onComplete?.(parsed);
+        if (event === "error") throw notifiedError(parsed.message || "Không thể hoàn tất cuộc họp AI");
       }
       if (done) break;
     }

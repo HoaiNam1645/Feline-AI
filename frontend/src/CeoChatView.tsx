@@ -30,7 +30,14 @@ const ETSY_SUGGESTIONS = [
   "Khi shop Etsy gặp cảnh báo cần báo cho ai?"
 ];
 
-type KnowledgeChatVariant = "ceo" | "tiktok" | "etsy";
+const ACCOUNTING_SUGGESTIONS = [
+  "Tổng thu chi tháng này là bao nhiêu?",
+  "Có bao nhiêu yêu cầu mua hàng đang chờ duyệt?",
+  "Công nợ chưa thu hiện còn bao nhiêu?",
+  "Tài khoản nào có dòng tiền ra nhiều nhất?"
+];
+
+type KnowledgeChatVariant = "ceo" | "tiktok" | "etsy" | "accounting";
 
 const CHAT_CONFIG = {
   ceo: {
@@ -59,6 +66,15 @@ const CHAT_CONFIG = {
     welcome: "Bạn cần hỗ trợ việc gì ở phòng Etsy?",
     welcomeText: "Câu trả lời dựa trên tài liệu Sell Etsy trong phạm vi bạn được phép xem.",
     suggestions: ETSY_SUGGESTIONS
+  },
+  accounting: {
+    name: "Kế toán AI",
+    subtitle: "Phòng Kế toán",
+    queryKey: "accountingConversation",
+    placeholder: "Hỏi về thu chi, công nợ hoặc quy trình kế toán...",
+    welcome: "Bạn cần kiểm tra thông tin kế toán nào?",
+    welcomeText: "Câu trả lời được đối chiếu với dữ liệu chỉ đọc và tài liệu trong phạm vi bạn được phép xem.",
+    suggestions: ACCOUNTING_SUGGESTIONS
   }
 } as const;
 
@@ -111,13 +127,20 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
     rename: api.renameTiktokChatConversation,
     remove: api.deleteTiktokChatConversation,
     stream: api.streamTiktokChatMessage
-  } : {
+  } : variant === "etsy" ? {
     list: api.etsyChatConversations,
     create: api.createEtsyChatConversation,
     get: api.etsyChatConversation,
     rename: api.renameEtsyChatConversation,
     remove: api.deleteEtsyChatConversation,
     stream: api.streamEtsyChatMessage
+  } : {
+    list: api.accountingChatConversations,
+    create: api.createAccountingChatConversation,
+    get: api.accountingChatConversation,
+    rename: api.renameAccountingChatConversation,
+    remove: api.deleteAccountingChatConversation,
+    stream: api.streamAccountingChatMessage
   };
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
@@ -219,7 +242,8 @@ export function CeoChatView({ isAdmin, variant = "ceo" }: { isAdmin: boolean; va
     setMessages((current) => retryAssistantMessageId
       ? current.map((message) => message.id === retryAssistantMessageId ? assistantMessage : message)
       : [...current, userMessage, assistantMessage]);
-    setQuestion(""); setSending(true); setError(null); setShowJump(false); setStatus("Đang tìm tài liệu phù hợp...");
+    setQuestion(""); setSending(true); setError(null); setShowJump(false);
+    setStatus(variant === "accounting" ? "Đang đối chiếu dữ liệu và tài liệu phù hợp..." : "Đang tìm tài liệu phù hợp...");
     const controller = new AbortController(); abortRef.current = controller;
     let sources: ChatSource[] = [];
     let streamBuffer = "";

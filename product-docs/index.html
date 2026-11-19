@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bản đồ chức năng Feline AI dành cho đội ngũ nội bộ.">
+  <title>Bản đồ chức năng — Feline AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="map-header">
+    <div class="brand-block">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>Feline AI</strong><small>Bản đồ chức năng</small></span>
+    </div>
+
+    <div class="map-heading">
+      <h1 id="page-title">Toàn cảnh hệ thống</h1>
+      <p id="page-description">Chọn một nhánh trên sơ đồ để xem màn hình đó dùng làm gì.</p>
+    </div>
+
+    <div class="map-modes" aria-label="Chọn loại sơ đồ">
+      <button class="active" data-mode="current">Hệ thống đang có</button>
+      <button data-mode="planned">Chức năng sẽ phát triển</button>
+    </div>
+  </header>
+
+  <main class="map-workspace">
+    <div class="map-tools">
+      <div class="map-hint"><span></span>Kéo nền để di chuyển · Chọn node để xem chi tiết</div>
+      <div class="planned-tools" id="planned-tools" hidden>
+        <button id="add-branch">Thêm nhánh</button>
+        <button id="export-plan">Tải kế hoạch</button>
+        <button id="import-plan">Nhập kế hoạch</button>
+        <button id="reset-plan">Khôi phục mặc định</button>
+      </div>
+      <div class="zoom-tools" aria-label="Điều khiển sơ đồ">
+        <button id="zoom-out" aria-label="Thu nhỏ">−</button>
+        <button id="fit-map">Xem toàn bộ</button>
+        <button id="zoom-in" aria-label="Phóng to">+</button>
+      </div>
+    </div>
+
+    <div class="focus-controls" id="focus-controls" hidden>
+      <button class="focus-action" id="focus-action">Xem mô tả nhóm</button>
+      <button class="focus-exit" id="exit-focus">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6 3 12l6 6M3 12h18"></path></svg>
+        Trở về toàn cảnh
+      </button>
+    </div>
+
+    <div class="map-viewport" id="map-viewport">
+      <div class="map-frame" id="map-frame">
+        <div class="map-stage" id="map-stage">
+          <svg class="map-lines" id="map-lines" viewBox="0 0 1800 1120" aria-hidden="true"></svg>
+          <div class="map-nodes" id="map-nodes"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-legend" aria-label="Chú thích sơ đồ">
+      <span><i class="legend-root"></i>Hệ thống</span>
+      <span><i class="legend-branch"></i>Nhóm chức năng</span>
+      <span><i class="legend-leaf"></i>Màn hình</span>
+    </div>
+    <div class="mobile-gesture">Vuốt để di chuyển · Chụm hai ngón để thu phóng</div>
+  </main>
+
+  <dialog class="detail-dialog" id="detail-dialog">
+    <div class="dialog-shell">
+      <button class="dialog-close" id="close-detail" aria-label="Đóng chi tiết">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+      </button>
+      <div id="detail-content"></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <input type="file" id="plan-import" accept="application/json" hidden>
+  <script src="./app.js"></script>
+  <script src="./mind-map.js"></script>
+</body>
+</html>

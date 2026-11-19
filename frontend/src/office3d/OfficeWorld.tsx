@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import * as THREE from "three";
-import { OfficePerson } from "./OfficePerson";
+import { OfficePerson, type PersonVariant } from "./OfficePerson";
 import { OfficeResident } from "./OfficeResident";
 import { agentStatus, type CeoIdleState, type VisualPhase } from "./office-status";
 
@@ -25,27 +25,31 @@ export function OfficeWorld({
   phase,
   ceoIdleState,
   scope = "all",
+  officeArea = "overview",
   selectedAgent,
   selectedAgentSpeech,
-  onAgentInteract
+  onAgentInteract,
+  onSpaceInteract
 }: {
   phase: VisualPhase;
   ceoIdleState: CeoIdleState;
   scope?: "all" | "lemiex";
+  officeArea?: "overview" | "operations" | "meeting";
   selectedAgent?: "tiktok" | null;
   selectedAgentSpeech?: string | null;
   onAgentInteract?: (agent: "tiktok" | "lemiex") => void;
+  onSpaceInteract?: (space: "director" | "etsy" | "tiktok" | "fela" | "operations" | "meeting" | "lemiex") => void;
 }) {
   if (scope === "lemiex") {
     return <group scale={1.22}>
       <WorkshopGround />
-      <LemiexWorkshop phase="IDLE" position={[0, 0, 0]} interactive onInteract={() => onAgentInteract?.("lemiex")} />
+      <LemiexWorkshop phase="IDLE" position={[0, 0, 0]} interactive onInteract={() => onSpaceInteract?.("lemiex")} />
     </group>;
   }
   return <group scale={1.1}>
     <CampusGround />
-    <FelineCampus phase={phase} ceoIdleState={ceoIdleState} selectedAgent={selectedAgent} selectedAgentSpeech={selectedAgentSpeech} onAgentInteract={onAgentInteract} />
-    <LemiexWorkshop phase={phase} />
+    <FelineCampus phase={phase} ceoIdleState={ceoIdleState} officeArea={officeArea} selectedAgent={selectedAgent} selectedAgentSpeech={selectedAgentSpeech} onAgentInteract={onAgentInteract} onSpaceInteract={onSpaceInteract} />
+    <LemiexWorkshop phase={phase} interactive onInteract={() => onSpaceInteract?.("lemiex")} />
     <IntercompanyPath />
     <TaskCourier phase={phase} />
   </group>;
@@ -62,7 +66,7 @@ function WorkshopGround() {
 
 function CampusGround() {
   return <group>
-    <RoundedBox args={[31, 0.34, 16]} radius={0.4} smoothness={5} position={[0, -0.2, 0]} receiveShadow>
+    <RoundedBox args={[31, 0.34, 22]} radius={0.4} smoothness={5} position={[0, -0.2, -2.8]} receiveShadow>
       <meshStandardMaterial color="#ded6ca" roughness={0.92} />
     </RoundedBox>
     <mesh receiveShadow position={[0, -0.005, 6.15]}>
@@ -70,11 +74,12 @@ function CampusGround() {
       <meshStandardMaterial color="#c8c0b5" roughness={0.95} />
     </mesh>
     {[-13.4, -11.8, 11.8, 13.4].map((x) => <Tree key={x} position={[x, 0, 6.15]} />)}
+    {[-12.8, -9.8, -6.8, -3.8].map((x) => <Tree key={`rear-${x}`} position={[x, 0, -12.25]} />)}
     {[-0.7, 1.1, 3].map((x) => <Planter key={x} position={[x, 0, 4.7]} compact />)}
   </group>;
 }
 
-function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech, onAgentInteract }: { phase: VisualPhase; ceoIdleState: CeoIdleState; selectedAgent?: "tiktok" | null; selectedAgentSpeech?: string | null; onAgentInteract?: (agent: "tiktok" | "lemiex") => void }) {
+function FelineCampus({ phase, ceoIdleState, officeArea, selectedAgent, selectedAgentSpeech, onAgentInteract, onSpaceInteract }: { phase: VisualPhase; ceoIdleState: CeoIdleState; officeArea: "overview" | "operations" | "meeting"; selectedAgent?: "tiktok" | null; selectedAgentSpeech?: string | null; onAgentInteract?: (agent: "tiktok" | "lemiex") => void; onSpaceInteract?: (space: "director" | "etsy" | "tiktok" | "fela" | "operations" | "meeting") => void }) {
   const taskActive = phase !== "IDLE" && phase !== "COMPLETE" && phase !== "ERROR";
   const ceoIdleActivity = ceoIdleState === "DESK" ? "seated" : ceoIdleState === "SMOKING" ? "smoking" : "sleeping";
   const ceoTaskActivity = phase === "OUTBOUND"
@@ -94,27 +99,28 @@ function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech,
   return <group position={[-5.25, 0, 0]}>
     <FelineExteriorWalls />
     <OpenOfficeShell />
-    <DepartmentRoom title="Phòng Giám đốc" subtitle="CEO AI Feline" tone="director" position={[-3.75, 0, -2.75]} size={[5.8, 4.1]} doorSide="right">
+    <DepartmentRoom title="Phòng Giám đốc" subtitle="CEO AI Feline" tone="director" position={[-3.75, 0, -2.75]} size={[5.8, 4.1]} doorSide="right" onInteract={() => onSpaceInteract?.("director")}>
       <ExecutiveDesk position={[-1.1, 0.72, 0.45]} gaming={ceoGaming} />
       <Lounge position={[0.85, 0.3, -1.25]} />
       <Library position={[-2.45, 1, -1.55]} />
       <Planter position={[2.25, 0, 0.85]} compact />
     </DepartmentRoom>
-    <DepartmentRoom title="Sell Etsy" subtitle="Sản phẩm & gian hàng" tone="etsy" position={[3.25, 0, -2.75]} size={[5.8, 4.1]} doorSide="left">
+    <DepartmentRoom title="Sell Etsy" subtitle="Sản phẩm & gian hàng" tone="etsy" position={[3.25, 0, -2.75]} size={[5.8, 4.1]} doorSide="left" onInteract={() => onSpaceInteract?.("etsy")}>
       <TeamDesk position={[-0.25, 0.68, -0.35]} accent="#b66c3c" />
       <Moodboard position={[0.55, 1.5, -1.95]} colors={["#d77842", "#f1c59f", "#8c563b"]} />
       <ProductShelf position={[2.45, 0.9, 0.95]} accent="#c37b4b" />
     </DepartmentRoom>
-    <DepartmentRoom title="Sell TikTok" subtitle="Nội dung & livestream" tone="tiktok" position={[-3.75, 0, 2.65]} size={[5.8, 4.1]} doorSide="right">
+    <DepartmentRoom title="Sell TikTok" subtitle="Nội dung & livestream" tone="tiktok" position={[-3.75, 0, 2.65]} size={[5.8, 4.1]} doorSide="right" onInteract={() => onSpaceInteract?.("tiktok")}>
       <CreatorDesk position={[-0.75, 0.67, -0.15]} />
       <StudioSet position={[1.55, 0, 0.45]} />
     </DepartmentRoom>
-    <DepartmentRoom title="Sell Fela" subtitle="Thương hiệu & tăng trưởng" tone="fela" position={[3.25, 0, 2.65]} size={[5.8, 4.1]} doorSide="left">
+    <DepartmentRoom title="Sell Fela" subtitle="Thương hiệu & tăng trưởng" tone="fela" position={[3.25, 0, 2.65]} size={[5.8, 4.1]} doorSide="left" onInteract={() => onSpaceInteract?.("fela")}>
       <TeamDesk position={[-0.45, 0.68, -0.15]} accent="#6f5d83" />
       <MeetingNook position={[1.85, 0.34, 0.8]} />
       <BrandStrategyWall position={[0.2, 1.45, -1.95]} />
     </DepartmentRoom>
     <CommonHub />
+    <AiOperationsWing meetingActive={officeArea === "meeting"} onSpaceInteract={onSpaceInteract} />
 
     <OfficeResident
       name="CEO AI Feline"
@@ -132,7 +138,7 @@ function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech,
       cycleMs={22000}
       talkEvery={5}
       scale={1.04}
-      hidden={selectedAgent === "tiktok"}
+      hidden={selectedAgent === "tiktok" || officeArea === "meeting"}
     />
     <OfficeResident
       name="Etsy AI"
@@ -152,7 +158,7 @@ function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech,
       travelMs={7600}
       cycleMs={29000}
       talkEvery={3}
-      hidden={selectedAgent === "tiktok"}
+      hidden={selectedAgent === "tiktok" || officeArea === "meeting"}
     />
     <OfficeResident
       name="TikTok AI"
@@ -179,6 +185,7 @@ function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech,
       activityOverride={selectedAgent === "tiktok" ? "talking" : undefined}
       statusOverride={selectedAgent === "tiktok" ? "Đang trò chuyện" : undefined}
       speechOverride={selectedAgent === "tiktok" ? selectedAgentSpeech : undefined}
+      hidden={officeArea === "meeting"}
     />
     <OfficeResident
       name="Fela AI"
@@ -198,12 +205,12 @@ function FelineCampus({ phase, ceoIdleState, selectedAgent, selectedAgentSpeech,
       travelMs={8000}
       cycleMs={27500}
       talkEvery={5}
-      hidden={selectedAgent === "tiktok"}
+      hidden={selectedAgent === "tiktok" || officeArea === "meeting"}
     />
 
-    <Html position={[-0.2, 3.7, -5]} center transform distanceFactor={16}>
-      <div className="scene-company-sign feline"><strong>FELINE AI</strong><span>Văn phòng điều hành</span></div>
-    </Html>
+    {officeArea === "overview" && <Html position={[-0.2, 3.7, -5]} center transform distanceFactor={16}>
+      <div className="scene-company-sign feline"><strong>FELINE AI</strong><span>Văn phòng điều hành & phối hợp AI</span></div>
+    </Html>}
   </group>;
 }
 
@@ -243,10 +250,12 @@ function OpenOfficeShell() {
     <RoundedBox args={[14.7, 0.2, 10.8]} radius={0.14} smoothness={4} position={[0, 0.02, 0]} receiveShadow>
       <meshStandardMaterial color="#f5ede1" roughness={0.84} />
     </RoundedBox>
-    <mesh castShadow receiveShadow position={[0, 1.65, -5.3]}>
-      <boxGeometry args={[14.7, 3.2, 0.2]} />
-      <meshStandardMaterial color="#fffaf2" roughness={0.76} />
-    </mesh>
+    {[-4.05, 3.55].map((x, index) => <mesh key={x} castShadow receiveShadow position={[x, 1.65, -5.3]}>
+      <boxGeometry args={[index === 0 ? 6.6 : 7.1, 3.2, 0.2]} />
+      <meshPhysicalMaterial color="#dbe4e1" transparent opacity={0.2} roughness={0.18} />
+    </mesh>)}
+    <mesh castShadow position={[-0.25, 2.88, -5.3]}><boxGeometry args={[1.5, 0.74, 0.22]} /><meshStandardMaterial color="#fffaf2" roughness={0.76} /></mesh>
+    <mesh position={[0, 3.18, -5.3]} castShadow><boxGeometry args={[14.7, 0.12, 0.24]} /><meshStandardMaterial color="#a59687" roughness={0.62} /></mesh>
     <mesh castShadow receiveShadow position={[-7.25, 1.65, 0]}>
       <boxGeometry args={[0.2, 3.2, 10.6]} />
       <meshStandardMaterial color="#fffaf2" roughness={0.76} />
@@ -283,23 +292,24 @@ function OfficeCorridors() {
   </group>;
 }
 
-function DepartmentRoom({ title, subtitle, tone, position, size, doorSide, children }: {
+function DepartmentRoom({ title, subtitle, tone, position, size, doorSide, children, onInteract }: {
   title: string;
   subtitle: string;
-  tone: "director" | "etsy" | "tiktok" | "fela";
+  tone: "director" | "etsy" | "tiktok" | "fela" | "operations" | "meeting";
   position: Point;
   size: [number, number];
   doorSide: "left" | "right";
   children: ReactNode;
+  onInteract?: () => void;
 }) {
-  const accent = { director: "#812832", etsy: "#b66c3c", tiktok: "#356b6b", fela: "#6f5d83" }[tone];
+  const accent = { director: "#812832", etsy: "#b66c3c", tiktok: "#356b6b", fela: "#6f5d83", operations: "#315f5c", meeting: "#9a7138" }[tone];
   return <group position={position}>
-    <mesh position={[0, 0.075, 0]} receiveShadow>
+    <mesh position={[0, 0.075, 0]} receiveShadow onClick={(event) => { if (onInteract) { event.stopPropagation(); onInteract(); } }} onPointerOver={() => { if (onInteract) document.body.style.cursor = "pointer"; }} onPointerOut={() => { document.body.style.cursor = ""; }}>
       <boxGeometry args={[size[0], 0.035, size[1]]} />
-      <meshStandardMaterial color={tone === "director" ? "#f2e3dc" : "#f6f0e7"} roughness={0.92} />
+      <meshStandardMaterial color={tone === "director" ? "#f2e3dc" : tone === "operations" ? "#eaf0eb" : tone === "meeting" ? "#f2eadb" : "#f6f0e7"} roughness={0.92} />
     </mesh>
     <DoorPartition side={doorSide} width={size[0]} depth={size[1]} />
-    <mesh position={[0, 0.72, position[2] < 0 ? size[1] / 2 : -size[1] / 2]}>
+    <mesh position={[0, 0.72, position[2] <= 0 ? size[1] / 2 : -size[1] / 2]}>
       <boxGeometry args={[size[0], 1.35, 0.07]} />
       <meshPhysicalMaterial color="#d4dfdc" transparent opacity={0.27} roughness={0.2} />
     </mesh>
@@ -309,7 +319,7 @@ function DepartmentRoom({ title, subtitle, tone, position, size, doorSide, child
     </mesh>
     {children}
     <Html position={[-size[0] / 2 + 0.72, 0.36, -size[1] / 2 + 0.3]} center transform distanceFactor={8}>
-      <div className={`scene-department-sign ${tone}`}><strong>{title}</strong><span>{subtitle}</span></div>
+      <button type="button" className={`scene-department-sign ${tone} ${onInteract ? "interactive" : ""}`} onClick={onInteract}><strong>{title}</strong><span>{subtitle}</span></button>
     </Html>
   </group>;
 }
@@ -339,6 +349,59 @@ function CommonHub() {
     <Html position={[-0.25, 0.46, 0.55]} center transform distanceFactor={9}>
       <div className="scene-common-label">KHU TRAO ĐỔI</div>
     </Html>
+  </group>;
+}
+
+function AiOperationsWing({ meetingActive, onSpaceInteract }: { meetingActive: boolean; onSpaceInteract?: (space: "operations" | "meeting") => void }) {
+  return <group position={[0, 0, -7.85]}>
+    <OperationsWingShell />
+    <DepartmentRoom title="Điều hành AI" subtitle="Giám sát & điều phối Agent" tone="operations" position={[-3.35, 0, 0]} size={[6.15, 4.35]} doorSide="right" onInteract={() => onSpaceInteract?.("operations")}>
+      <OperationsVideoWall position={[0, 1.62, -1.98]} />
+      <OperationsConsole position={[0.1, 0.62, -0.3]} />
+      <Planter position={[-2.55, 0, 1.45]} compact />
+      <OfficeResident
+        name="Điều phối AI"
+        role="Phòng Điều hành AI"
+        variant="feline"
+        route={[{ position: [-0.95, 0.13, -1.18], rotation: 0 }]}
+        activities={["seated"]}
+        phrases={["Các Agent đang hoạt động ổn định."]}
+        cycleMs={36000}
+        talkEvery={8}
+        scale={0.84}
+      />
+      <OfficeResident
+        name="Giám sát vận hành"
+        role="Phòng Điều hành AI"
+        variant="feline"
+        route={[{ position: [1.15, 0.13, -1.18], rotation: 0 }]}
+        activities={["seated"]}
+        phrases={["Mình đang theo dõi luồng phối hợp."]}
+        delay={2400}
+        cycleMs={39000}
+        talkEvery={9}
+        scale={0.82}
+      />
+    </DepartmentRoom>
+    <DepartmentRoom title="Phòng họp AI" subtitle="Họp liên phòng ban" tone="meeting" position={[3.35, 0, 0]} size={[6.15, 4.35]} doorSide="left" onInteract={() => onSpaceInteract?.("meeting")}>
+      <ConferenceRoom active={meetingActive} />
+    </DepartmentRoom>
+    <mesh position={[0, 0.11, 2.65]} receiveShadow><boxGeometry args={[1.3, 0.055, 1.05]} /><meshStandardMaterial color="#dfd2bf" roughness={0.9} /></mesh>
+    <Html position={[0, 0.36, 2.4]} center transform distanceFactor={9}>
+      <div className="scene-corridor-label">CÁNH ĐIỀU HÀNH AI</div>
+    </Html>
+  </group>;
+}
+
+function OperationsWingShell() {
+  return <group>
+    <RoundedBox args={[13.65, 0.2, 4.8]} radius={0.14} smoothness={4} position={[0, 0.02, 0]} receiveShadow>
+      <meshStandardMaterial color="#f4ecdf" roughness={0.86} />
+    </RoundedBox>
+    <mesh castShadow receiveShadow position={[0, 1.65, -2.3]}><boxGeometry args={[13.65, 3.2, 0.2]} /><meshStandardMaterial color="#fffaf2" roughness={0.76} /></mesh>
+    <mesh castShadow receiveShadow position={[-6.72, 1.65, 0]}><boxGeometry args={[0.2, 3.2, 4.6]} /><meshStandardMaterial color="#fffaf2" roughness={0.76} /></mesh>
+    <mesh castShadow receiveShadow position={[6.72, 1.65, 0]}><boxGeometry args={[0.2, 3.2, 4.6]} /><meshStandardMaterial color="#fffaf2" roughness={0.76} /></mesh>
+    <mesh position={[0, 0.15, 2.3]}><boxGeometry args={[13.4, 0.13, 0.2]} /><meshStandardMaterial color="#812832" /></mesh>
   </group>;
 }
 
@@ -562,6 +625,72 @@ function Lounge({ position }: { position: Point }) {
 
 function MeetingNook({ position }: { position: Point }) {
   return <group position={position}><RoundedBox args={[1.55, 0.12, 1.05]} radius={0.18} smoothness={4} castShadow><meshStandardMaterial color="#c19d72" /></RoundedBox><mesh position={[0, -0.34, 0]}><boxGeometry args={[0.25, 0.62, 0.4]} /><meshStandardMaterial color="#6d5543" /></mesh><OfficeChair position={[-0.72, -0.35, 0]} color="#83708f" rotation={Math.PI / 2} /><OfficeChair position={[0.72, -0.35, 0]} color="#83708f" rotation={-Math.PI / 2} /></group>;
+}
+
+function OperationsVideoWall({ position }: { position: Point }) {
+  return <group position={position}>
+    <RoundedBox args={[4.65, 1.2, 0.1]} radius={0.07} smoothness={4} castShadow><meshStandardMaterial color="#263331" metalness={0.18} roughness={0.38} /></RoundedBox>
+    {[-1.52, 0, 1.52].map((x, index) => <group key={x} position={[x, 0, 0.06]}>
+      <RoundedBox args={[1.36, 0.92, 0.025]} radius={0.035} smoothness={3}><meshStandardMaterial color={["#173d3a", "#2c2937", "#3a2b27"][index]} emissive={["#2f7a70", "#6f5d83", "#a96942"][index]} emissiveIntensity={0.17} /></RoundedBox>
+      {[0, 1, 2, 3].map((bar) => <mesh key={bar} position={[-0.42 + bar * 0.28, -0.2 + bar * 0.07, 0.018]}><boxGeometry args={[0.13, 0.18 + bar * 0.09, 0.01]} /><meshBasicMaterial color={bar === 3 ? "#d0a653" : "#7fb0a6"} /></mesh>)}
+      <mesh position={[0, 0.3, 0.018]}><boxGeometry args={[0.88, 0.035, 0.01]} /><meshBasicMaterial color="#efe4ce" /></mesh>
+    </group>)}
+    <Html position={[0, 0.87, 0.08]} center transform distanceFactor={8}><div className="scene-operations-status"><i />HỆ THỐNG ĐANG VẬN HÀNH</div></Html>
+  </group>;
+}
+
+function OperationsConsole({ position }: { position: Point }) {
+  return <group position={position}>
+    <RoundedBox args={[4.7, 0.16, 1.05]} radius={0.08} smoothness={4} castShadow><meshStandardMaterial color="#8a6d54" roughness={0.62} /></RoundedBox>
+    {[-2.05, 2.05].flatMap((x) => [-0.38, 0.38].map((z) => <mesh key={`${x}-${z}`} position={[x, -0.43, z]} castShadow><boxGeometry args={[0.1, 0.8, 0.1]} /><meshStandardMaterial color="#4d4540" metalness={0.12} roughness={0.65} /></mesh>))}
+    {[-1.05, 1.05].map((x, index) => <group key={x} position={[x, 0.1, 0]}>
+      <DesktopMonitor position={[0, 0.04, 0.05]} accent={index ? "#b66c3c" : "#356b6b"} wide />
+      <Keyboard position={[0, 0.04, -0.34]} />
+      <DeskMug position={[0.56, 0.12, -0.08]} color={index ? "#ead8bd" : "#dce8df"} />
+      <OfficeChair position={[0, -0.37, -0.88]} color="#4e6461" />
+    </group>)}
+  </group>;
+}
+
+function ConferenceRoom({ active }: { active: boolean }) {
+  const seats: Array<{ position: Point; rotation: number; variant?: PersonVariant; name?: string; role?: string }> = [
+    { position: [-1.25, 0.13, -1.22], rotation: 0, variant: "director", name: "CEO AI Feline", role: "Chủ trì cuộc họp" },
+    { position: [1.25, 0.13, -1.22], rotation: 0, variant: "etsy", name: "Etsy AI", role: "Đại diện Sell Etsy" },
+    { position: [-1.25, 0.13, 1.22], rotation: Math.PI, variant: "tiktok", name: "TikTok AI", role: "Đại diện Sell TikTok" },
+    { position: [1.25, 0.13, 1.22], rotation: Math.PI, variant: "fela", name: "Fela AI", role: "Đại diện Sell Fela" },
+    { position: [-2.35, 0.13, 0], rotation: Math.PI / 2 },
+    { position: [2.35, 0.13, 0], rotation: -Math.PI / 2 }
+  ];
+  return <group>
+    <ConferenceTable position={[0, 0.78, 0]} />
+    {seats.map((seat, index) => <group key={index} position={seat.position} rotation={[0, seat.rotation, 0]}>
+      <OfficeChair position={[0, 0.08, 0]} color={index === 0 ? "#684947" : "#6c716f"} />
+      {active && seat.variant && seat.name && seat.role && <OfficePerson name={seat.name} role={seat.role} status="Đang họp" variant={seat.variant} activity="seated" scale={index === 0 ? 0.82 : 0.78} />}
+    </group>)}
+    <MeetingDisplay position={[0, 1.45, -1.98]} />
+    <Planter position={[2.55, 0, 1.5]} compact />
+  </group>;
+}
+
+function ConferenceTable({ position }: { position: Point }) {
+  return <group position={position}>
+    <RoundedBox args={[4.05, 0.18, 1.42]} radius={0.28} smoothness={5} castShadow><meshStandardMaterial color="#936f4f" roughness={0.6} /></RoundedBox>
+    <RoundedBox args={[1.55, 0.66, 0.68]} radius={0.08} smoothness={4} position={[0, -0.42, 0]} castShadow><meshStandardMaterial color="#57483e" roughness={0.68} /></RoundedBox>
+    <RoundedBox args={[1.05, 0.035, 0.34]} radius={0.045} smoothness={3} position={[0, 0.115, 0]}><meshStandardMaterial color="#2e3836" metalness={0.22} roughness={0.46} /></RoundedBox>
+    {[-1.45, -0.7, 0.7, 1.45].map((x) => <group key={x} position={[x, 0.13, 0]}>
+      <mesh><cylinderGeometry args={[0.035, 0.045, 0.18, 10]} /><meshStandardMaterial color="#c69a50" metalness={0.38} roughness={0.4} /></mesh>
+      <mesh position={[0, 0.1, 0]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.075, 0.12, 12]} /><meshStandardMaterial color="#3d4543" /></mesh>
+    </group>)}
+  </group>;
+}
+
+function MeetingDisplay({ position }: { position: Point }) {
+  return <group position={position}>
+    <RoundedBox args={[2.8, 1.05, 0.08]} radius={0.055} smoothness={4}><meshStandardMaterial color="#2c3433" roughness={0.35} /></RoundedBox>
+    <mesh position={[0, 0, 0.048]}><planeGeometry args={[2.58, 0.84]} /><meshBasicMaterial color="#e9e0d1" /></mesh>
+    <mesh position={[-0.62, 0.12, 0.055]}><boxGeometry args={[0.95, 0.08, 0.01]} /><meshBasicMaterial color="#7f2028" /></mesh>
+    {[-0.62, -0.2, 0.22, 0.64].map((x, index) => <mesh key={x} position={[x, -0.18, 0.055]}><boxGeometry args={[0.23, 0.2 + index * 0.09, 0.01]} /><meshBasicMaterial color={index === 3 ? "#c6933b" : "#526a55"} /></mesh>)}
+  </group>;
 }
 
 function DesktopMonitor({ position, accent, wide = false }: { position: Point; accent: string; wide?: boolean }) {

@@ -20,6 +20,8 @@ CEO AI là Agent điều hành dự kiến tiếp nhận hỏi đáp nhân sự,
 
 TikTok AI hỗ trợ theo dõi vận hành Sell TikTok và hỏi đáp theo phạm vi được cấp. Dashboard TikTok cung cấp số liệu thực tế, chỉ đọc cho G9B và CashStorm Team.
 
+Kế toán AI hỗ trợ Phòng Kế toán theo dõi tổng quan tài chính, hỏi đáp dữ liệu và tra cứu quy trình trong Knowledge Hub. Dữ liệu thu chi, yêu cầu mua hàng, tài khoản thanh toán, công nợ và quy đổi tiền được sử dụng ở chế độ chỉ đọc theo quyền của tài khoản.
+
 ## Positioning
 
 Các AI dùng chung nền tảng phân quyền, audit và dữ liệu nhưng có nhiệm vụ, công cụ và phạm vi riêng. Quyền thực thi không được suy ra từ prompt, tài liệu vector hoặc thói quen lịch sử.
@@ -36,6 +38,9 @@ Các AI dùng chung nền tảng phân quyền, audit và dữ liệu nhưng có
 - CEO AI ban đầu tập trung hỏi đáp nhân sự và tiếp nhận yêu cầu nội bộ.
 - Dashboard TikTok chỉ tổng hợp dữ liệu thực tế của G9B và CashStorm Team; không bao gồm team Designs.
 - Số liệu TikTok là chỉ đọc, tuân theo phạm vi truy cập của tài khoản và dùng múi giờ Los Angeles (PT) cho các mốc ngày tương đối.
+- Dashboard Kế toán tổng hợp dòng tiền, thu chi, yêu cầu mua hàng, công nợ và tài khoản theo kỳ được chọn; các mốc thời gian hiển thị theo giờ Việt Nam.
+- Kế toán AI chỉ đọc dữ liệu trong phạm vi được cấp, che thông tin tài chính nhạy cảm khi cần và không sửa giao dịch trực tiếp.
+- Chat Kế toán kết hợp số liệu được phép xem với tài liệu nghiệp vụ đang áp dụng; Knowledge Hub Kế toán do Admin quản lý quyền đọc, phiên bản và hiệu lực tài liệu.
 - Tri thức của CEO có thể được lưu và truy xuất bằng vector, kèm quyền truy cập và phiên bản tài liệu.
 - Policy Engine, không phải vector search, quyết định thẩm quyền và hạn mức phê duyệt.
 - Hành động nhạy cảm phải có data scope, quyền ủy quyền, điều kiện và audit phù hợp.
@@ -53,6 +58,7 @@ Các AI dùng chung nền tảng phân quyền, audit và dữ liệu nhưng có
 - Bản phân tích Giai đoạn 0 CEO AI: `docs/ceo-ai-giai-doan-0-pham-vi-an-toan.md`.
 - Nền tảng Lemiex AI đã cung cấp kiến trúc tham chiếu cho Agent, capability, tool và audit.
 - Dashboard TikTok đã triển khai thống kê theo team, kỳ thời gian, trạng thái đơn và hiệu suất seller từ nguồn dữ liệu chỉ đọc.
+- Kế toán AI đã triển khai dashboard, chat và Knowledge Hub cho Phòng Kế toán với nguồn dữ liệu tài chính chỉ đọc theo phạm vi được cấp.
 
 ## Product Principles
 

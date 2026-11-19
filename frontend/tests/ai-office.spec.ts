@@ -18,7 +18,7 @@ test("văn phòng 3D thực hiện nhiệm vụ liên công ty", async ({ page }
   }
   await page.getByRole("button", { name: "Văn phòng AI" }).click();
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByText("Feline AI · 4 phòng ban")).toBeVisible();
+  await expect(page.getByText("Feline AI · 6 khu chức năng")).toBeVisible();
   if (testInfo.project.name === "desktop") {
     await expect(page.getByText("CEO AI · Phòng Giám đốc")).toBeVisible();
   }
@@ -36,7 +36,17 @@ test("văn phòng 3D thực hiện nhiệm vụ liên công ty", async ({ page }
   await expect(page.locator(".scene-department-sign.etsy strong")).toHaveText("Sell Etsy");
   await expect(page.locator(".scene-department-sign.tiktok strong")).toHaveText("Sell TikTok");
   await expect(page.locator(".scene-department-sign.fela strong")).toHaveText("Sell Fela");
+  await expect(page.locator(".scene-department-sign.operations strong")).toHaveText("Điều hành AI");
+  await expect(page.locator(".scene-department-sign.meeting strong")).toHaveText("Phòng họp AI");
   await expect(page.locator(".scene-company-sign.lemiex strong")).toHaveText("LEMIEX");
+  await page.getByTitle("Xem Phòng họp AI").click();
+  await expect(page.getByTitle("Xem Phòng họp AI")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".scene-character-status.etsy")).toHaveCount(1);
+  await expect(page.locator(".scene-character-status.tiktok")).toHaveCount(1);
+  await expect(page.locator(".scene-character-status.fela")).toHaveCount(1);
+  await expect(page.locator(".scene-character-status.director")).toHaveCount(1);
+  await page.getByRole("button", { name: "Đặt lại góc nhìn" }).click();
+  await expect(page.getByTitle("Xem Phòng họp AI")).toHaveAttribute("aria-pressed", "false");
   const scene = page.locator(".office-scene-panel");
   const canvas = page.locator("canvas");
   const box = await canvas.boundingBox();

@@ -5,7 +5,7 @@ import {
   ClipboardList, Database, Eye, EyeOff, FileText, Gauge, KeyRound,
   LockKeyhole, LogOut, Menu, PackageCheck, Play, RefreshCw, Search,
   Settings2, ShieldCheck, Sparkles, UserRound, Users, X, MessageCircle,
-  DollarSign, Trophy, BookOpen
+  DollarSign, Trophy, BookOpen, Calculator
   , CircleHelp, Building2, ClipboardCheck
 } from "lucide-react";
 import {
@@ -21,22 +21,26 @@ import { KnowledgeHubView } from "./KnowledgeHubView";
 import { CeoChatView } from "./CeoChatView";
 import { TiktokDashboardView } from "./TiktokDashboardView";
 import { EtsyDashboardView } from "./EtsyDashboardView";
+import { AccountingDashboardView } from "./AccountingDashboardView";
 import { TaskManagerView } from "./TaskManagerView";
 import { DailyReportsView } from "./DailyReportsView";
 import { NotificationBell } from "./NotificationBell";
+import { MultiAgentMeetingView } from "./MultiAgentMeetingView";
 import type {
   AccessAction,
   AgentDefinition,
   AgentRun,
   AuthSession,
-  DailyMetrics
+  DailyMetrics,
+  MultiAgentId
 } from "./types";
 
-type View = "common" | "tasks" | "dailyReports" | "office" | "activity" | "lemiex" | "chat" | "ceoChat" | "tiktokDashboard" | "tiktokChat" | "etsyDashboard" | "etsyChat" | "reports" | "backlog" | "users" | "questions" | "knowledge" | "tiktokKnowledge" | "etsyKnowledge" | "audit" | "sources";
+type View = "common" | "tasks" | "dailyReports" | "multiAgent" | "office" | "activity" | "lemiex" | "chat" | "ceoChat" | "tiktokDashboard" | "tiktokChat" | "etsyDashboard" | "etsyChat" | "accountingDashboard" | "accountingChat" | "reports" | "backlog" | "users" | "questions" | "knowledge" | "tiktokKnowledge" | "etsyKnowledge" | "accountingKnowledge" | "audit" | "sources";
 const VIEW_PATHS: Record<View, string> = {
   common: "/overview",
   tasks: "/tasks",
   dailyReports: "/daily-reports",
+  multiAgent: "/multi-agent",
   office: "/office",
   activity: "/activity",
   lemiex: "/agents/lemiex",
@@ -46,6 +50,8 @@ const VIEW_PATHS: Record<View, string> = {
   tiktokChat: "/agents/tiktok/chat",
   etsyDashboard: "/agents/etsy/overview",
   etsyChat: "/agents/etsy/chat",
+  accountingDashboard: "/agents/accounting/overview",
+  accountingChat: "/agents/accounting/chat",
   reports: "/agents/lemiex/reports",
   backlog: "/agents/lemiex/backlog",
   users: "/admin/users",
@@ -53,6 +59,7 @@ const VIEW_PATHS: Record<View, string> = {
   knowledge: "/admin/knowledge",
   tiktokKnowledge: "/admin/knowledge/tiktok",
   etsyKnowledge: "/admin/knowledge/etsy",
+  accountingKnowledge: "/admin/knowledge/accounting",
   audit: "/admin/audit",
   sources: "/admin/sources"
 };
@@ -206,7 +213,9 @@ function PlatformApp({
     || session.access.grants.some((grant) => grant.agentId === "tiktok-ai");
   const hasEtsy = session.access.platformAdmin
     || session.access.grants.some((grant) => grant.agentId === "etsy-ai");
-  const lemiexOnly = !session.access.platformAdmin && hasLemiex && !hasCeo && !hasTiktok && !hasEtsy;
+  const hasAccounting = session.access.platformAdmin
+    || session.access.grants.some((grant) => grant.agentId === "accounting-ai");
+  const lemiexOnly = !session.access.platformAdmin && hasLemiex && !hasCeo && !hasTiktok && !hasEtsy && !hasAccounting;
   const canViewBasic = canAccess(session, "view", {
     agentId: "lemiex-ai",
     dataScopeId: "lemiex.operations.basic"
@@ -236,6 +245,21 @@ function PlatformApp({
     capabilityId: "etsy.knowledge.ask",
     dataScopeId: "etsy.knowledge"
   });
+  const canRunAccountingChat = canAccess(session, "run", {
+    agentId: "accounting-ai",
+    capabilityId: "accounting.knowledge.ask",
+    dataScopeId: "accounting.knowledge"
+  }) || canAccess(session, "run", {
+    agentId: "accounting-ai",
+    capabilityId: "accounting.data.ask"
+  });
+  const canCoordinateAgents = canAccess(session, "run", { agentId: "ceo-ai" });
+  const availableMultiAgentIds = [
+    canCoordinateAgents && "ceo-ai",
+    canAccess(session, "run", { agentId: "tiktok-ai" }) && "tiktok-ai",
+    canAccess(session, "run", { agentId: "etsy-ai" }) && "etsy-ai",
+    canAccess(session, "run", { agentId: "lemiex-ai" }) && "lemiex-ai"
+  ].filter(Boolean) as MultiAgentId[];
   const canViewTiktokDashboard = canAccess(session, "view", {
     agentId: "tiktok-ai",
     capabilityId: "tiktok.data.ask"
@@ -243,6 +267,10 @@ function PlatformApp({
   const canViewEtsyDashboard = canAccess(session, "view", {
     agentId: "etsy-ai",
     capabilityId: "etsy.data.ask"
+  });
+  const canViewAccountingDashboard = canAccess(session, "view", {
+    agentId: "accounting-ai",
+    capabilityId: "accounting.data.ask"
   });
   const canViewAudit = canAccess(session, "view_audit", {
     agentId: "lemiex-ai",
@@ -254,6 +282,7 @@ function PlatformApp({
     common: true,
     tasks: true,
     dailyReports: true,
+    multiAgent: canCoordinateAgents && availableMultiAgentIds.length > 1,
     office: canViewBasic || (canRunCeoChat && canViewBasic) || canRunTiktokChat,
     activity: canViewAudit,
     lemiex: hasLemiex,
@@ -263,6 +292,8 @@ function PlatformApp({
     tiktokChat: canRunTiktokChat,
     etsyDashboard: canViewEtsyDashboard,
     etsyChat: canRunEtsyChat,
+    accountingDashboard: canViewAccountingDashboard,
+    accountingChat: canRunAccountingChat,
     reports: canViewBasic,
     backlog: canViewBasic,
     users: isAdmin,
@@ -270,6 +301,7 @@ function PlatformApp({
     knowledge: isAdmin,
     tiktokKnowledge: isAdmin,
     etsyKnowledge: isAdmin,
+    accountingKnowledge: isAdmin,
     audit: canViewAudit,
     sources: isAdmin
   } satisfies Record<View, boolean>)[view];
@@ -360,9 +392,9 @@ function PlatformApp({
   if (!view || !canOpenView) return <Navigate to={VIEW_PATHS.common} replace />;
 
   const title = {
-    common: isAdmin ? ["Tổng quan", "Toàn bộ hệ thống AI"] : ["Tổng quan", lemiexOnly ? "Không gian Lemiex" : "Không gian làm việc"], tasks: ["Điều hành", "Quản lý công việc"], dailyReports: ["Điều hành", "Báo cáo hằng ngày"], office: [lemiexOnly ? "Lemiex" : "Không gian AI", lemiexOnly ? "Xưởng vận hành 3D" : "Văn phòng liên công ty"], activity: ["Hoạt động", "Luồng xử lý gần đây"],
-    lemiex: ["Lemiex AI", "Tổng quan vận hành xưởng"], chat: ["Lemiex AI", "Hỏi đáp vận hành"], ceoChat: ["CEO AI", "Tri thức nội bộ"], tiktokDashboard: ["TikTok AI", "Tổng quan G9B & CashStorm"], tiktokChat: ["TikTok AI", "Hỏi đáp Sell TikTok"], etsyDashboard: ["Etsy AI", "Tổng quan kinh doanh Etsy"], etsyChat: ["Etsy AI", "Hỏi đáp Sell Etsy"], reports: ["Lemiex AI", "Báo cáo vận hành"],
-    backlog: ["Lemiex AI", "Theo dõi backlog"], users: ["Quản trị", "Người dùng & phân quyền"], questions: ["Quản trị", "Câu hỏi cần bổ sung"], knowledge: ["CEO AI", "Kho tri thức nội bộ"], tiktokKnowledge: ["TikTok AI", "Kho tri thức Sell TikTok"], etsyKnowledge: ["Etsy AI", "Kho tri thức Sell Etsy"], audit: [isAdmin ? "Quản trị" : "Theo dõi", isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"],
+    common: isAdmin ? ["Tổng quan", "Toàn bộ hệ thống AI"] : ["Tổng quan", lemiexOnly ? "Không gian Lemiex" : "Không gian làm việc"], tasks: ["Điều hành", "Quản lý công việc"], dailyReports: ["Điều hành", "Báo cáo hằng ngày"], multiAgent: ["Điều hành", "Phòng điều hành AI"], office: [lemiexOnly ? "Lemiex" : "Không gian AI", lemiexOnly ? "Xưởng vận hành 3D" : "Văn phòng liên công ty"], activity: ["Hoạt động", "Luồng xử lý gần đây"],
+    lemiex: ["Lemiex AI", "Tổng quan vận hành xưởng"], chat: ["Lemiex AI", "Hỏi đáp vận hành"], ceoChat: ["CEO AI", "Tri thức nội bộ"], tiktokDashboard: ["TikTok AI", "Tổng quan G9B & CashStorm"], tiktokChat: ["TikTok AI", "Hỏi đáp Sell TikTok"], etsyDashboard: ["Etsy AI", "Tổng quan kinh doanh Etsy"], etsyChat: ["Etsy AI", "Hỏi đáp Sell Etsy"], accountingDashboard: ["Kế toán AI", "Tổng quan tài chính"], accountingChat: ["Kế toán AI", "Hỏi đáp kế toán"], reports: ["Lemiex AI", "Báo cáo vận hành"],
+    backlog: ["Lemiex AI", "Theo dõi backlog"], users: ["Quản trị", "Người dùng & phân quyền"], questions: ["Quản trị", "Câu hỏi cần bổ sung"], knowledge: ["CEO AI", "Kho tri thức nội bộ"], tiktokKnowledge: ["TikTok AI", "Kho tri thức Sell TikTok"], etsyKnowledge: ["Etsy AI", "Kho tri thức Sell Etsy"], accountingKnowledge: ["Kế toán AI", "Kho tri thức Kế toán"], audit: [isAdmin ? "Quản trị" : "Theo dõi", isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"],
     sources: ["Hệ thống", "Nguồn dữ liệu"]
   }[view];
 
@@ -375,10 +407,11 @@ function PlatformApp({
             <NavButton active={view === "common"} icon={<Gauge />} label="Tổng quan chung" onClick={() => navigate("common")} />
             <NavButton active={view === "tasks"} icon={<ClipboardCheck />} label="Công việc phòng ban" onClick={() => navigate("tasks")} />
             <NavButton active={view === "dailyReports"} icon={<CalendarDays />} label="Báo cáo hằng ngày" onClick={() => navigate("dailyReports")} />
+            {canCoordinateAgents && availableMultiAgentIds.length > 1 && <NavButton active={view === "multiAgent"} icon={<Users />} label="Phòng điều hành AI" onClick={() => navigate("multiAgent")} />}
             {(canViewBasic || (canRunCeoChat && canViewBasic) || canRunTiktokChat) && <NavButton active={view === "office"} icon={<Building2 />} label={lemiexOnly ? "Xưởng Lemiex 3D" : "Văn phòng AI"} onClick={() => navigate("office")} />}
             {canViewAudit && <NavButton active={view === "activity"} icon={<Activity />} label="Hoạt động AI" badge={String(runs.length)} onClick={() => navigate("activity")} />}
           </NavGroup>
-          {(hasLemiex || hasCeo || hasTiktok || hasEtsy) && <NavGroup label={isAdmin ? "Không gian AI" : "Trợ lý AI"}>
+          {(hasLemiex || hasCeo || hasTiktok || hasEtsy || hasAccounting) && <NavGroup label={isAdmin ? "Không gian AI" : "Trợ lý AI"}>
             {hasLemiex && <div className={`agent-nav-cluster ${["lemiex", "chat", "reports", "backlog"].includes(view) ? "current" : ""}`}>
               <button className={`nav-parent ${["lemiex", "chat", "reports", "backlog"].includes(view) ? "active" : ""}`} onClick={() => setAgentsOpen((value) => !value)}><span className="agent-dot lemiex"><Bot /></span><span><strong>Lemiex AI</strong><small>Vận hành xưởng</small></span>{agentsOpen ? <ChevronDown /> : <ChevronRight />}</button>
               {agentsOpen && <div className="subnav">
@@ -405,8 +438,12 @@ function PlatformApp({
                 {canRunEtsyChat && <NavButton compact active={view === "etsyChat"} icon={<MessageCircle />} label="Hỏi đáp" onClick={() => navigate("etsyChat")} />}
               </div>
             </div>}
-            {isAdmin && <div className="agent-upcoming">
-              <button className="nav-parent muted" disabled><span className="agent-dot finance"><BarChart3 /></span><span><strong>Finance AI</strong><small>Sắp triển khai</small></span><span className="soon">Soon</span></button>
+            {hasAccounting && <div className={`agent-nav-cluster ${view === "accountingChat" || view === "accountingDashboard" ? "current" : ""}`}>
+              <button className={`nav-parent ${view === "accountingChat" || view === "accountingDashboard" ? "active" : ""}`} onClick={() => navigate(canViewAccountingDashboard ? "accountingDashboard" : "accountingChat")}><span className="agent-dot finance"><Calculator /></span><span><strong>Kế toán AI</strong><small>Phòng Kế toán</small></span><ChevronRight /></button>
+              <div className="subnav">
+                {canViewAccountingDashboard && <NavButton compact active={view === "accountingDashboard"} icon={<Gauge />} label="Tổng quan" onClick={() => navigate("accountingDashboard")} />}
+                {canRunAccountingChat && <NavButton compact active={view === "accountingChat"} icon={<MessageCircle />} label="Hỏi đáp" onClick={() => navigate("accountingChat")} />}
+              </div>
             </div>}
           </NavGroup>}
           {(isAdmin || canViewAudit) && <NavGroup label={isAdmin ? "Quản trị" : "Theo dõi"}>
@@ -414,6 +451,7 @@ function PlatformApp({
             {isAdmin && <NavButton active={view === "knowledge"} icon={<BookOpen />} label="Kho tri thức CEO AI" onClick={() => navigate("knowledge")} />}
             {isAdmin && <NavButton active={view === "tiktokKnowledge"} icon={<BookOpen />} label="Kho tri thức TikTok AI" onClick={() => navigate("tiktokKnowledge")} />}
             {isAdmin && <NavButton active={view === "etsyKnowledge"} icon={<BookOpen />} label="Kho tri thức Etsy AI" onClick={() => navigate("etsyKnowledge")} />}
+            {isAdmin && <NavButton active={view === "accountingKnowledge"} icon={<BookOpen />} label="Kho tri thức Kế toán AI" onClick={() => navigate("accountingKnowledge")} />}
             {isAdmin && <NavButton active={view === "questions"} icon={<CircleHelp />} label="Câu hỏi cần bổ sung" onClick={() => navigate("questions")} />}
             {isAdmin && <NavButton active={view === "sources"} icon={<Database />} label="Nguồn dữ liệu" onClick={() => navigate("sources")} />}
             {canViewAudit && <NavButton active={view === "audit"} icon={<ShieldCheck />} label={isAdmin ? "Nhật ký AI" : "Lịch sử hoạt động"} onClick={() => navigate("audit")} />}
@@ -431,13 +469,24 @@ function PlatformApp({
         <div className="search-box"><Search /><span>Tìm trong không gian làm việc</span></div>
         <div className="header-tools"><NotificationBell onNavigate={(route) => routerNavigate(route)} /><div className="profile-wrap"><button className="profile-button" onClick={() => setProfileOpen((value) => !value)}><span className="profile">{initials(session.user.displayName)}</span><span className="profile-copy"><strong>{session.user.displayName}</strong><small>{roleLabel(session.user.role)}</small></span><ChevronDown /></button>{profileOpen && <div className="profile-menu"><div><strong>{session.user.displayName}</strong><span>{session.user.email}</span></div><button onClick={() => { setPasswordOpen(true); setProfileOpen(false); }}><KeyRound /> Đổi mật khẩu</button><button className="logout-action" onClick={() => void onLogout()}><LogOut /> Đăng xuất</button></div>}</div></div>
       </header>
-      <div className={`workspace-body ${view === "chat" || view === "ceoChat" || view === "tiktokChat" || view === "etsyChat" ? "chat-page-body" : ""} ${view === "office" ? "office-page-body" : ""}`}>
-        {view !== "chat" && view !== "ceoChat" && view !== "tiktokChat" && view !== "etsyChat" && view !== "office" && view !== "tasks" && view !== "dailyReports" && <div className="page-heading"><div><span>{title[0]}</span><h1>{title[1]}</h1></div><div className="heading-actions">{isAdmin && <div className="api-state"><i className={systemOnline ? "ok" : "down"} /> API {systemOnline ? "ổn định" : "mất kết nối"}</div>}<button className="refresh-button" onClick={() => void load()}><RefreshCw /></button></div></div>}
+      <div className={`workspace-body ${view === "chat" || view === "ceoChat" || view === "tiktokChat" || view === "etsyChat" || view === "accountingChat" ? "chat-page-body" : ""} ${view === "multiAgent" ? "multi-agent-page-body" : ""} ${view === "office" ? "office-page-body" : ""}`}>
+        {view !== "chat" && view !== "ceoChat" && view !== "tiktokChat" && view !== "etsyChat" && view !== "accountingChat" && view !== "multiAgent" && view !== "office" && view !== "tasks" && view !== "dailyReports" && <div className="page-heading"><div><span>{title[0]}</span><h1>{title[1]}</h1></div><div className="heading-actions">{isAdmin && <div className="api-state"><i className={systemOnline ? "ok" : "down"} /> API {systemOnline ? "ổn định" : "mất kết nối"}</div>}<button className="refresh-button" onClick={() => void load()}><RefreshCw /></button></div></div>}
         {error && <div className="error-banner"><AlertTriangle /><span>{error}</span><button onClick={() => setError(null)}><X /></button></div>}
         {view === "common" && <CommonDashboard definition={definition} runs={runs} systemOnline={systemOnline} sourceOnline={sourceOnline} isAdmin={isAdmin} hasLemiex={hasLemiex} displayName={session.user.displayName} onOpenLemiex={() => navigate("lemiex")} />}
         {view === "tasks" && <TaskManagerView session={session} />}
         {view === "dailyReports" && <DailyReportsView session={session} />}
-        {view === "office" && <Suspense fallback={<div className="office-module-loader"><Building2 /><span>Đang mở không gian 3D...</span></div>}><AiOfficeView displayName={session.user.displayName} scope={lemiexOnly ? "lemiex" : "all"} canRunLemiexChat={canRunChat} onOpenLemiexChat={() => navigate("chat")} /></Suspense>}
+        {view === "multiAgent" && canCoordinateAgents && <MultiAgentMeetingView availableAgentIds={availableMultiAgentIds} />}
+        {view === "office" && <Suspense fallback={<div className="office-module-loader"><Building2 /><span>Đang mở không gian 3D...</span></div>}><AiOfficeView
+          displayName={session.user.displayName}
+          scope={lemiexOnly ? "lemiex" : "all"}
+          canRunLemiexChat={canRunChat}
+          canRunCeoChat={canRunCeoChat}
+          canRunTiktokChat={canRunTiktokChat}
+          canRunEtsyChat={canRunEtsyChat}
+          canCoordinateAgents={canCoordinateAgents && availableMultiAgentIds.length > 1}
+          onOpenLemiexChat={() => navigate("chat")}
+          onOpenMultiAgent={() => navigate("multiAgent")}
+        /></Suspense>}
         {view === "activity" && <ActivityView runs={runs} isAdmin={isAdmin} />}
         {view === "lemiex" && <LemiexOverview selectedDate={selectedDate} setSelectedDate={setSelectedDate} selectedRun={selectedRun} metrics={metrics} review={review} loading={loading} running={running} canRun={canRunDaily} isAdmin={isAdmin} onRun={runAnalysis} />}
         {view === "chat" && canRunChat && <LemiexChatView isAdmin={isAdmin} />}
@@ -446,12 +495,15 @@ function PlatformApp({
         {view === "tiktokChat" && canRunTiktokChat && <CeoChatView isAdmin={isAdmin} variant="tiktok" />}
         {view === "etsyDashboard" && canViewEtsyDashboard && <EtsyDashboardView />}
         {view === "etsyChat" && canRunEtsyChat && <CeoChatView isAdmin={isAdmin} variant="etsy" />}
+        {view === "accountingDashboard" && canViewAccountingDashboard && <AccountingDashboardView />}
+        {view === "accountingChat" && canRunAccountingChat && <CeoChatView isAdmin={isAdmin} variant="accounting" />}
         {view === "reports" && <ReportsView selectedDate={selectedDate} setSelectedDate={setSelectedDate} report={report} runs={runs} isAdmin={isAdmin} onOpen={(date) => { setSelectedDate(date); navigate("lemiex"); }} />}
         {view === "backlog" && <BacklogView metrics={metrics} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />}
         {view === "users" && isAdmin && <AdminUsersView />}
         {view === "knowledge" && isAdmin && <KnowledgeHubView />}
         {view === "tiktokKnowledge" && isAdmin && <KnowledgeHubView agentId="tiktok-ai" />}
         {view === "etsyKnowledge" && isAdmin && <KnowledgeHubView agentId="etsy-ai" />}
+        {view === "accountingKnowledge" && isAdmin && <KnowledgeHubView agentId="accounting-ai" />}
         {view === "questions" && isAdmin && <AdminQuestionsView />}
         {view === "audit" && <AuditView runs={runs} isAdmin={isAdmin} />}
         {view === "sources" && <SourcesView sourceOnline={sourceOnline} metrics={metrics} definition={definition} />}
